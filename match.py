@@ -187,6 +187,51 @@ class DuoPlayer(CalcPlayer):
         return m
 
 
+class DuoVPlayer(CalcPlayer):
+    """two brains: the calculator searches; each root move's score is corrected by OURO's judgment of the position
+    after it, measured against the calculator network's own static judgment of that position.
+    On fresh self-play positions the game result is predicted best by  search + 0.88 * OURO - 0.87 * static network
+    (zero/judge_cmp.py), i.e. OURO's opinion plus what the search found beyond the static network.
+    duov:<weights .bin, with its .ema.pt beside it>:<ouro ckpt>:<nodes or seconds>:<scale>[:<cap>[:<engine binary>]]"""
+    def __init__(self, net, ckpt, t, scale=1.0, cap=100, binary='calc/calc'):
+        import torch
+        from engine import Net
+        CalcPlayer.__init__(self, net, t, binary)
+        self.ouro = Net(ckpt, threads=1); self.scale = float(scale); self.cap = float(cap)
+        self.sd = torch.load(net + '.ema.pt', map_location='cpu'); self.torch = torch
+        i = np.arange(768); self.lut = torch.from_numpy(np.concatenate([((i // 64 + 6) % 12) * 64 + ((i % 64) ^ 56), [768]]).astype(np.int64))
+        self.ptw = torch.cat([torch.tensor([0, 1, 1, 2, 4, 0] * 2, dtype=torch.float32).repeat_interleave(64), torch.zeros(1)])
+
+    def static(self, boards):
+        """the calculator network's static judgment (logit of the win probability of the side to move)"""
+        torch, sd = self.torch, self.sd; F = torch.nn.functional
+        idx = torch.full((len(boards), 32), 768, dtype=torch.long)
+        for k, b in enumerate(boards):
+            for j, (sq, pc) in enumerate(list(b.piece_map().items())[:32]):
+                idx[k, j] = ((0 if pc.color == b.turn else 6) + pc.piece_type - 1) * 64 + (sq if b.turn == chess.WHITE else sq ^ 56)
+        with torch.no_grad():
+            ao = sd['b'] + F.embedding_bag(idx, sd['E'], mode='sum', padding_idx=768); ap = sd['b'] + F.embedding_bag(self.lut[idx], sd['E'], mode='sum', padding_idx=768)
+            lin = sd['c'] + F.embedding_bag(idx, sd['S'], mode='sum', padding_idx=768)
+            ph = (self.ptw[idx].sum(1) / 24).clamp(max=1.0); bk = (((idx < 768).sum(1) - 2) // 4).clamp(0, sd['wo'].shape[0] - 1)
+            return (ph * lin[:, 0] + (1 - ph) * lin[:, 1] + sd['cb'][bk] + (ao.clamp(0, 1) ** 2 * sd['wo'][bk]).sum(1) + (ap.clamp(0, 1) ** 2 * sd['wp'][bk]).sum(1)).numpy()
+
+    def move(self, board, history):
+        t = time.time(); moves = list(board.legal_moves); kids = []
+        for m in moves:
+            board.push(m); kids.append(board.copy(stack=False)); board.pop()
+        live = [k for k, b in enumerate(kids) if any(True for _ in b.legal_moves)]       # positions that are not mate or stalemate
+        if len(moves) > 1 and live:
+            ev = self.ouro.evaluate([kids[k] for k in live], loops=1)
+            o = np.array([math.log(max(1e-4, min(1 - 1e-4, e[2])) / (1 - max(1e-4, min(1 - 1e-4, e[2])))) for e in ev])   # the opponent's view
+            a = self.static([kids[k] for k in live])
+            g = np.zeros(len(moves)); g[live] = -271.58 * self.scale * (0.88 * o - 0.87 * a)                               # for the side to move at the root
+            g[live] -= g[live].max(); g = np.maximum(g, -self.cap)
+            self.e.configure({'Bonus': ' '.join(f'{m.uci()[:4]} {int(round(x))}' for m, x in zip(moves, g))})
+        m = self.go(board, self.t if self.t >= 100 else max(0.01, self.t - (time.time() - t)))
+        self.moves += 1; self.secs += time.time() - t
+        return m
+
+
 class UCIPlayer:
     """any other UCI engine: uci:<command line>:<seconds per move>"""
     def __init__(self, cmd, t):
@@ -211,6 +256,8 @@ def make(spec):
         return CalcPlayer(*p[1:])
     if p[0] == 'duo':
         return DuoPlayer(*p[1:])
+    if p[0] == 'duov':
+        return DuoVPlayer(*p[1:])
     if p[0] == 'net':
         return NetPlayer(p[1], p[2], p[3])
     if p[0] == 'mcts':

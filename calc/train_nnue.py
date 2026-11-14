@@ -28,6 +28,8 @@ ap.add_argument('--mlr', type=float, default=0.03)       # learning rate of the 
 ap.add_argument('--max_rows', type=int, default=0)       # use only this many positions per file (quick experiments)
 ap.add_argument('--gate', type=int, default=32)          # the router reads this many hidden units per side
 ap.add_argument('--widen', default='')                   # start from a narrower network: copy its units, new units start with zero output weights
+ap.add_argument('--ytag', default='y')                   # which value target to train on: y (production), ys (smoothed), yl (lambda-return) -- see zero/foresight.py
+ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresight heads (training only; the exported network is unchanged). Needs data/ev_<tag>_aux.npy
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
 
@@ -70,8 +72,10 @@ class Net(torch.nn.Module):
             self.gb = torch.nn.Parameter(torch.zeros(NEX))
         self.S = torch.nn.Parameter(torch.zeros(769, 2))            # [:,0] middlegame, [:,1] endgame
         self.c = torch.nn.Parameter(torch.zeros(2))
+        if a.aux > 0:                                               # foresight heads: 3 later scores, plies left, 10 + 10 material changes, from, to, volatility
+            self.A = torch.nn.Linear(2 * H, 153)
 
-    def forward(self, idx):
+    def forward(self, idx, feats=False):
         bk = (((idx < 768).sum(1) - 2) // 4).clamp(0, a.buckets - 1) if a.buckets > 1 else torch.zeros(idx.shape[0], dtype=torch.long, device=idx.device)
         if a.phase and a.overlap > 0 and ROUTE['train']:          # a position one capture away from the next phase sometimes trains that phase's specialist
             o = ((idx < 768).sum(1) - 2) % 4; pick = torch.rand(idx.shape[0], device=idx.device) < a.overlap
@@ -89,7 +93,8 @@ class Net(torch.nn.Module):
         xo = ao.clamp(0, 1) ** 2; xp = ap_.clamp(0, 1) ** 2
         base = ph * lin[:, 0] + (1 - ph) * lin[:, 1]
         if M == 1:
-            return base + self.cb[bk] + (xo * self.wo[bk]).sum(1) + (xp * self.wp[bk]).sum(1)
+            out = base + self.cb[bk] + (xo * self.wo[bk]).sum(1) + (xp * self.wp[bk]).sum(1)
+            return (out, torch.cat([xo, xp], 1)) if feats else out
         e = bk[:, None] * M + torch.arange(M, device=idx.device)                                        # the piece-count group's experts
         outs = (xo[:, None, :] * self.wo[e]).sum(2) + (xp[:, None, :] * self.wp[e]).sum(2) + self.cb[e]
         logits = (torch.cat([xo[:, :G], xp[:, :G]], 1)[:, None, :] * self.gw[e]).sum(2) + self.gb[e]
@@ -150,10 +155,11 @@ elif a.pst:
     with torch.no_grad():
         net.S[:768, 0] = torch.from_numpy(z['S_mg']); net.S[:768, 1] = torch.from_numpy(z['S_eg'])
         net.c[0] = float(z['c_mg']); net.c[1] = float(z['c_eg'])
-files = [(np.load(f'data/ev_{t}_x.npy', mmap_mode='r'), np.load(f'data/ev_{t}_y.npy', mmap_mode='r')) for t in a.files.split(',')]
+files = [(np.load(f'data/ev_{t}_x.npy', mmap_mode='r'), np.load(f'data/ev_{t}_{a.ytag}.npy', mmap_mode='r'),
+          np.load(f'data/ev_{t}_aux.npy', mmap_mode='r') if a.aux > 0 else None) for t in a.files.split(',')]
 if a.max_rows:
-    files = [(x[:a.max_rows], y[:a.max_rows]) for x, y in files]
-total = sum(len(x) for x, _ in files)
+    files = [(x[:a.max_rows], y[:a.max_rows], None if ax is None else ax[:a.max_rows]) for x, y, ax in files]
+total = sum(len(f_[0]) for f_ in files)
 steps_total = int(a.epochs * total / a.bs)
 
 net.to(DEV)
@@ -222,12 +228,32 @@ def validate(m=None):
 
 print(f'positions {total/1e6:.1f}M, hidden {H}, steps {steps_total}, start val (log-loss, MAE) {validate()}', flush=True)
 step = 0; t0 = time.time(); seen = 0; run = 0.0; nrun = 0
-chunks = [(fi, s) for fi, (x, _) in enumerate(files) for s in range(0, len(x), a.chunk)]
+chunks = [(fi, s) for fi, f_ in enumerate(files) for s in range(0, len(f_[0]), a.chunk)]
+
+
+def aux_loss(feat, ax):
+    """foresight: what the hidden layer must be able to tell about the rest of the game (played positions only)"""
+    m = ax[:, 0] > 0
+    if int(m.sum()) < 8:
+        return feat.sum() * 0.0, {}
+    o = net.A(feat[m]); t = ax[m].float(); fr = ax[m][:, 25].long(); to = ax[m][:, 26].long(); pm = fr < 64
+    parts = {'later': F.binary_cross_entropy_with_logits(o[:, 0:3], t[:, 1:4] / 255),
+             'left': F.smooth_l1_loss(o[:, 3], t[:, 4] / 50),
+             'mat8': F.mse_loss(o[:, 4:14], t[:, 5:15] - 16),
+             'matend': F.mse_loss(o[:, 14:24], (t[:, 15:25] - 16) / 4),
+             'move': (F.cross_entropy(o[pm][:, 24:88], fr[pm]) + F.cross_entropy(o[pm][:, 88:152], to[pm])) if bool(pm.any()) else o.sum() * 0.0,
+             'vol': F.binary_cross_entropy_with_logits(o[:, 152], t[:, 27] / 255)}
+    total_ = parts['later'] + 0.2 * parts['left'] + 0.5 * parts['mat8'] + 0.5 * parts['matend'] + 0.1 * parts['move'] + 0.5 * parts['vol']
+    return total_, {k_: float(v_) for k_, v_ in parts.items()}
+
+
+AUXLOG = {}
 done = False
 while not done:
     for ci in rs.permutation(len(chunks)):
         fi, s = chunks[ci]
         X = torch.from_numpy(np.ascontiguousarray(files[fi][0][s:s + a.chunk])).to(DEV); Y = torch.from_numpy(np.ascontiguousarray(files[fi][1][s:s + a.chunk])).to(DEV)
+        AX = torch.from_numpy(np.ascontiguousarray(files[fi][2][s:s + a.chunk])).to(DEV) if a.aux > 0 else None
         perm = torch.randperm(len(X), device=DEV)
         for j in range(0, len(X) - a.bs + 1, a.bs):
             k = perm[j:j + a.bs]
@@ -236,7 +262,13 @@ while not done:
                 g['lr'] = lr
             frac = step / max(1, steps_total)
             ROUTE['tau'] = max(0.3, 1.0 - frac); ROUTE['hard'] = frac >= 0.7      # soft mixture first, exactly-one-expert for the last 30%
-            loss = F.binary_cross_entropy_with_logits(net(X[k].long()), Y[k].float() / 255)
+            if a.aux > 0:
+                out_, feat_ = net(X[k].long(), feats=True)
+                loss = F.binary_cross_entropy_with_logits(out_, Y[k].float() / 255)
+                la, AUXLOG = aux_loss(feat_, AX[k])
+                run_main = float(loss); loss = loss + a.aux * la
+            else:
+                loss = F.binary_cross_entropy_with_logits(net(X[k].long()), Y[k].float() / 255); run_main = float(loss)
             opt.zero_grad(set_to_none=True)
             if matopt is not None:
                 net.E.grad = None
@@ -248,9 +280,10 @@ while not done:
                     d = min(a.ema, (1 + step) / (10 + step))
                     for pe, pm in zip(ema.parameters(), net.parameters()):
                         pe.lerp_(pm, 1 - d)
-            step += 1; seen += a.bs; run += float(loss); nrun += 1
+            step += 1; seen += a.bs; run += run_main; nrun += 1
             if step % 500 == 0:
-                print(f'step {step}/{steps_total} seen {seen/1e6:.1f}M loss {run/nrun:.5f} {seen/(time.time()-t0)/1e3:.0f}k pos/s', flush=True)
+                print(f'step {step}/{steps_total} seen {seen/1e6:.1f}M loss {run/nrun:.5f} {seen/(time.time()-t0)/1e3:.0f}k pos/s'
+                      + ('  foresight ' + ' '.join(f'{k_} {v_:.3f}' for k_, v_ in AUXLOG.items()) if AUXLOG else ''), flush=True)
                 run = 0.0; nrun = 0
             if step >= steps_total or time.time() - t0 > a.minutes * 60:
                 done = True; break
