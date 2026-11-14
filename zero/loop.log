@@ -1,0 +1,464 @@
+{"player": "calc:zero/g1.bin:0.1:calc/calc_z2", "rating": 1515, "ci95": 76, "games": 120}
+[14:02:17] === generation 2: hidden 0
+[14:05:47] newton step 0: log-loss before step 0.69315  |step| 50.5810  (31s)
+newton step 1: log-loss before step 0.55242  |step| 27.5490  (31s)
+newton step 2: log-loss before step 0.54219  |step| 6.6953  (28s)
+newton step 3: log-loss before step 0.54176  |step| 0.8700  (29s)
+newton step 4: log-loss before step 0.54176  |step| 0.0507  (31s)
+newton step 5: log-loss before step 0.54176  |step| 0.1207  (29s)
+newton step 6: log-loss before step 0.54176  |step| 0.0546  (30s)
+piece values handed to the search (centipawns, P N B R Q): [115, 248, 298, 458, 985]
+solved piece values (middlegame, own side, pawn = 1): {'P': 0.75, 'N': 6.36, 'B': 7.33, 'R': 11.25, 'Q': 21.34}
+tempo (side to move) in centipawns: mg -237 eg -6
+[14:05:47] 
+[14:06:01] generation 2 vs 1: 181-9-10  score 0.9275  Elo 442.8 (371.7 to 553.4)
+[14:10:22] generation 2 rating 1985 +- 78 (120 games)
+[14:32:29] done games 6000 positions 567300 tree positions 2302691 white 2143 draw 1636 black 2221
+done games 6000 positions 566566 tree positions 2296890 white 2082 draw 1611 black 2307
+done games 6000 positions 559947 tree positions 2269612 white 2129 draw 1637 black 2234
+done games 6000 positions 562104 tree positions 2279968 white 2060 draw 1671 black 2269
+[14:32:41] generation 2: played positions 2255917  tree positions 9149161  results W/D/L from the mover 0.328/0.343/0.329  mean |score| 384  corr(score, result) 0.609
+[14:32:41] === generation 3: hidden 64
+[14:37:14] newton step 0: log-loss before step 0.69315  |step| 55.9087  (33s)
+newton step 1: log-loss before step 0.53465  |step| 37.9847  (34s)
+newton step 2: log-loss before step 0.52012  |step| 18.7250  (36s)
+newton step 3: log-loss before step 0.51918  |step| 10.9751  (40s)
+newton step 4: log-loss before step 0.51917  |step| 35.6284  (47s)
+newton step 5: log-loss before step 0.51917  |step| 51.7098  (38s)
+newton step 6: log-loss before step 0.51917  |step| 28.5163  (42s)
+piece values handed to the search (centipawns, P N B R Q): [147, 311, 356, 561, 1247]
+solved piece values (middlegame, own side, pawn = 1): {'P': 0.75, 'N': 4.81, 'B': 5.43, 'R': 8.59, 'Q': 26.72}
+tempo (side to move) in centipawns: mg -472 eg 138
+[14:39:39] positions 4.3M, hidden 64, steps 1300, start val (log-loss, MAE) (0.5206328630447388, 0.14602333307266235)
+  checkpoint: val (log-loss, MAE) (0.522079586982727, 0.1481577306985855)
+  checkpoint: val (log-loss, MAE) (0.5223747491836548, 0.14766834676265717)
+step 500/1300 seen 8.2M loss 0.53030 152k pos/s
+  checkpoint: val (log-loss, MAE) (0.5147184133529663, 0.13968656957149506)
+step 1000/1300 seen 16.4M loss 0.52126 153k pos/s
+  checkpoint: val (log-loss, MAE) (0.5106783509254456, 0.13477221131324768)
+  checkpoint: val (log-loss, MAE) (0.512061595916748, 0.1364077627658844)
+done: steps 1300, val (log-loss, MAE) raw (0.5110582709312439, 0.13532157242298126) averaged (0.5117229223251343, 0.1360791027545929), 137s -> zero/g3a.bin
+  step += 1; seen += a.bs; run += float(loss); nrun += 1
+[14:46:26] 521868109703064, 0.14655117690563202)
+  checkpoint: val (log-loss, MAE) (0.5208310484886169, 0.14514164626598358)
+step 1000/4092 seen 16.4M loss 0.51646 164k pos/s
+step 1500/4092 seen 24.6M loss 0.49760 167k pos/s
+  checkpoint: val (log-loss, MAE) (0.5189701914787292, 0.14513804018497467)
+step 2000/4092 seen 32.8M loss 0.50553 167k pos/s
+step 2500/4092 seen 41.0M loss 0.49712 167k pos/s
+  checkpoint: val (log-loss, MAE) (0.518966555595398, 0.14507615566253662)
+step 3000/4092 seen 49.2M loss 0.50525 165k pos/s
+step 3500/4092 seen 57.3M loss 0.49684 166k pos/s
+step 4000/4092 seen 65.5M loss 0.49967 166k pos/s
+  checkpoint: val (log-loss, MAE) (0.5190810561180115, 0.1450335532426834)
+done: steps 4092, val (log-loss, MAE) raw (0.51976078748703, 0.1457677036523819) averaged (0.5190880298614502, 0.14504221081733704), 404s -> zero/g3b.bin
+  step += 1; seen += a.bs; run += float(loss); nrun += 1
+[14:47:05] tree-harvest experiment: with tree positions vs without: 216-66-118  score 0.6225  Elo 86.9 (55.6 to 119.6)
+[14:47:24] generation 3 vs 2: 142-30-28  score 0.785  Elo 225.0 (177.0 to 282.0)
+[14:53:34] generation 3 rating 2360 +- 73 (120 games)
+[15:19:21] done games 6000 positions 512222 tree positions 2116153 white 2306 draw 1236 black 2458
+done games 6000 positions 516200 tree positions 2132327 white 2291 draw 1279 black 2430
+done games 6000 positions 516590 tree positions 2137211 white 2259 draw 1268 black 2473
+done games 6000 positions 512583 tree positions 2113436 white 2268 draw 1293 black 2439
+[15:19:34] generation 3: played positions 2057595  tree positions 8499127  results W/D/L from the mover 0.376/0.243/0.381  mean |score| 358  corr(score, result) 0.651
+[15:19:34] === generation 4: hidden 128
+[15:24:07] newton step 0: log-loss before step 0.69315  |step| 57.5538  (36s)
+newton step 1: log-loss before step 0.52249  |step| 35.4001  (40s)
+newton step 2: log-loss before step 0.50242  |step| 15.9501  (36s)
+newton step 3: log-loss before step 0.50024  |step| 4.8404  (42s)
+newton step 4: log-loss before step 0.50018  |step| 3.1126  (41s)
+newton step 5: log-loss before step 0.50018  |step| 7.3537  (38s)
+newton step 6: log-loss before step 0.50018  |step| 13.7040  (38s)
+piece values handed to the search (centipawns, P N B R Q): [163, 368, 420, 652, 1414]
+solved piece values (middlegame, own side, pawn = 1): {'P': 0.75, 'N': 4.17, 'B': 4.7, 'R': 6.39, 'Q': 21.03}
+tempo (side to move) in centipawns: mg 851 eg -42
+[15:43:50] 02)
+  checkpoint: val (log-loss, MAE) (0.4963967800140381, 0.12800048291683197)
+step 4500/7289 seen 73.7M loss 0.50588 117k pos/s
+step 5000/7289 seen 81.9M loss 0.49701 117k pos/s
+  checkpoint: val (log-loss, MAE) (0.4965473413467407, 0.12814567983150482)
+step 5500/7289 seen 90.1M loss 0.49789 117k pos/s
+  checkpoint: val (log-loss, MAE) (0.49735453724861145, 0.12923544645309448)
+step 6000/7289 seen 98.3M loss 0.50456 99k pos/s
+step 6500/7289 seen 106.5M loss 0.49913 100k pos/s
+  checkpoint: val (log-loss, MAE) (0.4959902763366699, 0.12740562856197357)
+step 7000/7289 seen 114.7M loss 0.49806 101k pos/s
+  checkpoint: val (log-loss, MAE) (0.49633586406707764, 0.12786425650119781)
+done: steps 7289, val (log-loss, MAE) raw (0.4982505440711975, 0.13018250465393066) averaged (0.4963524639606476, 0.12788638472557068), 1179s -> zero/g4.bin
+  step += 1; seen += a.bs; run += float(loss); nrun += 1
+[15:44:14] generation 4 vs 3: 122-24-54  score 0.67  Elo 123.0 (77.3 to 173.3)
+[15:51:55] generation 4 rating 2463 +- 61 (120 games)
+[15:51:59] === generation 4: hidden 128
+[15:51:59] generation 4 already matched and rated
+[15:51:59] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:51:59] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:51:59] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:51:59] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:51:59] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:51:59] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:51:59] Traceback (most recent call last):
+  File "/home/user/loopchess/zero/data.py", line 8, in <module>
+    r = np.concatenate([np.fromfile(f, dtype=rec) for f in sorted(glob.glob(f'zero/g{g}_p*.bin') + glob.glob(f'zero/g{g}_c*_p*.bin'))])
+ValueError: need at least one array to concatenate
+[15:51:59] === generation 5: hidden 128
+[15:52:00] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/solve_pst.py", line 15, in <module>
+    X = np.concatenate([np.load(f'data/ev_{t}_x.npy', mmap_mode='r')[:N] for t in TAGS])[:N]
+                        ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/ev_z4_x.npy'
+[15:52:02] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/train_nnue.py", line 83, in <module>
+    PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None
+                                                                           ~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'zero/g5s.npz'
+[15:52:03] match output:  return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 774, in get
+    raise self._value
+FileNotFoundError: [Errno 2] No such file or directory: '{ENGINE}'
+[15:52:04] ladder output:  return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 774, in get
+    raise self._value
+FileNotFoundError: [Errno 2] No such file or directory: '{ENGINE}'
+[15:52:04] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:04] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:04] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:04] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:04] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:04] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:05] Traceback (most recent call last):
+  File "/home/user/loopchess/zero/data.py", line 8, in <module>
+    r = np.concatenate([np.fromfile(f, dtype=rec) for f in sorted(glob.glob(f'zero/g{g}_p*.bin') + glob.glob(f'zero/g{g}_c*_p*.bin'))])
+ValueError: need at least one array to concatenate
+[15:52:05] === generation 6: hidden 256
+[15:52:06] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/solve_pst.py", line 15, in <module>
+    X = np.concatenate([np.load(f'data/ev_{t}_x.npy', mmap_mode='r')[:N] for t in TAGS])[:N]
+                        ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/ev_z5_x.npy'
+[15:52:07] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/train_nnue.py", line 83, in <module>
+    PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None
+                                                                           ~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'zero/g6s.npz'
+[15:52:09] match output:  return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 774, in get
+    raise self._value
+FileNotFoundError: [Errno 2] No such file or directory: '{ENGINE}'
+[15:52:10] ladder output:  return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 774, in get
+    raise self._value
+FileNotFoundError: [Errno 2] No such file or directory: '{ENGINE}'
+[15:52:10] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:10] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:10] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:10] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:10] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:10] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:10] Traceback (most recent call last):
+  File "/home/user/loopchess/zero/data.py", line 8, in <module>
+    r = np.concatenate([np.fromfile(f, dtype=rec) for f in sorted(glob.glob(f'zero/g{g}_p*.bin') + glob.glob(f'zero/g{g}_c*_p*.bin'))])
+ValueError: need at least one array to concatenate
+[15:52:10] === generation 7: hidden 256
+[15:52:12] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/solve_pst.py", line 15, in <module>
+    X = np.concatenate([np.load(f'data/ev_{t}_x.npy', mmap_mode='r')[:N] for t in TAGS])[:N]
+                        ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/ev_z6_x.npy'
+[15:52:13] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/train_nnue.py", line 83, in <module>
+    PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None
+                                                                           ~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'zero/g7s.npz'
+[15:52:14] match output:  return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 774, in get
+    raise self._value
+FileNotFoundError: [Errno 2] No such file or directory: '{ENGINE}'
+[15:52:16] ladder output:  return self._map_async(func, iterable, mapstar, chunksize).get()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/multiprocessing/pool.py", line 774, in get
+    raise self._value
+FileNotFoundError: [Errno 2] No such file or directory: '{ENGINE}'
+[15:52:16] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:16] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:16] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:16] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:16] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:16] zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+zero/gen.sh: line 9: {ENGINE}: command not found
+[15:52:16] Traceback (most recent call last):
+  File "/home/user/loopchess/zero/data.py", line 8, in <module>
+    r = np.concatenate([np.fromfile(f, dtype=rec) for f in sorted(glob.glob(f'zero/g{g}_p*.bin') + glob.glob(f'zero/g{g}_c*_p*.bin'))])
+ValueError: need at least one array to concatenate
+[15:52:16] === generation 8: hidden 256
+[15:52:17] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/solve_pst.py", line 15, in <module>
+    X = np.concatenate([np.load(f'data/ev_{t}_x.npy', mmap_mode='r')[:N] for t in TAGS])[:N]
+                        ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/ev_z7_x.npy'
+[15:52:19] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/train_nnue.py", line 83, in <module>
+    PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None
+                                                                           ~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'zero/g8s.npz'
+[15:52:37] === generation 4: hidden 128
+[15:52:37] generation 4 already matched and rated
+[16:00:25] done games 1000 positions 84551 tree positions 407017 white 387 draw 207 black 406
+done games 1000 positions 87375 tree positions 418293 white 390 draw 226 black 384
+done games 1000 positions 87123 tree positions 415218 white 372 draw 254 black 374
+done games 1000 positions 85459 tree positions 408758 white 365 draw 210 black 425
+zero/gen.sh: line 13: g: command not found
+zero/gen.sh: line 14: syntax error near unexpected token `done'
+zero/gen.sh: line 14: `done'
+[16:08:04] done games 1000 positions 86669 tree positions 413316 white 362 draw 232 black 406
+done games 1000 positions 85132 tree positions 406553 white 340 draw 232 black 428
+done games 1000 positions 85210 tree positions 410299 white 362 draw 227 black 411
+done games 1000 positions 86481 tree positions 412068 white 370 draw 237 black 393
+[16:25:04] done games 1000 positions 85965 tree positions 413498 white 364 draw 226 black 410
+done games 1000 positions 84860 tree positions 407700 white 376 draw 231 black 393
+done games 1000 positions 86231 tree positions 413288 white 354 draw 247 black 399
+done games 1000 positions 85616 tree positions 408947 white 398 draw 225 black 377
+[16:48:34] done games 1000 positions 86640 tree positions 414757 white 370 draw 233 black 397
+done games 1000 positions 83990 tree positions 401517 white 376 draw 220 black 404
+done games 1000 positions 84410 tree positions 404850 white 345 draw 234 black 421
+done games 1000 positions 87140 tree positions 419718 white 360 draw 212 black 428
+[17:02:15] done games 1000 positions 86903 tree positions 417238 white 357 draw 223 black 420
+done games 1000 positions 85703 tree positions 410217 white 387 draw 216 black 397
+done games 1000 positions 84162 tree positions 403131 white 377 draw 224 black 399
+done games 1000 positions 82612 tree positions 395389 white 386 draw 221 black 393
+[17:16:16] done games 1000 positions 86980 tree positions 415394 white 354 draw 241 black 405
+done games 1000 positions 85709 tree positions 409674 white 370 draw 226 black 404
+done games 1000 positions 84371 tree positions 401765 white 379 draw 250 black 371
+done games 1000 positions 85264 tree positions 408810 white 389 draw 231 black 380
+[17:16:30] generation 4: played positions 2054556  tree positions 9837415  results W/D/L from the mover 0.367/0.262/0.371  mean |score| 348  corr(score, result) 0.660
+[17:16:30] === generation 5: hidden 128
+[17:16:32] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/solve_pst.py", line 15, in <module>
+    X = np.concatenate([np.load(f'data/ev_{t}_x.npy', mmap_mode='r')[:N] for t in TAGS])[:N]
+                        ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/ev_z4_x.npy'
+[17:16:34] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/train_nnue.py", line 108, in <module>
+    PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None
+                                                                           ~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'zero/g5s.npz'
+[17:16:34] no weights for generation 5; stopping
+[17:16:37] === generation 5: hidden 128
+[17:16:39] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/solve_pst.py", line 15, in <module>
+    X = np.concatenate([np.load(f'data/ev_{t}_x.npy', mmap_mode='r')[:N] for t in TAGS])[:N]
+                        ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'data/ev_z4_x.npy'
+[17:16:41] Traceback (most recent call last):
+  File "/home/user/loopchess/calc/train_nnue.py", line 108, in <module>
+    PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None
+                                                                           ~~~~~~~^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 454, in load
+    fid = stack.enter_context(open(os.fspath(file), "rb"))
+                              ~~~~^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'zero/g5s.npz'
+[17:16:41] no weights for generation 5; stopping
+[17:17:05] === generation 5: hidden 128
+[17:49:18] newton step 0: log-loss before step 0.69315  |step| 57.4053  (636s)
+newton step 1: log-loss before step 0.53772  |step| 33.4592  (1156s)
+newton step 2: log-loss before step 0.52085  |step| 12.2567  (27s)
+newton step 3: log-loss before step 0.51910  |step| 5.3206  (27s)
+newton step 4: log-loss before step 0.51904  |step| 0.7801  (28s)
+newton step 5: log-loss before step 0.51904  |step| 0.1255  (28s)
+newton step 6: log-loss before step 0.51904  |step| 0.0378  (28s)
+piece values handed to the search (centipawns, P N B R Q): [144, 328, 373, 565, 1250]
+solved piece values (middlegame, own side, pawn = 1): {'P': 0.75, 'N': 4.7, 'B': 5.17, 'R': 7.22, 'Q': 19.61}
+tempo (side to move) in centipawns: mg 74 eg -4
+[18:13:20] 7500/10253 seen 122.9M loss 0.49783 115k pos/s
+  checkpoint: val (log-loss, MAE) (0.5014177560806274, 0.12701165676116943)
+step 8000/10253 seen 131.1M loss 0.49872 116k pos/s
+  checkpoint: val (log-loss, MAE) (0.5019968152046204, 0.12775328755378723)
+step 8500/10253 seen 139.3M loss 0.50902 116k pos/s
+  checkpoint: val (log-loss, MAE) (0.5007057189941406, 0.1261035054922104)
+step 9000/10253 seen 147.5M loss 0.50633 116k pos/s
+step 9500/10253 seen 155.6M loss 0.50518 116k pos/s
+  checkpoint: val (log-loss, MAE) (0.5007288455963135, 0.12616924941539764)
+step 10000/10253 seen 163.8M loss 0.49965 117k pos/s
+  checkpoint: val (log-loss, MAE) (0.5015791654586792, 0.12723779678344727)
+done: steps 10253, val (log-loss, MAE) raw (0.5049599409103394, 0.13134117424488068) averaged (0.5016036033630371, 0.1272687017917633), 1438s -> zero/g5.bin
+  step += 1; seen += a.bs; run += float(loss); nrun += 1
+[18:13:43] generation 5 vs 4: 117-30-53  score 0.66  Elo 115.2 (70.5 to 164.0)
+[18:20:17] generation 5 rating 2521 +- 59 (120 games)
+[19:41:52] === generation 5: hidden 128
+[19:41:52] generation 5 already matched and rated
+[19:48:50] done games 1000 positions 87709 tree positions 704748 white 387 draw 215 black 398
+done games 1000 positions 85824 tree positions 691483 white 386 draw 210 black 404
+done games 1000 positions 85207 tree positions 683651 white 360 draw 229 black 411
+done games 1000 positions 87886 tree positions 709232 white 385 draw 223 black 392
+[19:56:01] done games 1000 positions 85516 tree positions 689552 white 387 draw 212 black 401
+done games 1000 positions 89666 tree positions 724180 white 351 draw 282 black 367
+done games 1000 positions 85646 tree positions 688238 white 354 draw 269 black 377
+done games 1000 positions 84993 tree positions 683921 white 382 draw 231 black 387
+[20:03:09] done games 1000 positions 87600 tree positions 706281 white 345 draw 223 black 432
+done games 1000 positions 85149 tree positions 685178 white 373 draw 214 black 413
+done games 1000 positions 87879 tree positions 705952 white 350 draw 244 black 406
+done games 1000 positions 85313 tree positions 685779 white 383 draw 204 black 413
+[20:10:19] done games 1000 positions 87542 tree positions 704966 white 390 draw 228 black 382
+done games 1000 positions 87274 tree positions 700947 white 377 draw 224 black 399
+done games 1000 positions 85873 tree positions 687859 white 355 draw 237 black 408
+done games 1000 positions 84086 tree positions 674121 white 355 draw 226 black 419
+[20:17:29] done games 1000 positions 86713 tree positions 701860 white 355 draw 226 black 419
+done games 1000 positions 85179 tree positions 686261 white 347 draw 237 black 416
+done games 1000 positions 85071 tree positions 680018 white 386 draw 239 black 375
+done games 1000 positions 85960 tree positions 688138 white 349 draw 262 black 389
+[20:24:41] done games 1000 positions 85602 tree positions 688694 white 379 draw 232 black 389
+done games 1000 positions 87891 tree positions 708100 white 373 draw 245 black 382
+done games 1000 positions 88111 tree positions 707595 white 381 draw 236 black 383
+done games 1000 positions 85493 tree positions 691688 white 396 draw 228 black 376
+[20:25:18] generation 5: played positions 2073183  tree positions 16678442  results W/D/L from the mover 0.359/0.278/0.363  mean |score| 341  corr(score, result) 0.659
+[20:25:19] === generation 6: hidden 256
+[20:28:19] newton step 0: log-loss before step 0.69315  |step| 60.0678  (29s)
+newton step 1: log-loss before step 0.53248  |step| 33.9748  (25s)
+newton step 2: log-loss before step 0.51476  |step| 14.0525  (26s)
+newton step 3: log-loss before step 0.51306  |step| 4.9179  (24s)
+newton step 4: log-loss before step 0.51303  |step| 277.4105  (24s)
+newton step 5: log-loss before step 0.51303  |step| 146.9051  (24s)
+newton step 6: log-loss before step 0.51303  |step| 83.0106  (25s)
+piece values handed to the search (centipawns, P N B R Q): [176, 397, 449, 694, 1451]
+solved piece values (middlegame, own side, pawn = 1): {'P': 0.75, 'N': 5.71, 'B': 6.11, 'R': 9.15, 'Q': 22.6}
+tempo (side to move) in centipawns: mg -4696 eg -413
+[21:02:11] 
+step 7500/10445 seen 122.9M loss 0.50588 84k pos/s
+  checkpoint: val (log-loss, MAE) (0.5018210411071777, 0.1221802681684494)
+step 8000/10445 seen 131.1M loss 0.50881 84k pos/s
+  checkpoint: val (log-loss, MAE) (0.5021501183509827, 0.12261630594730377)
+step 8500/10445 seen 139.3M loss 0.51192 84k pos/s
+step 9000/10445 seen 147.5M loss 0.51483 84k pos/s
+  checkpoint: val (log-loss, MAE) (0.5014570951461792, 0.12168581783771515)
+step 9500/10445 seen 155.6M loss 0.50987 84k pos/s
+  checkpoint: val (log-loss, MAE) (0.5013916492462158, 0.12164238095283508)
+step 10000/10445 seen 163.8M loss 0.51322 84k pos/s
+  checkpoint: val (log-loss, MAE) (0.5018109679222107, 0.1222066581249237)
+done: steps 10445, val (log-loss, MAE) raw (0.5036114454269409, 0.1245720162987709) averaged (0.5018278956413269, 0.12222965806722641), 2029s -> zero/g6a.bin
+  step += 1; seen += a.bs; run += float(loss); nrun += 1
+[21:19:40] === generation 6: hidden 256
+[22:10:57] 12155057489871979)
+step 9000/12497 seen 147.5M loss 0.51009 62k pos/s
+step 9500/12497 seen 155.6M loss 0.50693 63k pos/s
+  checkpoint: val (log-loss, MAE) (0.5028654932975769, 0.12350441515445709)
+step 10000/12497 seen 163.8M loss 0.50179 63k pos/s
+  checkpoint: val (log-loss, MAE) (0.5026659369468689, 0.12324308604001999)
+step 10500/12497 seen 172.0M loss 0.51092 64k pos/s
+step 11000/12497 seen 180.2M loss 0.51157 65k pos/s
+  checkpoint: val (log-loss, MAE) (0.5017330050468445, 0.12198081612586975)
+step 11500/12497 seen 188.4M loss 0.51084 65k pos/s
+step 12000/12497 seen 196.6M loss 0.50867 66k pos/s
+  checkpoint: val (log-loss, MAE) (0.5024204254150391, 0.12292197346687317)
+done: steps 12497, val (log-loss, MAE) raw (0.5039963722229004, 0.12499777227640152) averaged (0.5024392604827881, 0.12294744700193405), 3073s -> zero/g6b.bin
+  step += 1; seen += a.bs; run += float(loss); nrun += 1
+[22:11:52] harvest experiment: eight per move vs four per move: 165-85-150  score 0.5188  Elo 13.0 (-17.2 to 43.4)
+[22:12:18] generation 6 vs 5: 105-37-58  score 0.6175  Elo 83.2 (39.8 to 129.3)
+[22:20:08] generation 6 rating 2577 +- 57 (120 games)

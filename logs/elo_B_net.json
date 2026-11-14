@@ -1,0 +1,63 @@
+{
+ "player": "net:ckpt/B.pt:mix:2",
+ "sf_time": 0.1,
+ "rating": 1498,
+ "ci95": 50,
+ "games": 180,
+ "levels": [
+  {
+   "n": 60,
+   "w": 28,
+   "d": 8,
+   "l": 24,
+   "score": 0.5333,
+   "elo": 23.2,
+   "lo": -59.0,
+   "hi": 108.2,
+   "avg_plies": 101.9,
+   "a_evals_per_move": 1.0,
+   "a_blocks_per_move": 0.0,
+   "a_secs_per_move": 0.014,
+   "level": 1500,
+   "secs": 90,
+   "rating_so_far": 1523,
+   "ci": 82
+  },
+  {
+   "n": 60,
+   "w": 13,
+   "d": 8,
+   "l": 39,
+   "score": 0.2833,
+   "elo": -161.2,
+   "lo": -264.5,
+   "hi": -79.5,
+   "avg_plies": 110.6,
+   "a_evals_per_move": 1.0,
+   "a_blocks_per_move": 0.0,
+   "a_secs_per_move": 0.011,
+   "level": 1700,
+   "secs": 105,
+   "rating_so_far": 1530,
+   "ci": 61
+  },
+  {
+   "n": 60,
+   "w": 14,
+   "d": 5,
+   "l": 41,
+   "score": 0.275,
+   "elo": -168.4,
+   "lo": -277.8,
+   "hi": -83.6,
+   "avg_plies": 108.3,
+   "a_evals_per_move": 1.0,
+   "a_blocks_per_move": 0.0,
+   "a_secs_per_move": 0.011,
+   "level": 1600,
+   "secs": 102,
+   "rating_so_far": 1498,
+   "ci": 50
+  }
+ ]
+}

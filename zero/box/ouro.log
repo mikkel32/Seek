@@ -1,0 +1,21 @@
+[22:03:30] OURO trainer on cuda: 2,054,635 parameters, batch 1024, resumed at step 0
+[22:06:54] step 500 seen 0.51M (pool 1.20M, reuse 0.4x) policy 2.456 value 0.567 q 0.580 move-match 0.262 | 2505 positions/s
+[22:08:47] step 1000 seen 1.02M (pool 1.62M, reuse 0.6x) policy 2.152 value 0.519 q 0.545 move-match 0.328 | 3223 positions/s
+[22:10:38] step 1500 seen 1.54M (pool 1.62M, reuse 0.9x) policy 2.045 value 0.510 q 0.539 move-match 0.351 | 3582 positions/s
+[22:12:30] step 2000 seen 2.05M (pool 1.62M, reuse 1.3x) policy 1.979 value 0.505 q 0.535 move-match 0.367 | 3797 positions/s || held-out games: policy 1.953 value 0.515 move-match 0.379
+[22:14:20] step 2500 seen 2.56M (pool 1.62M, reuse 1.6x) policy 1.931 value 0.502 q 0.533 move-match 0.379 | 3937 positions/s
+[22:16:10] step 3000 seen 3.07M (pool 1.62M, reuse 1.9x) policy 1.894 value 0.500 q 0.532 move-match 0.388 | 4040 positions/s
+[22:18:00] step 3500 seen 3.58M (pool 1.62M, reuse 2.2x) policy 1.865 value 0.498 q 0.531 move-match 0.396 | 4117 positions/s
+[22:19:51] step 4000 seen 4.10M (pool 1.62M, reuse 2.5x) policy 1.845 value 0.498 q 0.531 move-match 0.399 | 4177 positions/s || held-out games: policy 1.856 value 0.510 move-match 0.393
+[22:21:41] step 4500 seen 4.61M (pool 1.62M, reuse 2.8x) policy 1.820 value 0.497 q 0.530 move-match 0.405 | 4223 positions/s
+[22:23:32] step 5000 seen 5.12M (pool 2.00M, reuse 2.6x) policy 1.802 value 0.495 q 0.530 move-match 0.410 | 4259 positions/s
+[22:25:24] step 5500 seen 5.63M (pool 2.81M, reuse 2.0x) policy 1.802 value 0.495 q 0.529 move-match 0.409 | 4286 positions/s
+[22:27:16] step 6000 seen 6.14M (pool 3.28M, reuse 1.9x) policy 1.809 value 0.495 q 0.529 move-match 0.406 | 4309 positions/s || held-out games: policy 1.806 value 0.483 move-match 0.409
+[22:29:08] step 6500 seen 6.66M (pool 4.09M, reuse 1.6x) policy 1.800 value 0.495 q 0.528 move-match 0.408 | 4326 positions/s
+[22:31:00] step 7000 seen 7.17M (pool 4.90M, reuse 1.5x) policy 1.794 value 0.494 q 0.528 move-match 0.409 | 4342 positions/s
+[22:34:36] step 7500 seen 7.68M (pool 6.13M, reuse 1.3x) policy 1.792 value 0.494 q 0.528 move-match 0.409 | 4116 positions/s
+[22:37:24] step 8000 seen 8.19M (pool 6.93M, reuse 1.2x) policy 1.788 value 0.494 q 0.528 move-match 0.411 | 4028 positions/s || held-out games: policy 1.743 value 0.480 move-match 0.420
+[22:39:23] step 8500 seen 8.70M (pool 7.73M, reuse 1.1x) policy 1.777 value 0.494 q 0.528 move-match 0.412 | 4043 positions/s
+[22:42:42] step 9000 seen 9.22M (pool 8.69M, reuse 1.1x) policy 1.774 value 0.494 q 0.528 move-match 0.413 | 3918 positions/s
+[22:46:12] step 9500 seen 9.73M (pool 10.09M, reuse 1.0x) policy 1.768 value 0.493 q 0.527 move-match 0.415 | 3797 positions/s
+[22:48:05] step 10000 seen 10.24M (pool 10.15M, reuse 1.0x) policy 1.762 value 0.493 q 0.527 move-match 0.415 | 3829 positions/s || held-out games: policy 1.720 value 0.481 move-match 0.424

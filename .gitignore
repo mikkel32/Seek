@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+# generated training data and raw self-play
+data/*.npy
+zero/pool/
+zero/opool/
+zero/nx/
+zero/*_c*_p*.bin
+zero/*.ok
+zero/*.done
+# compiled engines
+calc/calc
+calc/calc_ab
+calc/calc_x
+calc/calc_t
+calc/calc_f[0-9]
+calc/calc_z[0-9]
+calc/calc_v[0-9]
+# training state that can be regenerated
+*.bin.pt
+dist/

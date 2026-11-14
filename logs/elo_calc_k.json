@@ -1,0 +1,63 @@
+{
+ "player": "calc:calc/net256k.bin:0.1",
+ "sf_time": 0.1,
+ "rating": 2716,
+ "ci95": 55,
+ "games": 120,
+ "levels": [
+  {
+   "n": 40,
+   "w": 22,
+   "d": 7,
+   "l": 11,
+   "score": 0.6375,
+   "elo": 98.1,
+   "lo": 2.3,
+   "hi": 211.5,
+   "avg_plies": 153.2,
+   "a_evals_per_move": 83898.6,
+   "a_blocks_per_move": 14.3,
+   "a_secs_per_move": 0.09,
+   "level": 2700,
+   "secs": 137,
+   "rating_so_far": 2798,
+   "ci": 101
+  },
+  {
+   "n": 40,
+   "w": 4,
+   "d": 7,
+   "l": 29,
+   "score": 0.1875,
+   "elo": -254.7,
+   "lo": -412.0,
+   "hi": -155.9,
+   "avg_plies": 158.9,
+   "a_evals_per_move": 78113.2,
+   "a_blocks_per_move": 15.1,
+   "a_secs_per_move": 0.089,
+   "level": 2900,
+   "secs": 171,
+   "rating_so_far": 2733,
+   "ci": 65
+  },
+  {
+   "n": 40,
+   "w": 10,
+   "d": 7,
+   "l": 23,
+   "score": 0.3375,
+   "elo": -117.2,
+   "lo": -234.3,
+   "hi": -21.6,
+   "avg_plies": 153.7,
+   "a_evals_per_move": 79534.4,
+   "a_blocks_per_move": 14.9,
+   "a_secs_per_move": 0.089,
+   "level": 2800,
+   "secs": 160,
+   "rating_so_far": 2716,
+   "ci": 55
+  }
+ ]
+}

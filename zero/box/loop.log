@@ -1,0 +1,29 @@
+[21:22:06] === generation 5: hidden 128
+[21:22:06] generation 5 already matched and rated
+[21:25:33] === generation 5: hidden 128
+[21:25:33] generation 5 already matched and rated
+[21:34:46] done games 476 positions 41845 tree positions 201835 white 176 draw 108 black 192
+done games 476 positions 41142 tree positions 198349 white 183 draw 115 black 178
+done games 476 positions 39615 tree positions 191294 white 194 draw 97 black 185
+done games 476 positions 39687 tree positions 190758 white 191 draw 96 black 189
+[21:41:51] continuous loop: generation 5, 36 self-play processes, 6 side threads, training on cuda, 5000 nodes per move
+[21:49:13] === generation 6: shard 0 with 26.0M positions from 25900 games (214697 validation positions), hidden 256
+[21:56:20] generation 6 vs 5: 120-34-46  score 0.685  Elo 135.0 (90.5 to 184.1)
+[21:58:41] generation 6 rating 2110 +- 77 (120 games)
+[21:58:41] generation 6 published after 610s of training-side work; done: steps 3175, val (log-loss, MAE) raw (0.5063230395317078, 0.12404114753007889) averaged (0.50632929801940
+[21:59:05] === generation 7: shard 1 with 12.7M positions from 27900 games (105455 validation positions), hidden 256
+[22:01:33] generation 7 vs 6: 84-44-72  score 0.53  Elo 20.9 (-21.6 to 64.0)
+[22:01:33] generation 7 published after 173s of training-side work; done: steps 4727, val (log-loss, MAE) raw (0.5088984966278076, 0.12130191922187805) averaged (0.50891768932342
+[22:01:33] continuous loop stopped
+[22:03:54] continuous loop: generation 7, 36 self-play processes, 6 side threads, training on cuda, 5000 nodes per move
+[22:08:11] === generation 8: shard 2 with 10.8M positions from 24200 games (84619 validation positions), hidden 256
+[22:08:14] table solve failed: h, and 574.19 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+[22:08:15] continuous loop stopped
+[22:22:33] continuous loop: generation 7, 36 self-play processes, 6 side threads, training on cuda, 5000 nodes per move
+[22:26:53] continuous loop stopped
+[22:27:02] continuous loop: generation 7, 36 self-play processes, 6 side threads, training on cuda, 5000 nodes per move
+[22:30:18] === generation 8: shard 3 with 11.5M positions from 25800 games (91918 validation positions), hidden 256
+[22:36:56] generation 8 vs 7: 97-37-66  score 0.5775  Elo 54.3 (11.0 to 99.3)
+[22:36:56] generation 8 published after 414s of training-side work; done: steps 7454, val (log-loss, MAE) raw (0.5070947408676147, 0.13008838891983032) averaged (0.50603425502777
+[22:38:22] === generation 9: shard 4 with 11.0M positions from 24600 games (84734 validation positions), hidden 256
+[22:46:22] generation 9 vs 8: 83-36-81  score 0.505  Elo 3.5 (-40.3 to 47.4)

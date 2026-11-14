@@ -1,0 +1,2 @@
+{"n": 120, "w": 84, "d": 11, "l": 25, "score": 0.7458, "elo": 187.0, "lo": 125.2, "hi": 262.1, "avg_plies": 126.5, "a_evals_per_move": 70661.0, "a_blocks_per_move": 12.3, "a_secs_per_move": 0.086, "a": "calc:calc/net256k.bin:0.1", "b": "uci:/usr/games/fruit:0.1", "secs": 341}
+{"n": 120, "w": 65, "d": 8, "l": 47, "score": 0.575, "elo": 52.5, "lo": -7.2, "hi": 115.5, "avg_plies": 122.0, "a_evals_per_move": 69514.6, "a_blocks_per_move": 12.4, "a_secs_per_move": 0.089, "a": "calc:calc/net256k.bin:0.1", "b": "uci:/usr/games/toga2:0.1", "secs": 315}

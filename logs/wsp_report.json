@@ -1,0 +1,250 @@
+{
+ "goal": "fewer blunders (searchless move gives up > 0.1 win prob)",
+ "candidates_def": [
+  [
+   "C1",
+   64,
+   6.0
+  ],
+  [
+   "C2",
+   128,
+   6.0
+  ],
+  [
+   "C3",
+   256,
+   6.0
+  ],
+  [
+   "C4",
+   64,
+   1.0
+  ]
+ ],
+ "practice_fail_rate": 0.06687979539641943,
+ "round1": {
+  "failed": 2092,
+  "n": 31280,
+  "pairs": 1536,
+  "layers": [
+   "out.0",
+   "out.1"
+  ],
+  "share": {
+   "inp.0": -0.027733974158763885,
+   "inp.1": -1.071940302848816,
+   "rec.0": -1.599568247795105,
+   "rec.1": -0.48838746547698975,
+   "rec.2": 0.0061135850846767426,
+   "out.0": 4.265030860900879,
+   "out.1": 1.1303586959838867
+  },
+  "candidates": [
+   {
+    "unwanted": -0.6075218915939331,
+    "wanted": -0.5526572465896606,
+    "normal": -0.529930591583252,
+    "touched": 20480,
+    "scr_fixed": 163,
+    "scr_broke": 40,
+    "n_scr": 512,
+    "name": "C1",
+    "k": 64,
+    "alpha": 6.0,
+    "cols": {
+     "out.0": 64,
+     "out.1": 64
+    },
+    "eligible": false
+   },
+   {
+    "unwanted": -1.0338467359542847,
+    "wanted": -1.0269712209701538,
+    "normal": -0.9849714040756226,
+    "touched": 40960,
+    "scr_fixed": 178,
+    "scr_broke": 91,
+    "n_scr": 512,
+    "name": "C2",
+    "k": 128,
+    "alpha": 6.0,
+    "cols": {
+     "out.0": 128,
+     "out.1": 128
+    },
+    "eligible": false
+   },
+   {
+    "unwanted": -1.1516121625900269,
+    "wanted": -1.1750649213790894,
+    "normal": -1.1095422506332397,
+    "touched": 81920,
+    "scr_fixed": 177,
+    "scr_broke": 92,
+    "n_scr": 512,
+    "name": "C3",
+    "k": 256,
+    "alpha": 6.0,
+    "cols": {
+     "out.0": 256,
+     "out.1": 256
+    },
+    "eligible": false
+   },
+   {
+    "unwanted": -5.5909156799316406e-05,
+    "wanted": 0.014768779277801514,
+    "normal": 0.004136979579925537,
+    "touched": 20480,
+    "scr_fixed": 46,
+    "scr_broke": 6,
+    "n_scr": 512,
+    "name": "C4",
+    "k": 64,
+    "alpha": 1.0,
+    "cols": {
+     "out.0": 64,
+     "out.1": 64
+    },
+    "eligible": true
+   }
+  ],
+  "control": {
+   "unwanted": -0.05708515644073486,
+   "wanted": -0.035037994384765625,
+   "normal": -0.03374600410461426,
+   "touched": 20480,
+   "scr_fixed": 68,
+   "scr_broke": 6,
+   "n_scr": 512,
+   "name": "control(random)",
+   "k": 64,
+   "alpha": 6.0
+  }
+ },
+ "round2": {
+  "failed": 2130,
+  "n": 31280,
+  "pairs": 1536,
+  "layers": [
+   "rec.2",
+   "inp.0"
+  ],
+  "share": {
+   "inp.0": -0.2747461497783661,
+   "inp.1": -1.1523756980895996,
+   "rec.0": -1.184351921081543,
+   "rec.1": -0.4863244295120239,
+   "rec.2": 0.053472548723220825,
+   "out.0": -1.3283041715621948,
+   "out.1": -0.7414464950561523
+  },
+  "candidates": [
+   {
+    "unwanted": -0.02259957790374756,
+    "wanted": -0.038637757301330566,
+    "normal": -0.02255260944366455,
+    "touched": 20480,
+    "scr_fixed": 45,
+    "scr_broke": 11,
+    "n_scr": 512,
+    "name": "C1",
+    "k": 64,
+    "alpha": 6.0,
+    "cols": {
+     "rec.2": 64,
+     "inp.0": 64
+    },
+    "eligible": true
+   },
+   {
+    "unwanted": -0.11609137058258057,
+    "wanted": -0.12555080652236938,
+    "normal": -0.07802128791809082,
+    "touched": 40960,
+    "scr_fixed": 76,
+    "scr_broke": 23,
+    "n_scr": 512,
+    "name": "C2",
+    "k": 128,
+    "alpha": 6.0,
+    "cols": {
+     "rec.2": 128,
+     "inp.0": 128
+    },
+    "eligible": false
+   },
+   {
+    "unwanted": -0.17103707790374756,
+    "wanted": -0.18102777004241943,
+    "normal": -0.11937534809112549,
+    "touched": 78880,
+    "scr_fixed": 86,
+    "scr_broke": 37,
+    "n_scr": 512,
+    "name": "C3",
+    "k": 256,
+    "alpha": 6.0,
+    "cols": {
+     "rec.2": 249,
+     "inp.0": 244
+    },
+    "eligible": false
+   },
+   {
+    "unwanted": 0.003947138786315918,
+    "wanted": -0.0010695457458496094,
+    "normal": 0.0011926889419555664,
+    "touched": 20480,
+    "scr_fixed": 13,
+    "scr_broke": 0,
+    "n_scr": 512,
+    "name": "C4",
+    "k": 64,
+    "alpha": 1.0,
+    "cols": {
+     "rec.2": 64,
+     "inp.0": 64
+    },
+    "eligible": false
+   }
+  ],
+  "control": {
+   "unwanted": 0.0020314455032348633,
+   "wanted": -0.0013440251350402832,
+   "normal": -0.0012127161026000977,
+   "touched": 20480,
+   "scr_fixed": 14,
+   "scr_broke": 4,
+   "n_scr": 512,
+   "name": "control(random)",
+   "k": 64,
+   "alpha": 6.0
+  }
+ },
+ "gate_attempts": [
+  {
+   "candidate": "C4",
+   "round": 1,
+   "fixed": 180,
+   "need": 419,
+   "broke": 0,
+   "share_before": 0.9971401334604385,
+   "share_after": 0.9113441372735939,
+   "passed": false
+  },
+  {
+   "candidate": "C4+C1",
+   "round": 2,
+   "fixed": 311,
+   "need": 419,
+   "broke": 0,
+   "share_before": 0.9971401334604385,
+   "share_after": 0.8489037178265014,
+   "passed": false
+  }
+ ],
+ "verdict": "no edit kept (gate failed; copy restored)",
+ "edited": false
+}
