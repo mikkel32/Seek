@@ -1,0 +1,15 @@
+positions searched per second: alone, and the average of 8 copies thinking at once
+  ours, 384 wide   alone 0.90M   in a crowd 0.73M   keeps 81%
+  ours, 768 wide   alone 0.59M   in a crowd 0.55M   keeps 92%
+  Stockfish 19     alone 0.36M   in a crowd 0.37M   keeps 101%
+  Stockfish 14.1   alone 0.43M   in a crowd 0.41M   keeps 96%
+  Glaurung 2.2     alone 1.79M   in a crowd 1.33M   keeps 74%
+positions searched per second: alone, and the average of 16 copies thinking at once
+  ours, 384 wide   alone 0.90M   in a crowd 0.70M   keeps 78%
+  ours, 768 wide   alone 0.59M   in a crowd 0.50M   keeps 85%
+  Stockfish 19     alone 0.36M   in a crowd 0.28M   keeps 76%
+  Stockfish 14.1   alone 0.42M   in a crowd 0.37M   keeps 89%
+  Glaurung 2.2     alone 1.22M   in a crowd 1.17M   keeps 96%
+positions searched per second: alone, and the average of 24 copies thinking at once
+  ours, 384 wide   alone 0.75M   in a crowd 0.96M   keeps 128%
+  ours, 768 wide   alone 0.60M   in a crowd 0.67M   keeps 113%

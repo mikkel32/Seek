@@ -1,0 +1,13 @@
+r11: 1200 files, 78.1M positions, 19.2M of them played (0.246); mean |difference| to the lambda-0.95 target over all positions: y70 0.0140, y50 0.0152, search score alone 0.0180
+[08:12:13] start: generation 67 weights
+[08:13:32] arm y95: positions 78.1M, hidden 384, steps 9530, train loss loss 0.47985  [79s]
+[08:14:34] arm y70: positions 78.1M, hidden 384, steps 9530, train loss loss 0.48123  [62s]
+[08:15:53] arm y50: positions 78.1M, hidden 384, steps 9530, train loss loss 0.48142  [79s]
+[08:17:03] arm y00: positions 78.1M, hidden 384, steps 9530, train loss loss 0.48103  [70s]
+[08:19:11] 20,000 positions per move, y70 vs y95: {"n": 2000, "w": 651, "d": 697, "l": 652, "score": 0.4998, "elo": -0.2, "lo": -12.5, "hi": 12.1, "avg_plies": 
+[08:21:26] 20,000 positions per move, y50 vs y95: {"n": 2000, "w": 666, "d": 702, "l": 632, "score": 0.5085, "elo": 5.9, "lo": -6.4, "hi": 18.2, "avg_plies": 15
+[08:23:43] 20,000 positions per move, y00 vs y95: {"n": 2000, "w": 640, "d": 707, "l": 653, "score": 0.4968, "elo": -2.3, "lo": -14.5, "hi": 10.0, "avg_plies": 
+[08:27:28] clock 10+0.1, y70 vs y95: {"opponent": "y95", "tc": "10+0.1", "n": 300, "w": 80, "d": 151, "l": 69, "score": 0.5183, "elo": 12.7, "lo": -14.9, "hi": 40.6, "avg_plies": 148.9, "
+[08:31:19] clock 10+0.1, y50 vs y95: {"opponent": "y95", "tc": "10+0.1", "n": 300, "w": 84, "d": 152, "l": 64, "score": 0.5333, "elo": 23.2, "lo": -4.3, "hi": 51.0, "avg_plies": 160.8, "o
+[08:35:20] clock 10+0.1, y00 vs y95: {"opponent": "y95", "tc": "10+0.1", "n": 300, "w": 62, "d": 160, "l": 78, "score": 0.4733, "elo": -18.5, "lo": -45.6, "hi": 8.2, "avg_plies": 150.6, "
+[08:35:20] finished
