@@ -1,0 +1,4 @@
+{"opponent": "hand-set search", "tc": "10+0.1", "n": 400, "w": 89, "d": 216, "l": 95, "score": 0.4925, "elo": -5.2, "lo": -28.4, "hi": 17.9, "avg_plies": 149.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.0}
+{"opponent": "hand-set search", "tc": "60+0.6", "n": 100, "w": 17, "d": 71, "l": 12, "score": 0.525, "elo": 17.4, "lo": -19.2, "hi": 54.3, "avg_plies": 156.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 10.8}
+self-tuned against hand-set at clock speed, all games: 106-287-107, score 0.499 -> the standing test uses calc/calc_untuned
+finished

@@ -106,7 +106,9 @@ static void init_zobrist(void) {
     zside = rnd64();
 }
 // evaluation accumulators, one per history ply, kept for both viewpoints and updated incrementally by make()
-#define HMAX 512
+#ifndef HMAX
+#define HMAX 512                         // widest hidden layer this build can load (-DHMAX=... for wider experiments)
+#endif
 // One accumulator per history ply. Updates are LAZY: make() only records what changed; the sums are built from the
 // nearest computed ancestor when (and only if) a position is actually evaluated.
 typedef struct { float a[2][HMAX]; float lin[2][2]; int pb, ok, nchg, ksq[2]; int chg[6][4]; } Acc;
