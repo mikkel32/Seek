@@ -15,6 +15,11 @@ positions of one game sit together and in order, each one can be told what happe
     15-24  the same at the end of the game, +16
     25,26  from and to square of the move played here (255 = unknown)
     27     how far the search score moves over the next two plies
+    28-43  who holds each of the 64 squares 8 plies later, in this position's view (0 empty, 1 mine, 2 theirs; 2 bits a square)
+    44     whether 28-43 are valid (the game lasted that long)
+    45,46  from and to square of the opponent's REPLY on the next ply, in this position's view (255 = unknown)
+  The square map and the reply do not depend on the order in which moves are played: unlike a move sequence, two ways of
+  reaching the same position give the same target.
 
 Positions from inside the trees have no future in the game: their three value targets are all the search score and
 their foresight targets are switched off.
@@ -27,7 +32,7 @@ from multiprocessing import Pool
 
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 REC = np.dtype([('idx', '<i2', 32), ('score', '<i2'), ('result', 'i1'), ('ply', 'i1')])
-K = 28
+K = 47
 _i = np.arange(768); LUT = np.concatenate([((_i // 64 + 6) % 12) * 64 + ((_i % 64) ^ 56), [768]]).astype(np.int64)
 L_T = 0.95
 
@@ -53,7 +58,10 @@ def one_game(r):
     end = eff[-1] + 1                                          # the game ended (at the earliest) one ply after its last recorded position
     y = 0.5 * wp + 0.5 * z
     ys = y.copy(); yl = y.copy()
-    aux = np.zeros((m, K), dtype=np.uint8); aux[:, 25:27] = 255
+    aux = np.zeros((m, K), dtype=np.uint8); aux[:, 25:27] = 255; aux[:, 45:47] = 255
+    ix = r['idx'].astype(np.int64); own = np.zeros((m, 65), dtype=np.uint8)                      # who holds each square, in each position's own view
+    np.put_along_axis(own, np.where(ix < 768, ix % 64, 64), np.where(ix < 384, 1, 2).astype(np.uint8), 1)
+    packed = (own[:, :64].reshape(m, 16, 4) << np.array([0, 2, 4, 6], dtype=np.uint8)).sum(2).astype(np.uint8)
     cnt = counts(r['idx']); swap = cnt[:, [5, 6, 7, 8, 9, 0, 1, 2, 3, 4]]
     occ = np.zeros((m, 769), dtype=bool); np.put_along_axis(occ, r['idx'].astype(np.int64), True, 1)
     occ_other = np.zeros((m, 769), dtype=bool); np.put_along_axis(occ_other, LUT[r['idx'].astype(np.int64)], True, 1)
@@ -77,6 +85,15 @@ def one_game(r):
         ce = cnt[je] if par[je] == par[i] else swap[je]
         aux[i, 15:25] = np.clip(ce - cnt[i], -16, 16) + 16
         aux[i, 27] = np.round(255 * abs(f[0] - wp[i]))
+        if len(nxt) > 3:                                       # my fourth later turn: 8 plies on, the same side to move, the same view
+            aux[i, 28:44] = packed[nxt[3]]; aux[i, 44] = 1
+        if i + 2 < m and known[i + 1] and known[i + 2] and ply[i + 1] == ply[i] + 1 and ply[i + 2] == ply[i] + 2:   # the reply: compare the next two positions
+            a2 = occ[i + 1, :384]; b2 = occ_other[i + 2, :384]  # the opponent's pieces before and after its reply, both in the opponent's view
+            fr2 = np.nonzero(a2 & ~b2)[0]; to2 = np.nonzero(b2 & ~a2)[0]
+            if len(fr2) == 2 and len(to2) == 2:
+                fr2 = fr2[fr2 // 64 == 5]; to2 = to2[to2 // 64 == 5]
+            if len(fr2) == 1 and len(to2) == 1:
+                aux[i, 45] = (fr2[0] % 64) ^ 56; aux[i, 46] = (to2[0] % 64) ^ 56            # turned into this position's view
         if i + 1 < m and known[i + 1] and ply[i + 1] == ply[i] + 1:               # the move played: compare with the next position
             a = occ[i, :384]; b = occ_other[i + 1, :384]       # my pieces now / my pieces one ply later, both in my view
             fr = np.nonzero(a & ~b)[0]; to = np.nonzero(b & ~a)[0]
@@ -93,7 +110,7 @@ def one_file(path):
     n = len(r)
     wp = 1 / (1 + np.exp(-r['score'].astype(np.float64) / 271.58))
     y = np.round(255 * wp).astype(np.uint8); ys = y.copy(); yl = y.copy()
-    aux = np.zeros((n, K), dtype=np.uint8); aux[:, 25:27] = 255
+    aux = np.zeros((n, K), dtype=np.uint8); aux[:, 25:27] = 255; aux[:, 45:47] = 255
     played = r['ply'] >= 0
     # one game's played positions form a run; a ply that does not increase inside a run starts the next game
     idx = np.nonzero(played)[0]
@@ -122,6 +139,7 @@ if __name__ == '__main__':
     np.save(f'data/ev_{tag}val_x.npy', vx[vp]); np.save(f'data/ev_{tag}val_y.npy', vy[vp].astype(np.float32) / 255)
     a = aux[played]
     print(f'{tag}: {len(files)} files, {games} games, {len(x)/1e6:.2f}M positions ({played.sum()/1e6:.2f}M played), validation {vp.sum()} played positions')
+    print(f'  square map 8 plies on valid {a[:, 44].mean():.3f} of played (squares empty/mine/theirs: ' + ' / '.join(f'{((np.unpackbits(a[a[:, 44] > 0][:200000, 28:44], axis=1, bitorder="little").reshape(-1, 64, 2) * [1, 2]).sum(2) == k).mean():.2f}' for k in range(3)) + f'); reply known {(a[:, 45] < 64).mean():.3f}')
     print(f'  foresight valid {a[:, 0].mean():.3f} of played; move known {(a[:, 25] < 64).mean():.3f}; mean plies to end {a[a[:, 0] > 0, 4].mean():.1f}; '
           f'mean |score change over 2 plies| {a[a[:, 0] > 0, 27].mean() / 255:.4f}')
     d = lambda u, v: float(np.abs(u[played].astype(np.float64) - v[played]).mean() / 255)

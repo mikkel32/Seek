@@ -30,6 +30,7 @@ ap.add_argument('--gate', type=int, default=32)          # the router reads this
 ap.add_argument('--widen', default='')                   # start from a narrower network: copy its units, new units start with zero output weights
 ap.add_argument('--dense', type=int, default=-1)         # 1 = matrix-product formulation (fast on a GPU), 0 = lookup-and-sum (fast on a CPU), -1 = choose by device
 ap.add_argument('--ytag', default='y')                   # which value target to train on: y (production), ys (smoothed), yl (lambda-return) -- see zero/foresight.py
+ap.add_argument('--aux_set', default='all')              # all = every foresight target; inv = only those that do not depend on move order (square map 8 plies on, the reply, volatility)
 ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresight heads (training only; the exported network is unchanged). Needs data/ev_<tag>_aux.npy
 ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
 ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
@@ -82,7 +83,7 @@ class Net(torch.nn.Module):
         self.S = torch.nn.Parameter(torch.zeros(769, 2))            # [:,0] middlegame, [:,1] endgame
         self.c = torch.nn.Parameter(torch.zeros(2))
         if a.aux > 0:                                               # foresight heads: 3 later scores, plies left, 10 + 10 material changes, from, to, volatility
-            self.A = torch.nn.Linear(2 * H, 153)
+            self.A = torch.nn.Linear(2 * H, 153 + 192 + 128)    # ... + who holds each square 8 plies on (64 x 3) + the opponent's reply (from, to)
 
     def forward(self, idx, feats=False):
         if DENSE:
@@ -282,7 +283,17 @@ def aux_loss(feat, ax):
              'matend': F.mse_loss(o[:, 14:24], (t[:, 15:25] - 16) / 4),
              'move': (F.cross_entropy(o[pm][:, 24:88], fr[pm]) + F.cross_entropy(o[pm][:, 88:152], to[pm])) if bool(pm.any()) else o.sum() * 0.0,
              'vol': F.binary_cross_entropy_with_logits(o[:, 152], t[:, 27] / 255)}
+    if ax.shape[1] >= 47:
+        tb = ax[m][:, 28:44].long(); own = torch.stack([(tb >> k) & 3 for k in (0, 2, 4, 6)], 2).reshape(-1, 64); ov = ax[m][:, 44] > 0
+        parts['squares'] = F.cross_entropy(o[ov][:, 153:345].reshape(-1, 3), own[ov].reshape(-1)) if bool(ov.any()) else o.sum() * 0.0
+        rf = ax[m][:, 45].long(); rt = ax[m][:, 46].long(); rm = rf < 64
+        parts['reply'] = (F.cross_entropy(o[rm][:, 345:409], rf[rm]) + F.cross_entropy(o[rm][:, 409:473], rt[rm])) if bool(rm.any()) else o.sum() * 0.0
+    if a.aux_set == 'inv':
+        total_ = parts['squares'] + 0.1 * parts['reply'] + 0.5 * parts['vol']
+        return total_, {k_: float(v_) for k_, v_ in parts.items() if k_ in ('squares', 'reply', 'vol')}
     total_ = parts['later'] + 0.2 * parts['left'] + 0.5 * parts['mat8'] + 0.5 * parts['matend'] + 0.1 * parts['move'] + 0.5 * parts['vol']
+    if 'squares' in parts:
+        total_ = total_ + parts['squares'] + 0.1 * parts['reply']
     return total_, {k_: float(v_) for k_, v_ in parts.items()}
 
 

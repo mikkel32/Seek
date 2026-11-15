@@ -9,6 +9,10 @@ n=0
 while [ ! -e zero/SQ_STOP ]; do
   if [ $n -lt $(wc -l < zero/search_queue.txt) ]; then
     n=$((n + 1)); line=$(sed -n "${n}p" zero/search_queue.txt)
-    [ -n "$line" ] && bash zero/burst.sh 48 bash zero/stest.sh $line
+    case "$line" in
+      "") ;;
+      "run "*) bash zero/burst.sh 48 bash -c "${line#run }" ;;          # any other match: "run <shell command>"
+      *) bash zero/burst.sh 48 bash zero/stest.sh $line ;;
+    esac
   else sleep 15; fi
 done

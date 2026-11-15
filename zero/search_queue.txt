@@ -2,7 +2,10 @@ picker-clock-10+0.1 calc_s1 calc_s0 300 10+0.1
 clock-use-10+0.1 calc_s2 calc_s2 300 10+0.1 TmNew=1 TmNew=0
 logic-batch-50k calc_s3 calc_s2 1000 10+0.1 - - 50000
 integer-evaluator-clock-10+0.1 calc_s4 calc_s3 300 10+0.1
+run bash zero/voltest.sh reliability-margins-full-50k VolMix=100
 all-four-clock-10+0.1 calc_s4 calc_s0 300 10+0.1
+run bash zero/voltest.sh reliability-margins-prune-more-50k VolMix=100,VolRef=140
+run bash zero/voltest.sh reliability-margins-prune-less-50k VolMix=100,VolRef=70
 picker-equal-positions-20k calc_s1 calc_s0 1000 10+0.1 - - 20000
 integer-evaluator-equal-positions-20k calc_s4 calc_s3 1000 10+0.1 - - 20000
 cutnode-reduce-1-50k calc_s3 calc_s3 500 10+0.1 CutLmr=1 - 50000

@@ -209,9 +209,9 @@ class CalcPlayer:
 class DuoPlayer(CalcPlayer):
     """two systems: the calculator searches, OURO adds a prior to the root moves.
     duo:<weights>:<ouro ckpt>:<seconds per move>:<centipawns per nat of policy>[:<cap>[:<kind p|q>]]"""
-    def __init__(self, net, ckpt, t, lam, cap=40, kind='p'):
+    def __init__(self, net, ckpt, t, lam, cap=40, kind='p', binary='calc/calc'):
         from engine import Net
-        CalcPlayer.__init__(self, net, t)
+        CalcPlayer.__init__(self, net, t, binary)
         self.ouro = Net(ckpt, threads=1); self.lam = float(lam); self.cap = float(cap); self.kind = kind
 
     def move(self, board, history):
