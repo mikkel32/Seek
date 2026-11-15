@@ -1,0 +1,32 @@
+20000 positions from 155 files of generation-55 self-play; results: wins 0.335, draws 0.330, losses 0.335 for the side to move
+Stockfish 19 played out 4000 positions against itself: wins 0.362, draws 0.330, losses 0.308 for the side to move; agrees with the result of our own game in 0.719 of them
+
+TRUTH = Stockfish 19 playing the position out (4000 positions; fitted on 2000, tested on 2000):  log-loss, and the difference to our evaluator (negative = better)
+  our evaluator, no search                   0.3747   +0.0000 +- 0.0000
+  Stockfish 14.1 evaluator, no search        0.3417   -0.0331 +- 0.0090
+  Stockfish 19 evaluator, no search          0.3168   -0.0579 +- 0.0094
+  our search as played (2,500 positions)     0.3460   -0.0288 +- 0.0070
+  ours searching 2,500 positions             0.3471   -0.0277 +- 0.0067
+  Stockfish 19 searching 2,500 positions     0.2969   -0.0778 +- 0.0100
+  ours searching 50,000 positions            0.3301   -0.0447 +- 0.0083
+  Stockfish 19 searching 50,000 positions    0.2815   -0.0932 +- 0.0102
+
+TRUTH = the result of our own game, all positions (20000; fitted on 10000, tested on 10000):  log-loss against the game result, and the difference to our evaluator (negative = better)
+  our evaluator, no search                   0.4810   +0.0000 +- 0.0000
+  Stockfish 14.1 evaluator, no search        0.4979   +0.0168 +- 0.0052
+  Stockfish 19 evaluator, no search          0.4843   +0.0033 +- 0.0039
+  our search as played (2,500 positions)     0.4640   -0.0171 +- 0.0025
+
+TRUTH = the result of our own game, the 4000 searched positions (4000; fitted on 2000, tested on 2000):  log-loss against the game result, and the difference to our evaluator (negative = better)
+  our evaluator, no search                   0.4822   +0.0000 +- 0.0000
+  Stockfish 14.1 evaluator, no search        0.5126   +0.0304 +- 0.0165
+  Stockfish 19 evaluator, no search          0.4793   -0.0029 +- 0.0078
+  our search as played (2,500 positions)     0.4642   -0.0180 +- 0.0051
+  ours searching 2,500 positions             0.4688   -0.0134 +- 0.0053
+  Stockfish 19 searching 2,500 positions     0.4732   -0.0090 +- 0.0089
+  ours searching 50,000 positions            0.4622   -0.0200 +- 0.0076
+  Stockfish 19 searching 50,000 positions    0.4749   -0.0073 +- 0.0124
+
+agreement between evaluators without search (correlation of scores): ours and Stockfish 19 0.921, Stockfish 14.1 and Stockfish 19 0.918
+finished
+
