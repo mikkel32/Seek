@@ -1,0 +1,7 @@
+[11:07:37] start: generation 92 weights, 25 shards
+[11:12:53] arm P0 ( ; 1.6258 passes): train loss loss 0.48069 -> played held-out 0.505439  [316s]
+[11:19:28] arm P1 (--prod 1 ; 1.6258 passes): train loss loss 0.48068 -> played held-out 0.505430  [395s]
+[11:19:34] engine against trainer, P0: 300 random positions, hidden 384, product terms off: largest difference 1.00 centipawns, mean 0.500; evaluations range -3937 to 5041, the product terms supply 0 centipawns on average
+[11:19:38] engine against trainer, P1: 300 random positions, hidden 384, product terms on: largest difference 1.00 centipawns, mean 0.485; evaluations range -3942 to 5045, the product terms supply 8 centipawns on average
+[11:19:44] speed alone, positions per second: P0    P1 
+[12:34:11] product terms in the evaluator, 20,000 positions per move: {"opponent": "P0", "tc": "20000 positions per move", "n": 2000, "w": 669, "d": 712, "l": 619, "score": 0.5125, "elo": 8.7, "lo": -3.5, "hi": 20.9, "avg_plies": 155.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.4, "verdict": "undecided between 0 and 20 after all 2000 games (log-likelihood ratio -0.72, decision at +-2.94)"}

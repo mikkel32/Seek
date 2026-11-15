@@ -27,6 +27,9 @@ PARAMS = [('Razor', 293, 80, 700, 30), ('Rfp', 53, 15, 200, 8), ('NmpBase', 3, 1
           ('DeltaQ', 190, 50, 600, 25), ('LmrBase', 68, 10, 200, 10), ('LmrDiv', 240, 120, 400, 15), ('HbQuad', 5, 1, 16, 1), ('HbLin', 33, 0, 120, 6),
           ('HbMax', 1322, 300, 4000, 150), ('LmrHist', 8192, 2000, 30000, 800), ('TmSoft', 55, 25, 110, 5)]
 FIXED = os.environ.get('SPSA_FIXED', '')              # options both variants always get, e.g. "CutLmr=1,NegExt=1"
+for extra in os.environ.get('SPSA_EXTRA', '').split(','):           # more parameters to tune: name:start:min:max:perturbation,...
+    if extra:
+        n_, *v_ = extra.split(':'); PARAMS.append((n_, *(float(x) for x in v_)))
 W = sys.argv[1]; N = int(sys.argv[2]); TC = sys.argv[3] if len(sys.argv) > 3 else '5+0.05'
 BASE, INC = (float(x) for x in TC.split('+'))
 ALPHA, GAMMA, R_END = 0.602, 0.101, 0.002
