@@ -25,6 +25,8 @@ NODES = int(E('NODES', 5000)); TREE = int(E('TREE', 4)); FILE_GAMES = int(E('FIL
 MIN_NEW = int(E('MIN_NEW', 24000))                               # games a new shard must hold before the next network is trained
 WINDOW = int(E('WINDOW', 6)); EPOCHS = float(E('EPOCHS', 2.0)); LAM = float(E('LAM', 0.5))
 RATE_EVERY = int(E('RATE_EVERY', 3))
+WINDOW_POS = int(E('WINDOW_POS', 120_000_000)); SAMPLE_CAP = int(E('SAMPLE_CAP', 160_000_000))    # bounds on the window and on one generation's training
+LAMBDA = float(E('LAMBDA', 0.95))                                # lambda-return value targets (0 = the old half-score, half-result target)
 DEVICE = E('DEVICE') or ('cuda' if subprocess.run('python3 -c "import torch,sys; sys.exit(0 if torch.cuda.is_available() else 1)"', shell=True).returncode == 0 else 'cpu')
 HIDDEN = lambda g: 128 if g <= 5 else (256 if g <= 11 else 384)
 REC = np.dtype([('idx', '<i2', 32), ('score', '<i2'), ('result', 'i1'), ('ply', 'i1')])
@@ -129,12 +131,48 @@ def target(q):
     return np.where(q['ply'] < 0, sc, LAM * sc + (1 - LAM) * (q['result'].astype(np.float32) + 1) / 2)
 
 
+def lam_targets(r, lam):
+    """value targets for one raw file, with the lambda-return for played positions: a decaying blend of the search scores of
+    the LATER positions of the same game (lam per ply), ending in the game's result. In a 2,000-game test a network trained
+    on it beat one trained on "half score, half result" by 21 Elo (8 to 34). Positions from inside the trees, and played
+    positions past ply 127 (whose side to move the record does not tell), keep the usual target.
+    Self-play writes each game's played positions together and in ply order; everything here is whole-array arithmetic."""
+    t = target(r).astype(np.float64)
+    idx = np.nonzero(r['ply'] >= 0)[0]
+    if len(idx) < 2:
+        return t
+    ply = r['ply'][idx].astype(np.int64); wp = 1 / (1 + np.exp(-r['score'][idx].astype(np.float64) / 271.58)); z = (r['result'][idx].astype(np.float64) + 1) / 2
+    new = np.ones(len(idx), bool); new[1:] = (np.diff(idx) > 1) | ((np.diff(ply) <= 0) & (ply[1:] < 127))      # where a new game starts
+    gid = np.cumsum(new) - 1; first = np.nonzero(new)[0]; pos = np.arange(len(idx)) - first[gid]
+    G, L = gid[-1] + 1, pos.max() + 1
+    known = ply < 127; even = (ply & 1) == 0
+    K = np.zeros((G, L), bool); M = np.zeros((G, L), bool); P = np.zeros((G, L), np.int64); U = np.zeros((G, L))
+    K[gid, pos] = known; M[gid, pos] = True; P[gid, pos] = ply
+    U[gid, pos] = np.where(even, wp, 1 - wp)                       # every score seen from the side that moves on even plies
+    eff = np.where(K, P, 127 + np.cumsum(M & ~K, axis=1) - 1)      # past ply 127: one ply per record, in order
+    n_in = M.sum(1); end = eff[np.arange(G), n_in - 1] + 1          # the game ended one ply after its last recorded position
+    Z = np.full(G, np.nan)
+    zfix = np.where(even, z, 1 - z)
+    Z[gid[known][::-1]] = zfix[known][::-1]                        # the game's result in the same fixed view (any known record tells it)
+    S = np.zeros((G, L + 1)); W = np.zeros((G, L + 1))
+    for j in range(L - 1, -1, -1):                                 # backwards through the game, all games at once
+        dec = np.where(M[:, j + 1] if j + 1 < L else False, lam ** (eff[:, min(j + 1, L - 1)] - eff[:, j]).clip(0, None), 0.0)
+        S[:, j] = K[:, j] * U[:, j] + dec * S[:, j + 1]; W[:, j] = K[:, j] + dec * W[:, j + 1]
+    tail = lam ** (end[:, None] - eff).clip(0, None) / (1 - lam)
+    Gf = (S[:, :L] + tail * Z[:, None]) / (W[:, :L] + tail)
+    g = Gf[gid, pos]; g = np.where(even, g, 1 - g)
+    ok = known & ~np.isnan(g)
+    t[idx[ok]] = g[ok]
+    return t
+
+
 def make_shard(k, files):
     """finished game files -> one shuffled training shard; one file in twenty-five is held out, whole, for validation"""
     val_files = files[::25]; vs = set(val_files); tr_files = [f for f in files if f not in vs]
-    r = np.concatenate([np.fromfile(f, dtype=REC) for f in tr_files])
-    r = r[np.random.RandomState(k).permutation(len(r))]
-    np.save(f'data/ev_sh{k}_x.npy', r['idx']); np.save(f'data/ev_sh{k}_y.npy', (target(r) * 255).round().astype(np.uint8))
+    parts = [np.fromfile(f, dtype=REC) for f in tr_files]
+    tg = np.concatenate([lam_targets(p, LAMBDA) if LAMBDA > 0 else target(p) for p in parts])       # computed per file, while the games are still in order
+    r = np.concatenate(parts); perm = np.random.RandomState(k).permutation(len(r)); r = r[perm]; tg = tg[perm]
+    np.save(f'data/ev_sh{k}_x.npy', r['idx']); np.save(f'data/ev_sh{k}_y.npy', (tg * 255).round().astype(np.uint8))
     played = r[r['ply'] >= 0][:1_500_000]                      # played positions only, for the exact table solve
     np.save(f'data/ev_sp{k}_x.npy', played['idx']); np.save(f'data/ev_sp{k}_y.npy', (target(played) * 255).round().astype(np.uint8))
     v = np.concatenate([np.fromfile(f, dtype=REC) for f in val_files]); v = v[v['ply'] >= 0]
@@ -160,17 +198,24 @@ if __name__ == '__main__':
             t0 = time.time(); g = st['gen'] + 1; k = st['next_shard']; h = HIDDEN(g)
             n, nv = make_shard(k, files)
             st['shards'] = (st['shards'] + [k])[-WINDOW:]; st['next_shard'] = k + 1
+            # the window is also bounded in positions, and one generation's training in samples: otherwise a slow training run
+            # makes the next shard bigger, which makes the next training run slower still
+            size = {i: len(np.load(f'data/ev_sh{i}_y.npy', mmap_mode='r')) for i in st['shards'] if os.path.exists(f'data/ev_sh{i}_y.npy')}
+            while len(st['shards']) > 2 and sum(size.get(i, 0) for i in st['shards']) > WINDOW_POS:
+                st['shards'].pop(0)
+            total = sum(size.get(i, 0) for i in st['shards']); epochs = min(EPOCHS, SAMPLE_CAP / max(1, total))
             save_state(st)                                           # a shard that exists is never made twice, whatever happens next
             for old in glob.glob('data/ev_sh*_x.npy') + glob.glob('data/ev_sp*_x.npy'):       # drop shards that left the window
                 kk = old.split('ev_s')[1][1:].split('_')[0]
                 if kk.isdigit() and int(kk) not in st['shards']:
                     os.remove(old); os.remove(old.replace('_x.npy', '_y.npy'))
-            log(f'=== generation {g}: shard {k} with {n/1e6:.1f}M positions from {len(files) * FILE_GAMES} games ({nv} validation positions), hidden {h}')
+            log(f'=== generation {g}: shard {k} with {n/1e6:.1f}M positions from {len(files) * FILE_GAMES} games ({nv} validation positions), hidden {h}; '
+                f'window {len(st["shards"])} shards = {total/1e6:.0f}M positions, {epochs:.2f} epochs')
             # the table solve only refreshes the search's five piece values: it runs beside the training and serves the NEXT generation
             spawn('solve', g, f'OMP_NUM_THREADS=4 CUDA_VISIBLE_DEVICES= python3 calc/solve_pst.py 400000 sp{k} zero/g{g}s')
             prev = f'zero/g{g-1}.bin.ema.pt'; pst = newest_pst(g - 1)
             tags = ','.join(f'sh{i}' for i in st['shards'] if os.path.exists(f'data/ev_sh{i}_x.npy'))
-            train_cmd = (f'nice -n -10 python3 calc/train_nnue.py --h {h} --buckets 8 --ema 0.999 --files {tags} --val shval --epochs {EPOCHS} --lr 1e-3 '
+            train_cmd = (f'nice -n -10 python3 calc/train_nnue.py --h {h} --buckets 8 --ema 0.999 --files {tags} --val shval --epochs {epochs:.3f} --lr 1e-3 '
                          f'--threads 4 --device {DEVICE} {"--pst " + pst if pst else ""} {"--widen " + prev if os.path.exists(prev) else ""} --out zero/g{g}.bin')
             out = sh(train_cmd)
             if not os.path.exists(f'zero/g{g}.bin.ema.pt'):
