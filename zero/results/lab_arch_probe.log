@@ -1,0 +1,12 @@
+59M training positions from 4 shards, 1.0M held out from another shard, 155051 played positions; 8000 steps of 8192; every variant from scratch, same order
+plain 384                          parameters     303k   held-out label loss 0.50323   played positions (half score, half result) 0.52734   533k positions/s
+plain 768                          parameters     604k   held-out label loss 0.50255   played positions (half score, half result) 0.52633   518k positions/s
+attack maps 384                    parameters     598k   held-out label loss 0.50006   played positions (half score, half result) 0.52385   397k positions/s
+threats 384                        parameters    3842k   held-out label loss 0.50195   played positions (half score, half result) 0.52503   373k positions/s
+rule graph 384+64                  parameters     697k   held-out label loss 0.50267   played positions (half score, half result) 0.52643   132k positions/s
+layered head 384                   parameters     406k   held-out label loss 0.49952   played positions (half score, half result) 0.52415   496k positions/s
+looped head 384                    parameters     332k   held-out label loss 0.49963   played positions (half score, half result) 0.52399   428k positions/s
+mirrored 384                       parameters     303k   held-out label loss 0.50232   played positions (half score, half result) 0.52611   481k positions/s
+king base+delta 384                parameters    3547k   held-out label loss 0.50200   played positions (half score, half result) 0.52571   329k positions/s
+hard positions 384                 parameters     303k   held-out label loss 0.50647   played positions (half score, half result) 0.52961   595k positions/s
+other seed 384                     parameters     303k   held-out label loss 0.50349   played positions (half score, half result) 0.52740   588k positions/s
