@@ -16,10 +16,16 @@ width buys: an idea is worth building into the engine if it beats that at fewer 
                              the same relations; this is its idea in a form a fast evaluator can update.
   attack maps                768 more inputs computed from the rules: "a piece of this kind attacks this square" (sliders
                              stop at the first piece in the way). The engine can keep them as 12 bitboards per position.
+                             Variants: only some kinds of piece (am='pawn', 'nonslide' = pawn, knight, king, 'slide' = bishop,
+                             rook, queen, 'colour' = one map per side, 'class' = pawn / knight+bishop / rook / queen / king),
+                             and feeding the maps into only the first amk hidden units (the engine pays per unit fed).
   threats                    one input per (kind of attacker, attacked piece on its square), 12 x 768 of them, added into
                              the same hidden layer: who attacks whom, without the attacker's own square
   layered head               the hidden layer is read by a small network (16 -> 32 units per piece-count bucket) on top of
                              the direct read-out, instead of by the direct read-out alone
+                             Cheaper forms (reading all 2 x 384 units costs the engine a third of its speed): hk = the layers
+                             read only the first hk units of each side; nar = they read a separate narrow hidden layer of
+                             their own (nar units per side, kept up to date like the wide one)
   looped head                the hidden layer is summarised in 32 numbers, which one small block with shared weights
                              refines three times (the transformer's loop, on the fast evaluator)
   hard positions             plain 384, but each position weighs in the loss by how wrong the evaluator currently is
@@ -114,13 +120,26 @@ def threat_lists(idx):
     return ci * 768 + fj, ((ci + 6) % 12) * 768 + LUT[fj], off[:-1]
 
 
+_G = {'all': [[k] for k in range(6)], 'pawn': [[0]], 'nonslide': [[0], [1], [5]], 'slide': [[2], [3], [4]], 'colour': [[0, 1, 2, 3, 4, 5]], 'class': [[0], [1, 2], [3], [4], [5]],
+      'pnk+colour': [[0], [1], [5], [0, 1, 2, 3, 4, 5]], 'pawn+colour': [[0], [0, 1, 2, 3, 4, 5]]}
+
+
+def am_groups(Am, spec):
+    """merge the 12 attack maps into groups of kinds (the same grouping for the mover and for the opponent): (B,768) -> (B, groups*2*64)"""
+    if spec == 'all':
+        return Am
+    A = Am.view(-1, 12, 64)
+    return torch.cat([A[:, [k + o for k in g]].amax(1) for o in (0, 6) for g in _G[spec]], 1)
+
+
 def multi_hot(idx):
     return torch.zeros(idx.shape[0], 769, device=DEV).scatter_add_(1, idx, torch.ones(idx.shape, device=DEV))[:, :768]
 
 
 class Net(torch.nn.Module):
-    def __init__(self, H, hm=False, kb=False, rel=0, am=False, head=None, thr=False):
-        super().__init__(); self.H, self.hm, self.kb, self.rel, self.am, self.head, self.thr = H, hm, kb, rel, am, head, thr
+    def __init__(self, H, hm=False, kb=False, rel=0, am=False, head=None, thr=False, amk=0, h1=16, h2=32, direct=True, hk=0, nar=0, nam=False):
+        super().__init__(); self.H, self.hm, self.kb, self.rel, self.head, self.thr = H, hm, kb, rel, head, thr
+        self.am = 'all' if am is True else am; self.amk = amk or H; self.h1, self.h2, self.direct, self.hk, self.nar, self.nam = h1, h2, direct, hk, nar, nam; din = 2 * (nar or hk or H)
         P = torch.nn.Parameter
         self.E = P(torch.randn(768, H) * 0.05); self.b = P(torch.full((H,), 0.1))
         self.wo = P(torch.randn(8, H) / math.sqrt(H)); self.wp = P(torch.randn(8, H) / math.sqrt(H)); self.cb = P(torch.zeros(8))
@@ -131,12 +150,16 @@ class Net(torch.nn.Module):
             self.EA = P(torch.randn(769, 4 * rel) * 0.2); self.EB = P(torch.randn(769, 4 * rel) * 0.2)
             self.br = P(torch.full((rel,), 0.1)); self.wr = P(torch.randn(8, rel) / math.sqrt(rel))
         if am:
-            self.E2 = P(torch.zeros(768, H))
+            self.E2 = P(torch.zeros(2 * 64 * len(_G[self.am]), self.amk))
         if thr:
             self.E3 = P(torch.zeros(12 * 768, H))
         if head == 'mlp':
-            self.L1 = P(torch.randn(2 * H, 8 * 16) / math.sqrt(2 * H)); self.b1 = P(torch.zeros(8 * 16))
-            self.L2 = P(torch.randn(8, 16, 32) / 4); self.b2 = P(torch.zeros(8, 32)); self.L3 = P(torch.zeros(8, 32))
+            self.L1 = P(torch.randn(din, 8 * h1) / math.sqrt(din)); self.b1 = P(torch.zeros(8 * h1))
+            if nar:
+                self.En = P(torch.randn(768, nar) * 0.1); self.bn = P(torch.full((nar,), 0.1))
+                if nam:                                                    # the narrow layer also sees the attack maps (cheap there: few units per changed input)
+                    self.En2 = P(torch.zeros(768, nar))
+            self.L2 = P(torch.randn(8, h1, h2) / math.sqrt(h1)); self.b2 = P(torch.zeros(8, h2)); self.L3 = P(torch.zeros(8, h2) if direct else torch.randn(8, h2) / math.sqrt(h2))
         if head == 'loop':
             self.Li = P(torch.randn(2 * H, 32) / math.sqrt(2 * H)); self.be = P(torch.zeros(8, 32))
             self.A1 = P(torch.randn(32, 64) / math.sqrt(32)); self.a1 = P(torch.zeros(64)); self.A2 = P(torch.randn(64, 32) * 0.02); self.Lo = P(torch.zeros(8, 32))
@@ -156,18 +179,28 @@ class Net(torch.nn.Module):
             io, ip = mirror(io), mirror(ip)
         ao, ap = self.acc(io), self.acc(ip)
         if self.am:                                                            # the same attack map seen from each side
-            Am = attack_map(idx); ao = ao + Am @ self.E2; ap = ap + Am[:, LUT768] @ self.E2
+            Am = attack_map(idx); pad = (0, self.H - self.amk)
+            ao = ao + F.pad(am_groups(Am, self.am) @ self.E2, pad); ap = ap + F.pad(am_groups(Am[:, LUT768], self.am) @ self.E2, pad)
         if self.thr:
             fo, fp, off = threat_lists(idx); ao = ao + F.embedding_bag(fo, self.E3, off, mode='sum'); ap = ap + F.embedding_bag(fp, self.E3, off, mode='sum')
         xo = ao.clamp(0, 1) ** 2; xp = ap.clamp(0, 1) ** 2
-        out = ph * lin[:, 0] + (1 - ph) * lin[:, 1] + self.cb[bk] + (xo * self.wo[bk]).sum(1) + (xp * self.wp[bk]).sum(1)
+        out = ph * lin[:, 0] + (1 - ph) * lin[:, 1] + self.cb[bk]
+        if self.direct:
+            out = out + (xo * self.wo[bk]).sum(1) + (xp * self.wp[bk]).sum(1)
         if self.rel:
             att = relations(idx); ea = F.embedding(idx, self.EA).view(B, 32, 4, self.rel); eb = F.embedding(idx, self.EB).view(B, 32, 4, self.rel)
             r = self.br + sum((ea[:, :, t] * torch.bmm(att[t], eb[:, :, t])).sum(1) for t in range(4))
             out = out + ((r.clamp(0, 1) ** 2) * self.wr[bk]).sum(1)
         if self.head == 'mlp':
-            x = torch.cat([xo, xp], 1); ar = torch.arange(B, device=DEV)
-            h1 = (x @ self.L1 + self.b1).view(B, 8, 16)[ar, bk].clamp(0, 1) ** 2
+            if self.nar:
+                no, np_ = self.bn + multi_hot(io) @ self.En, self.bn + multi_hot(ip) @ self.En
+                if self.nam:
+                    Am = attack_map(idx); no = no + Am @ self.En2; np_ = np_ + Am[:, LUT768] @ self.En2
+                x = torch.cat([no.clamp(0, 1) ** 2, np_.clamp(0, 1) ** 2], 1)
+            else:
+                x = torch.cat([xo[:, :self.hk], xp[:, :self.hk]], 1) if self.hk else torch.cat([xo, xp], 1)
+            ar = torch.arange(B, device=DEV)
+            h1 = (x @ self.L1 + self.b1).view(B, 8, self.h1)[ar, bk].clamp(0, 1) ** 2
             h2 = (torch.bmm(h1[:, None, :], self.L2[bk]).squeeze(1) + self.b2[bk]).clamp(0, 1)
             out = out + (h2 * self.L3[bk]).sum(1)
         if self.head == 'loop':
@@ -210,7 +243,27 @@ VAR = [('plain 384', dict(H=384)), ('plain 768', dict(H=768)), ('attack maps 384
        ('mirrored 384', dict(H=384, hm=True)), ('king base+delta 384', dict(H=384, kb=True)), ('hard positions 384', dict(H=384, hard=True)),
        ('other seed 384', dict(H=384, seed=1)), ('threats + attack maps 384', dict(H=384, thr=True, am=True)), ('attack maps + layered head 384', dict(H=384, am=True, head='mlp')),
        ('attack maps 256', dict(H=256, am=True)), ('rule graph 384+128', dict(H=384, rel=128)), ('attack maps + rule graph 384+64', dict(H=384, am=True, rel=64)),
-       ('threats 256', dict(H=256, thr=True)), ('plain 1536', dict(H=1536))]
+       ('threats 256', dict(H=256, thr=True)), ('plain 1536', dict(H=1536)),
+       # second round: which maps carry the information, and how many hidden units need them
+       ('maps: pawns only 384', dict(H=384, am='pawn')), ('maps: pawn knight king 384', dict(H=384, am='nonslide')), ('maps: bishop rook queen 384', dict(H=384, am='slide')),
+       ('maps: one per side 384', dict(H=384, am='colour')), ('maps: pawns + one per side 384', dict(H=384, am='pawn+colour')), ('maps: pawn knight king + one per side 384', dict(H=384, am='pnk+colour')),
+       ('maps: value classes 384', dict(H=384, am='class')), ('maps into 128 of 384 units', dict(H=384, am=True, amk=128)), ('maps into 64 of 384 units', dict(H=384, am=True, amk=64)),
+       ('maps 768 wide', dict(H=768, am=True)), ('maps 192 wide', dict(H=192, am=True)), ('maps 128 wide', dict(H=128, am=True)),
+       # the layered read-out: how small can it be, does it replace width, does it need the direct read-out
+       ('head 8-32 on 384', dict(H=384, head='mlp', h1=8)), ('head 32-32 on 384', dict(H=384, head='mlp', h1=32)), ('head 16-32 on 256', dict(H=256, head='mlp')),
+       ('head 16-32 on 192', dict(H=192, head='mlp')), ('head 16-32 on 768', dict(H=768, head='mlp')), ('head 16-32 on 384, no direct read-out', dict(H=384, head='mlp', direct=False)),
+       ('head 16-32 + maps: pawn knight king + one per side 384', dict(H=384, head='mlp', am='pnk+colour')), ('head 16-32 + maps into 128 of 384', dict(H=384, head='mlp', am=True, amk=128)),
+       ('head 16-32 + maps 256', dict(H=256, head='mlp', am=True)),
+       # third round: cheap forms of the layered read-out
+       ('layers read first 64 units a side', dict(H=384, head='mlp', hk=64)), ('layers read first 128 units a side', dict(H=384, head='mlp', hk=128)),
+       ('layers read first 32 units a side', dict(H=384, head='mlp', hk=32)), ('layers on own narrow path 32', dict(H=384, head='mlp', nar=32, h1=32)),
+       ('layers on own narrow path 64', dict(H=384, head='mlp', nar=64, h1=32)), ('layers on own narrow path 64, 16 units', dict(H=384, head='mlp', nar=64)),
+       ('mirrored + layers 384', dict(H=384, hm=True, head='mlp')), ('mirrored + layers read first 64', dict(H=384, hm=True, head='mlp', hk=64)),
+       ('mirrored + maps + layers 384', dict(H=384, hm=False, head='mlp', am=True, seed=0)),
+       # fourth round: wide and shallow for the pieces, narrow and deep for the relations
+       ('two-speed: narrow 64 with maps', dict(H=384, head='mlp', nar=64, h1=32, nam=True)), ('two-speed: narrow 32 with maps', dict(H=384, head='mlp', nar=32, h1=32, nam=True)),
+       ('two-speed: narrow 128 with maps', dict(H=384, head='mlp', nar=128, h1=32, nam=True)), ('two-speed: narrow 64 with maps, wide 256', dict(H=256, head='mlp', nar=64, h1=32, nam=True)),
+       ('two-speed: narrow 64 with maps, mirrored', dict(H=384, hm=True, head='mlp', nar=64, h1=32, nam=True)), ('two-speed: narrow 64 with maps, 64-32 layers', dict(H=384, head='mlp', nar=64, h1=64, nam=True))]
 for name, kw in VAR:
     if WHICH is None or any(wh in name for wh in WHICH):
         run(name, **kw)

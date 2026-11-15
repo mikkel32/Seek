@@ -35,6 +35,7 @@ ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresig
 ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
 ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
 ap.add_argument('--lr_end', type=float, default=0.0)      # learning rate at the last step (0 = the usual 2% of --lr). Long runs of other self-taught engines decay to 1e-6
+ap.add_argument('--head', default='')                    # '16,32' = a small layered read-out per piece-count bucket on top of the direct one (2H -> 16 -> 32 -> 1); starts at zero
 ap.add_argument('--prod', type=int, default=0)           # 1 = product terms on top of the squares: unit i x unit i+H/2 within each view, and my unit i x the opponent's unit i
                                                          # (piece-pair interactions the squares cannot express; a few thousand extra output weights, the big input table unchanged)
 ap.add_argument('--extrap', type=float, default=0.0)     # move every label this share further away from what the STARTING network says (in score units): the search
@@ -51,6 +52,7 @@ DEV = torch.device('cuda' if a.device == 'cuda' or (a.device == 'auto' and torch
 M = a.experts; G = min(a.gate, a.h); NEX = a.buckets * M       # NEX output experts in total
 ROUTE = {'tau': 1.0, 'hard': False, 'train': True}                       # router temperature / hard top-1 routing (set by the training loop)
 NKB = a.kb
+HEAD = [int(x) for x in a.head.split(',')] if a.head else None
 KBT = torch.tensor([0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5] + [6] * 16)
 KB11 = torch.tensor([0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8] + [9] * 16 + [10] * 32)
 
@@ -81,10 +83,21 @@ class Net(torch.nn.Module):
             self.gb = torch.nn.Parameter(torch.zeros(NEX))
         if a.prod:                                              # start at zero: a network grown from one without products computes the same function
             self.qo = torch.nn.Parameter(torch.zeros(NEX, H // 2)); self.qp = torch.nn.Parameter(torch.zeros(NEX, H // 2)); self.qx = torch.nn.Parameter(torch.zeros(NEX, H))
+        if HEAD:                                                # the last layer starts at zero: a network grown from one without the layers computes the same function
+            h1, h2 = HEAD; P_ = torch.nn.Parameter
+            self.L1 = P_(torch.randn(NEX * h1, 2 * H) / math.sqrt(2 * H)); self.b1 = P_(torch.zeros(NEX * h1))
+            self.L2 = P_(torch.randn(NEX, h2, h1) / math.sqrt(h1)); self.b2 = P_(torch.zeros(NEX, h2)); self.L3 = P_(torch.zeros(NEX, h2))
         self.S = torch.nn.Parameter(torch.zeros(769, 2))            # [:,0] middlegame, [:,1] endgame
         self.c = torch.nn.Parameter(torch.zeros(2))
         if a.aux > 0:                                               # foresight heads: 3 later scores, plies left, 10 + 10 material changes, from, to, volatility
             self.A = torch.nn.Linear(2 * H, 153 + 192 + 128)    # ... + who holds each square 8 plies on (64 x 3) + the opponent's reply (from, to)
+
+    def layered(self, xo, xp, bk):
+        """the layered read-out of the position's own bucket: squared clipped units, then clipped units, then a sum"""
+        h1, h2 = HEAD; B = xo.shape[0]; ar = torch.arange(B, device=xo.device)
+        u = (torch.cat([xo, xp], 1) @ self.L1.T + self.b1).view(B, NEX, h1)[ar, bk].clamp(0, 1) ** 2
+        v = (torch.bmm(self.L2[bk], u[:, :, None]).squeeze(2) + self.b2[bk]).clamp(0, 1)
+        return (v * self.L3[bk]).sum(1)
 
     def forward(self, idx, feats=False):
         if DENSE:
@@ -100,6 +113,8 @@ class Net(torch.nn.Module):
             if a.prod:
                 h = H // 2; heads = heads + (co[:, :h] * co[:, h:]) @ self.qo.T + (cp[:, :h] * cp[:, h:]) @ self.qp.T + (co * cp) @ self.qx.T
             out = ph * lin[:, 0] + (1 - ph) * lin[:, 1] + (heads * F.one_hot(bk, NEX).to(heads.dtype)).sum(1)
+            if HEAD:
+                out = out + self.layered(xo, xp, bk)
             return (out, torch.cat([xo, xp], 1)) if feats else out
         bk = (((idx < 768).sum(1) - 2) // 4).clamp(0, a.buckets - 1) if a.buckets > 1 else torch.zeros(idx.shape[0], dtype=torch.long, device=idx.device)
         if a.phase and a.overlap > 0 and ROUTE['train']:          # a position one capture away from the next phase sometimes trains that phase's specialist
@@ -122,6 +137,8 @@ class Net(torch.nn.Module):
             if a.prod:
                 h = H // 2; co = ao.clamp(0, 1); cp = ap_.clamp(0, 1)
                 out = out + (co[:, :h] * co[:, h:] * self.qo[bk]).sum(1) + (cp[:, :h] * cp[:, h:] * self.qp[bk]).sum(1) + (co * cp * self.qx[bk]).sum(1)
+            if HEAD:
+                out = out + self.layered(xo, xp, bk)
             return (out, torch.cat([xo, xp], 1)) if feats else out
         e = bk[:, None] * M + torch.arange(M, device=idx.device)                                        # the piece-count group's experts
         outs = (xo[:, None, :] * self.wo[e]).sum(2) + (xp[:, None, :] * self.wp[e]).sum(2) + self.cb[e]
@@ -152,6 +169,10 @@ class Net(torch.nn.Module):
                         f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
             if PVAL is not None:
                 f.write(struct.pack('<i5i', 0x4C415650, *PVAL))
+            if HEAD:                                            # trailer 'MLP1': the layered read-out (the engine reads it from calc_s13 on)
+                f.write(struct.pack('<iii', 0x31504C4D, *HEAD))
+                for t in (self.L1, self.b1, self.L2, self.b2, self.L3):
+                    f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
 
 
 PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None

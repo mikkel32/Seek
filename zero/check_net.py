@@ -9,7 +9,7 @@ import chess, numpy as np, torch
 
 binary, net_bin, net_pt = sys.argv[1:4]; n = int(sys.argv[4]) if len(sys.argv) > 4 else 300
 w = {k: v.numpy().astype(np.float64) for k, v in torch.load(net_pt, map_location='cpu').items()}
-H = w['b'].shape[0]; prod = 'qo' in w; nb = w['wo'].shape[0]
+H = w['b'].shape[0]; prod = 'qo' in w; nb = w['wo'].shape[0]; mlp = 'L1' in w; HP = []
 PARTS = []                                   # how much of each evaluation the product terms supply (a check that agrees only because they are tiny proves nothing)
 PT_W = np.repeat(np.array([0, 1, 1, 2, 4, 0] * 2, float), 64)
 
@@ -32,6 +32,10 @@ def ev(b):
     pr = 0.0
     if prod:
         h = H // 2; pr = (co[:h] * co[h:]) @ w['qo'][bk] + (cp[:h] * cp[h:]) @ w['qp'][bk] + (co * cp) @ w['qx'][bk]
+    if mlp:                                  # the layered read-out of this bucket
+        h1 = w['L1'].shape[0] // nb; x = np.concatenate([co ** 2, cp ** 2])
+        u = (w['L1'][bk * h1:(bk + 1) * h1] @ x + w['b1'][bk * h1:(bk + 1) * h1]).clip(0, 1) ** 2
+        hd = w['L3'][bk] @ (w['L2'][bk] @ u + w['b2'][bk]).clip(0, 1); HP.append(abs(hd) * 271.58); pr = pr + hd
     PARTS.append(abs(pr) * 271.58)
     return (out + pr) * 271.58
 
@@ -51,5 +55,6 @@ want = np.array([ev(b) for b in boards]); got = np.array(got, float)
 assert len(got) == n, f'the engine answered {len(got)} of {n}'
 d = np.abs(got - np.clip(want, -20000, 20000))
 print(f'{n} random positions, hidden {H}, product terms {"on" if prod else "off"}: largest difference {d.max():.2f} centipawns, mean {d.mean():.3f}; '
-      f'evaluations range {got.min():.0f} to {got.max():.0f}, the product terms supply {np.mean(PARTS):.0f} centipawns on average')
+      f'evaluations range {got.min():.0f} to {got.max():.0f}, the product terms supply {np.mean(PARTS):.0f} centipawns on average'
+      + (f', the layered read-out {np.mean(HP):.0f}' if mlp else ''))
 sys.exit(0 if d.max() <= 1.5 else 1)
