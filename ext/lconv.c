@@ -36,7 +36,7 @@ static int attacked_by(int s, int white) {            // is square s attacked by
     return 0;
 }
 static FILE **fc, **fy; static int K; static uint64_t rng = 0x9E3779B97F4A7C15ULL;
-static long long n = 0, kept = 0, s_check = 0, s_cap = 0, s_mate = 0, s_bad = 0;
+static long long n = 0, kept = 0, s_check = 0, s_cap = 0, s_mate = 0, s_bad = 0, s_early = 0; static int min_move = 0;
 // one position with its chosen evaluation: fen text (up to the first space the board, then the side to move), mate or centipawns
 // (White's view), and the best move as text (4 or 5 characters)
 static void process(const char *p, int is_mate, int cp, const char *ln) {
@@ -55,6 +55,10 @@ static void process(const char *p, int is_mate, int cp, const char *ln) {
     }
     if (!ok || *p != ' ' || wk < 0 || bk < 0 || np > 32) { s_bad++; return; }
     int white = p[1] == 'w';
+    if (min_move) {                        // positions from games: leave out the first moves (the same opening positions occur millions of times)
+        const char *e = p + strlen(p); while (e > p && e[-1] >= '0' && e[-1] <= '9') e--;
+        if (e > p && e[-1] == ' ' && *e && atoi(e) < min_move) { s_early++; return; }
+    }
     if (is_mate) { s_mate++; return; }
     if (ln[0] < 'a' || ln[0] > 'h' || ln[2] < 'a' || ln[2] > 'h' || ln[1] < '1' || ln[1] > '8' || ln[3] < '1' || ln[3] > '8') { s_bad++; return; }
     int from = (ln[1] - '1') * 8 + (ln[0] - 'a'), to = (ln[3] - '1') * 8 + (ln[2] - 'a');
@@ -79,7 +83,8 @@ static void process(const char *p, int is_mate, int cp, const char *ln) {
     fwrite(rec, 1, 24, fc[sh]); fputc(y, fy[sh]); kept++;
 }
 int main(int argc, char **argv) {
-    if (argc < 3) { fprintf(stderr, "usage: lconv <out prefix> <shards> [csv]\n"); return 1; }
+    if (argc < 3) { fprintf(stderr, "usage: lconv <out prefix> <shards> [csv [first move number kept]]\n"); return 1; }
+    if (argc > 4) min_move = atoi(argv[4]);
     K = atoi(argv[2]); fc = malloc(sizeof(FILE *) * K); fy = malloc(sizeof(FILE *) * K); char name[512]; int csv = argc > 3 && !strcmp(argv[3], "csv");
     for (int k = 0; k < K; k++) { snprintf(name, sizeof name, "%s_%d.c", argv[1], k); fc[k] = fopen(name, "wb"); snprintf(name, sizeof name, "%s_%d.y", argv[1], k); fy[k] = fopen(name, "wb"); if (!fc[k] || !fy[k]) { perror(name); return 1; } }
     size_t cap = 1 << 22; char *line = malloc(cap);
@@ -126,7 +131,7 @@ int main(int argc, char **argv) {
         process(p, is_mate, cp, mv);
     }
     for (int k = 0; k < K; k++) { fclose(fc[k]); fclose(fy[k]); }
-    fprintf(stderr, "%lld positions read; kept %lld (%.1f%%); left out: in check %lld, best move a capture or promotion %lld, forced mate %lld, unreadable %lld\n",
-            n, kept, 100.0 * kept / (n ? n : 1), s_check, s_cap, s_mate, s_bad);
+    fprintf(stderr, "%lld positions read; kept %lld (%.1f%%); left out: in check %lld, best move a capture or promotion %lld, forced mate %lld, before move %d: %lld, unreadable %lld\n",
+            n, kept, 100.0 * kept / (n ? n : 1), s_check, s_cap, s_mate, min_move, s_early, s_bad);
     return 0;
 }

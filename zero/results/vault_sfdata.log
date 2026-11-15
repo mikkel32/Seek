@@ -1,0 +1,5 @@
+[19:23:18] S1/UHO.pdist.iter-1.bullet.bin.zst: 19 GB, downloading in 10 pieces
+[19:41:14] downloaded 19 GB of 19; converting
+[19:47:17] 1232742889 positions in 83 shards
+[20:08:34] network zero/w_SF1.bin trained from scratch on them, 6 passes, in 1277s
+[20:08:34] finished

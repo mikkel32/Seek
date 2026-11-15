@@ -1,0 +1,9 @@
+[20:13:42] months 2025_02 2025_03: download and conversion started
+[20:20:34] 2025_02: 544907368 positions read; kept 254429807 (46.7%); left out: in check 29115674, best move a capture or promotion 97278418, forced mate 34510314, before move 9: 125128481, unreadable 4444674
+[20:21:54] 2025_03: 591224487 positions read; kept 275919215 (46.7%); left out: in check 31569042, best move a capture or promotion 105559575, forced mate 37286096, before move 9: 136046545, unreadable 4844014
+530M positions kept in 40 shards data/ev_f<k>
+[20:23:22] f finished
+[20:32:46] network FNf trained from scratch, 6 passes, in 544s
+[20:47:25] network LFf trained from scratch, 6 passes, in 879s
+[20:53:04] f matches finished
+[20:56:43] months 2025_01 2024_12 2024_11 2024_10 2024_09 2024_08 2024_07 2024_06 2024_05 2024_04 2024_03 2024_02 2024_01 2023_12: download and conversion started
