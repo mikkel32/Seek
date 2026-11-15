@@ -455,7 +455,10 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 #define NPAR 26
 enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR };
 static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr"};
-static int par[NPAR] = {250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200, 0, 0, 0, 0, 0, 0};
+// search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
+// (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
+// and +37 at 10,000 nodes over 2,000 games each.
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0};
 static U64 nodes, node_limit, check_mask = 2047;
 // self-play harvest: interior positions whose value the search settled exactly (mover-relative features + score)
 typedef struct { short idx[32]; short score; signed char result, pad; } Rec;     // 68 bytes, mover's view
