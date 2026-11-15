@@ -8,3 +8,5 @@ layers read first 32 units a side  parameters     316k   held-out label loss 0.5
 layers on own narrow path 32       parameters     353k   held-out label loss 0.50060   played positions (half score, half result) 0.52489   428k positions/s
 layers on own narrow path 64       parameters     394k   held-out label loss 0.50031   played positions (half score, half result) 0.52464   456k positions/s
 layers on own narrow path 64, 16 units parameters     373k   held-out label loss 0.50050   played positions (half score, half result) 0.52491   635k positions/s
+mirrored + layers 384              parameters     406k   held-out label loss 0.49909   played positions (half score, half result) 0.52360   333k positions/s
+mirrored + layers read first 64    parameters     324k   held-out label loss 0.49984   played positions (half score, half result) 0.52384   206k positions/s

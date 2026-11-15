@@ -6,3 +6,4 @@ maps: one per side 384             parameters     352k   held-out label loss 0.5
 maps: pawns + one per side 384     parameters     401k   held-out label loss 0.50131   played positions (half score, half result) 0.52554   274k positions/s
 maps: pawn knight king + one per side 384 parameters     500k   held-out label loss 0.50081   played positions (half score, half result) 0.52475   211k positions/s
 maps: value classes 384            parameters     549k   held-out label loss 0.50009   played positions (half score, half result) 0.52396   291k positions/s
+maps into 128 of 384 units         parameters     401k   held-out label loss 0.50055   played positions (half score, half result) 0.52444   296k positions/s

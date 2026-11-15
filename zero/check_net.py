@@ -2,12 +2,12 @@
 
 A new term in the evaluator has to be written twice (trainer, engine); this says whether the two agree. Plain inputs only.
 
-  python3 zero/check_net.py <engine binary> <network .bin> <the same network's .ema.pt> [positions=300]
+  python3 zero/check_net.py <engine binary> <network .bin> <the same network's .ema.pt> [positions=300] [mirror]
 """
 import random, subprocess, sys
 import chess, numpy as np, torch
 
-binary, net_bin, net_pt = sys.argv[1:4]; n = int(sys.argv[4]) if len(sys.argv) > 4 else 300
+binary, net_bin, net_pt = sys.argv[1:4]; n = int(sys.argv[4]) if len(sys.argv) > 4 else 300; MIR = len(sys.argv) > 5 and sys.argv[5] == 'mirror'
 w = {k: v.numpy().astype(np.float64) for k, v in torch.load(net_pt, map_location='cpu').items()}
 H = w['b'].shape[0]; prod = 'qo' in w; nb = w['wo'].shape[0]; mlp = 'L1' in w; HP = []
 PARTS = []                                   # how much of each evaluation the product terms supply (a check that agrees only because they are tiny proves nothing)
@@ -25,7 +25,8 @@ def feats(b):
 
 def ev(b):
     o, p = feats(b)
-    co = (w['b'] + w['E'][o].sum(0)).clip(0, 1); cp = (w['b'] + w['E'][p].sum(0)).clip(0, 1)
+    hm = lambda f: f ^ 7 if MIR and (int(f[(f >= 320) & (f < 384)][0]) & 7) < 4 else f      # mirrored inputs: the view's own king on files a-d flips the files
+    co = (w['b'] + w['E'][hm(o)].sum(0)).clip(0, 1); cp = (w['b'] + w['E'][hm(p)].sum(0)).clip(0, 1)
     bk = min(nb - 1, (len(o) - 2) // 4)
     lin = w['c'] + w['S'][o].sum(0); ph = min(1.0, PT_W[o].sum() / 24)
     out = ph * lin[0] + (1 - ph) * lin[1] + w['cb'][bk] + (co ** 2) @ w['wo'][bk] + (cp ** 2) @ w['wp'][bk]

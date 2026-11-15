@@ -35,6 +35,7 @@ ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresig
 ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
 ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
 ap.add_argument('--lr_end', type=float, default=0.0)      # learning rate at the last step (0 = the usual 2% of --lr). Long runs of other self-taught engines decay to 1e-6
+ap.add_argument('--hm', type=int, default=0)             # 1 = mirrored inputs: a view's inputs are flipped left-right when its own king is on files a-d (one set of weights for both wings)
 ap.add_argument('--head', default='')                    # '16,32' = a small layered read-out per piece-count bucket on top of the direct one (2H -> 16 -> 32 -> 1); starts at zero
 ap.add_argument('--prod', type=int, default=0)           # 1 = product terms on top of the squares: unit i x unit i+H/2 within each view, and my unit i x the opponent's unit i
                                                          # (piece-pair interactions the squares cannot express; a few thousand extra output weights, the big input table unchanged)
@@ -68,6 +69,12 @@ def kfeat(idx):
     kb = KBT[(kq >> 3) * 4 + (kq & 7)]
     f = kb[:, None] * 768 + (idx // 64) * 64 + ((idx % 64) ^ mir[:, None])
     return torch.where(idx == 768, torch.full_like(idx, NKB * 768), f)
+
+
+def hmir(idx):
+    """flip the files of a view's inputs when that view's own king (piece code 5) stands on files a-d"""
+    isk = (idx >= 320) & (idx < 384); ks = ((idx * isk).sum(1) - 320).clamp(0, 63)
+    return torch.where((((ks & 7) < 4)[:, None]) & (idx < 768), idx ^ 7, idx)
 
 
 class Net(torch.nn.Module):
@@ -107,7 +114,11 @@ class Net(torch.nn.Module):
             Mo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, idx, one)[:, :768]
             Mp = torch.zeros(B, 769, device=idx.device).scatter_add_(1, LUT[idx], one)[:, :768]
             bk = ((Mo.sum(1) - 2) // 4).clamp(0, a.buckets - 1).long() if a.buckets > 1 else torch.zeros(B, dtype=torch.long, device=idx.device)
-            co = (self.b + Mo @ self.E[:768]).clamp(0, 1); cp = (self.b + Mp @ self.E[:768]).clamp(0, 1); xo = co ** 2; xp = cp ** 2
+            if a.hm:                                                        # the hidden layer sees the mirrored inputs; the linear shortcut and the bucket do not
+                Eo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(idx), one)[:, :768]; Ep = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(LUT[idx]), one)[:, :768]
+            else:
+                Eo, Ep = Mo, Mp
+            co = (self.b + Eo @ self.E[:768]).clamp(0, 1); cp = (self.b + Ep @ self.E[:768]).clamp(0, 1); xo = co ** 2; xp = cp ** 2
             lin = self.c + Mo @ self.S[:768]; ph = ((Mo @ PT_W[:768]) / 24).clamp(max=1.0)
             heads = xo @ self.wo.T + xp @ self.wp.T + self.cb                       # every piece-count head at once; the position's own is picked below
             if a.prod:
@@ -126,6 +137,8 @@ class Net(torch.nn.Module):
             io = torch.where(idx == 768, torch.full_like(idx, NKB * 768), pb + idx); ip = torch.where(ip0 == 768, torch.full_like(idx, NKB * 768), pb + ip0)
         else:
             io, ip = (idx, LUT[idx]) if NKB == 1 else (kfeat(idx), kfeat(LUT[idx]))
+            if a.hm:
+                io, ip = hmir(io), hmir(ip)
         ao = self.b + F.embedding_bag(io, self.E, mode='sum', padding_idx=NKB * 768)
         ap_ = self.b + F.embedding_bag(ip, self.E, mode='sum', padding_idx=NKB * 768)
         lin = self.c + F.embedding_bag(idx, self.S, mode='sum', padding_idx=768)
@@ -169,6 +182,8 @@ class Net(torch.nn.Module):
                         f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
             if PVAL is not None:
                 f.write(struct.pack('<i5i', 0x4C415650, *PVAL))
+            if a.hm:
+                f.write(struct.pack('<i', 0x3152494D))          # trailer 'MIR1': mirrored inputs (the engine reads it from calc_s14 on)
             if HEAD:                                            # trailer 'MLP1': the layered read-out (the engine reads it from calc_s13 on)
                 f.write(struct.pack('<iii', 0x31504C4D, *HEAD))
                 for t in (self.L1, self.b1, self.L2, self.b2, self.L3):
