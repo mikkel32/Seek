@@ -7,3 +7,19 @@
 [20:47:25] network LFf trained from scratch, 6 passes, in 879s
 [20:53:04] f matches finished
 [20:56:43] months 2025_01 2024_12 2024_11 2024_10 2024_09 2024_08 2024_07 2024_06 2024_05 2024_04 2024_03 2024_02 2024_01 2023_12: download and conversion started
+[21:06:18] 2024_11: 542110952 positions read; kept 253608173 (46.8%); left out: in check 28850010, best move a capture or promotion 96730014, forced mate 34002831, before move 9: 124484776, unreadable 4435148
+[21:07:23] 2024_12: 600600676 positions read; kept 281363258 (46.8%); left out: in check 32021908, best move a capture or promotion 107267051, forced mate 37383575, before move 9: 137641161, unreadable 4923723
+[21:07:29] 2025_01: 627353822 positions read; kept 293580654 (46.8%); left out: in check 33481639, best move a capture or promotion 112141501, forced mate 39303222, before move 9: 143722864, unreadable 5123942
+[21:17:53] 2024_09: 517711650 positions read; kept 242740245 (46.9%); left out: in check 27454906, best move a capture or promotion 92543098, forced mate 31842385, before move 9: 118862551, unreadable 4268465
+[21:18:30] 2024_10: 564794726 positions read; kept 264325522 (46.8%); left out: in check 30056973, best move a capture or promotion 100884634, forced mate 35184590, before move 9: 129709148, unreadable 4633859
+[21:18:51] 2024_08: 551548323 positions read; kept 259182825 (47.0%); left out: in check 29188508, best move a capture or promotion 98540450, forced mate 34006812, before move 9: 126090972, unreadable 4538756
+[21:27:25] 2024_06: 532636670 positions read; kept 248971628 (46.7%); left out: in check 27994777, best move a capture or promotion 94736763, forced mate 34459430, before move 9: 122156748, unreadable 4317324
+[21:30:16] 2024_05: 552365485 positions read; kept 257800599 (46.7%); left out: in check 29096570, best move a capture or promotion 98066840, forced mate 36497442, before move 9: 126472189, unreadable 4431845
+[21:30:54] 2024_07: 532392349 positions read; kept 249590112 (46.9%); left out: in check 27939150, best move a capture or promotion 94805857, forced mate 33859490, before move 9: 121860733, unreadable 4337007
+[21:36:01] 2024_04: 500760014 positions read; kept 232831920 (46.5%); left out: in check 26115441, best move a capture or promotion 88272439, forced mate 35496389, before move 9: 114171822, unreadable 3872003
+[21:41:26] 2024_02: 505365642 positions read; kept 234423893 (46.4%); left out: in check 26422088, best move a capture or promotion 89129337, forced mate 36284790, before move 9: 115231184, unreadable 3874350
+[21:41:29] 2024_03: 513804021 positions read; kept 238550898 (46.4%); left out: in check 26820671, best move a capture or promotion 90663112, forced mate 36438297, before move 9: 117365395, unreadable 3965648
+[21:47:35] 2024_01: 577212482 positions read; kept 268510018 (46.5%); left out: in check 30477317, best move a capture or promotion 102089420, forced mate 40391535, before move 9: 131330789, unreadable 4413403
+[21:50:43] 2023_12: 562538321 positions read; kept 261954590 (46.6%); left out: in check 29945228, best move a capture or promotion 99886864, forced mate 37950069, before move 9: 128500788, unreadable 4300782
+3587M positions kept in 210 shards data/ev_h<k>
+[21:59:38] h finished

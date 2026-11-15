@@ -1,0 +1,5 @@
+[21:11:44] network LFK (--h 384 --head 16,32 --hk 64) trained in 848s
+[21:15:15] layers reading 64 units a side (LFK) against plain (LFf), same outside data, 30,000 positions per move: {"opponent": "LFf", "tc": "30000 positions per move", "n": 2000, "w": 551, "d": 944, "l": 505, "score": 0.5115, "elo": 8.0, "lo": -3.1, "hi": 19.1, "avg_plies": 172.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.5}
+[21:36:34] network LFW (--h 768) trained in 1279s
+[21:39:58] 768 wide (LFW) against 384 wide (LFf), same outside data, 30,000 positions per move: {"opponent": "LFf", "tc": "30000 positions per move", "n": 2000, "w": 736, "d": 843, "l": 421, "score": 0.5787, "elo": 55.2, "lo": 43.6, "hi": 66.9, "avg_plies": 164.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.4}
+[21:39:58] finished
