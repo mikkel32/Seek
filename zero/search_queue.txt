@@ -1,17 +1,6 @@
-picker-clock-10+0.1 calc_s1 calc_s0 300 10+0.1
-clock-use-10+0.1 calc_s2 calc_s2 300 10+0.1 TmNew=1 TmNew=0
-logic-batch-50k calc_s3 calc_s2 1000 10+0.1 - - 50000
-integer-evaluator-clock-10+0.1 calc_s4 calc_s3 300 10+0.1
-run bash zero/voltest.sh reliability-margins-full-50k VolMix=100
-all-four-clock-10+0.1 calc_s4 calc_s0 300 10+0.1
-run bash zero/voltest.sh reliability-margins-prune-more-50k VolMix=100,VolRef=140
-run bash zero/voltest.sh reliability-margins-prune-less-50k VolMix=100,VolRef=70
-picker-equal-positions-20k calc_s1 calc_s0 1000 10+0.1 - - 20000
-integer-evaluator-equal-positions-20k calc_s4 calc_s3 1000 10+0.1 - - 20000
-cutnode-reduce-1-50k calc_s3 calc_s3 500 10+0.1 CutLmr=1 - 50000
-no-check-extension-50k calc_s3 calc_s3 500 10+0.1 ChkExt=0 - 50000
-negative-extension-50k calc_s3 calc_s3 500 10+0.1 NegExt=1 - 50000
-double-extension-20-50k calc_s3 calc_s3 500 10+0.1 SeDouble=20 - 50000
-probcut-180-50k calc_s3 calc_s3 500 10+0.1 ProbCut=180 - 50000
-cutnode-iir-50k calc_s3 calc_s3 500 10+0.1 CutIir=1 - 50000
-ttcapture-reduce-50k calc_s3 calc_s3 500 10+0.1 TtCapLmr=1 - 50000
+run bash zero/gt.sh "all four engine changes at the clock (picker, clock use, search logic, integer evaluator) against the old engine, 10+0.1" zero/search_tests.log --us "calc/calc_s4 zero/st_net.bin" --opp "old engine|calc/calc_s0 zero/st_net.bin|Hash=64" --tc 10+0.1 --openings 300 --stop 0,30
+run bash zero/gt.sh "search-logic batch, 50,000 positions per move" zero/search_tests.log --us "calc/calc_s3 zero/st_net.bin" --opp "without|calc/calc_s2 zero/st_net.bin|Hash=64" --openings 1000 --nodes 50000 --stop 0,20
+run bash zero/gt.sh "uncertainty-scaled pruning margins, 50,000 positions per move" zero/search_tests.log --us "calc/calc_s5 zero/vol_net.bin" --us_opts "Hash=64,VolMix=100" --opp "same margins everywhere|calc/calc_s5 zero/vol_net.bin|Hash=64" --openings 1000 --nodes 50000 --stop 0,20
+run bash zero/gt.sh "clock use by settledness alone, 10+0.1" zero/search_tests.log --us "calc/calc_s2 zero/st_net.bin" --us_opts "Hash=64,TmNew=1" --opp "old clock|calc/calc_s2 zero/st_net.bin|Hash=64,TmNew=0" --tc 10+0.1 --openings 300 --stop 0,30
+run bash zero/gt.sh "product terms in the evaluator, 20,000 positions per move" zero/research15.log --us "calc/calc_p zero/r15_P1.bin" --opp "P0|calc/calc_p zero/r15_P0.bin|Hash=64" --openings 1000 --nodes 20000 --stop 0,20
+run bash zero/gt.sh "against Stockfish 14.1 with its network off (hand-written evaluator), 10+0.1" zero/search_gap.log --us "calc/calc_s4 zero/st_net.bin" --opp "Stockfish 14.1 hand-written evaluator|/usr/games/stockfish|Hash=64,Threads=1,Use NNUE=false" --tc 10+0.1 --openings 100

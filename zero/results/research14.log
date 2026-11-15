@@ -1,0 +1,14 @@
+[11:33:00] start: generation 98 weights, 26 shards
+[11:34:36] arm E0 (--seed 0 ; 0.5239 passes): played held-out 0.499597, opening position eval 37  [95s]
+[11:36:11] arm E0b (--seed 1 ; 0.5239 passes): played held-out 0.499710, opening position eval 37  [95s]
+[11:38:52] arm X12 (--seed 0 --extrap 0.12 ; 0.5239 passes): played held-out 0.499651, opening position eval 36  [161s]
+[11:41:45] arm X30 (--seed 0 --extrap 0.30 ; 0.5239 passes): played held-out 0.499752, opening position eval 36  [172s]
+[11:45:29] arm E0L (--seed 0 ; 1.5717 passes): played held-out 0.499562, opening position eval 38  [223s]
+[11:48:53] 20,000 positions per move, E0b vs E0: {"n": 2000, "w": 632, "d": 684, "l": 684, "score": 0.487, "elo": -9.0, "lo": -21.4, "hi": 3.3, "avg_plies": 15
+[11:52:56] 20,000 positions per move, X12 vs E0: {"n": 2000, "w": 634, "d": 740, "l": 626, "score": 0.502, "elo": 1.4, "lo": -10.7, "hi": 13.5, "avg_plies": 15
+[12:01:08] 20,000 positions per move, X30 vs E0: 
+[12:04:40] 20,000 positions per move, E0L vs E0: {"n": 2000, "w": 654, "d": 715, "l": 631, "score": 0.5058, "elo": 4.0, "lo": -8.2, "hi": 16.2, "avg_plies": 15
+[12:08:55] clock 10+0.1, X12 vs E0: {"opponent": "E0", "tc": "10+0.1", "n": 300, "w": 76, "d": 158, "l": 66, "score": 0.5167, "elo": 11.6, "lo": -15.4, "hi": 38.8, "avg_plies": 155.0, "o
+[12:13:01] clock 10+0.1, X30 vs E0: {"opponent": "E0", "tc": "10+0.1", "n": 300, "w": 69, "d": 170, "l": 61, "score": 0.5133, "elo": 9.3, "lo": -16.6, "hi": 35.2, "avg_plies": 147.9, "ou
+[12:17:14] clock 10+0.1, E0L vs E0: {"opponent": "E0", "tc": "10+0.1", "n": 300, "w": 69, "d": 154, "l": 77, "score": 0.4867, "elo": -9.3, "lo": -36.8, "hi": 18.2, "avg_plies": 151.2, "o
+[12:17:14] finished
