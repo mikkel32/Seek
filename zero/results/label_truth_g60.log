@@ -1,0 +1,21 @@
+8000 played positions from 63 files of generation-60 self-play
+OURO step 316000; its value output ranges -8.61 to 7.33
+Stockfish 19 playouts: wins 0.371, draws 0.294, losses 0.335; our own game ended the same way in 0.704
+
+truth = Stockfish 19 playing the position out; fitted on 4000, tested on 4000. Lower is better. Difference is to production's label (lambda 0.95).
+  label                                                  calibrated   difference          raw
+  our search, 20,000 positions                           0.3295   -0.0445 +- 0.0077   0.0392
+  half 20,000-position search, half OURO                 0.3308   -0.0433 +- 0.0075   0.0400
+  third each: lambda-return, 20,000 search, OURO         0.3320   -0.0421 +- 0.0056   0.0400
+  lambda-return, lambda 0.7                              0.3350   -0.0391 +- 0.0064   0.0413
+  search score, 2,500 positions                          0.3371   -0.0370 +- 0.0075   0.0422
+  half lambda-return 0.95, half 20,000-position search   0.3382   -0.0358 +- 0.0044   0.0409
+  lambda-return, lambda 0.85                             0.3413   -0.0328 +- 0.0046   0.0421
+  half lambda-return 0.95, half OURO                     0.3420   -0.0320 +- 0.0046   0.0421
+  OURO value, no search                                  0.3457   -0.0284 +- 0.0081   0.0433
+  our evaluator, no search                               0.3630   -0.0111 +- 0.0085   0.0483
+  lambda-return, lambda 0.95                             0.3741   +0.0000 +- 0.0000   0.0495
+  half score, half result                                0.3927   +0.0186 +- 0.0056   0.0580
+  lambda-return, lambda 0.98                             0.4116   +0.0376 +- 0.0034   0.0655
+  game result                                            0.5175   +0.1434 +- 0.0091   0.1141
+
