@@ -1,0 +1,1 @@
+[13:08:48] reductions for late root moves (RootLmr=1): {"opponent": "without", "tc": "40000 positions per move", "n": 1448, "w": 382, "d": 657, "l": 409, "score": 0.4907, "elo": -6.5, "lo": -19.7, "hi": 6.7, "avg_plies": 153.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 17.1, "verdict": "decided after 1448 games: not +10 rather than -10"}
