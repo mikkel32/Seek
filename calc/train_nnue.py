@@ -33,6 +33,8 @@ ap.add_argument('--ytag', default='y')                   # which value target to
 ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresight heads (training only; the exported network is unchanged). Needs data/ev_<tag>_aux.npy
 ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
 ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
+ap.add_argument('--prod', type=int, default=0)           # 1 = product terms on top of the squares: unit i x unit i+H/2 within each view, and my unit i x the opponent's unit i
+                                                         # (piece-pair interactions the squares cannot express; a few thousand extra output weights, the big input table unchanged)
 ap.add_argument('--extrap', type=float, default=0.0)     # move every label this share further away from what the STARTING network says (in score units): the search
                                                          # corrects the evaluator only part of the way, and game results sit further along the same line (zero/teacher2.py)
 a = ap.parse_args()
@@ -75,6 +77,8 @@ class Net(torch.nn.Module):
         if M > 1:                                               # router: one score per expert from 2G hidden activations
             self.gw = torch.nn.Parameter(torch.randn(NEX, 2 * G) * 0.3)
             self.gb = torch.nn.Parameter(torch.zeros(NEX))
+        if a.prod:                                              # start at zero: a network grown from one without products computes the same function
+            self.qo = torch.nn.Parameter(torch.zeros(NEX, H // 2)); self.qp = torch.nn.Parameter(torch.zeros(NEX, H // 2)); self.qx = torch.nn.Parameter(torch.zeros(NEX, H))
         self.S = torch.nn.Parameter(torch.zeros(769, 2))            # [:,0] middlegame, [:,1] endgame
         self.c = torch.nn.Parameter(torch.zeros(2))
         if a.aux > 0:                                               # foresight heads: 3 later scores, plies left, 10 + 10 material changes, from, to, volatility
@@ -88,9 +92,11 @@ class Net(torch.nn.Module):
             Mo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, idx, one)[:, :768]
             Mp = torch.zeros(B, 769, device=idx.device).scatter_add_(1, LUT[idx], one)[:, :768]
             bk = ((Mo.sum(1) - 2) // 4).clamp(0, a.buckets - 1).long() if a.buckets > 1 else torch.zeros(B, dtype=torch.long, device=idx.device)
-            xo = (self.b + Mo @ self.E[:768]).clamp(0, 1) ** 2; xp = (self.b + Mp @ self.E[:768]).clamp(0, 1) ** 2
+            co = (self.b + Mo @ self.E[:768]).clamp(0, 1); cp = (self.b + Mp @ self.E[:768]).clamp(0, 1); xo = co ** 2; xp = cp ** 2
             lin = self.c + Mo @ self.S[:768]; ph = ((Mo @ PT_W[:768]) / 24).clamp(max=1.0)
             heads = xo @ self.wo.T + xp @ self.wp.T + self.cb                       # every piece-count head at once; the position's own is picked below
+            if a.prod:
+                h = H // 2; heads = heads + (co[:, :h] * co[:, h:]) @ self.qo.T + (cp[:, :h] * cp[:, h:]) @ self.qp.T + (co * cp) @ self.qx.T
             out = ph * lin[:, 0] + (1 - ph) * lin[:, 1] + (heads * F.one_hot(bk, NEX).to(heads.dtype)).sum(1)
             return (out, torch.cat([xo, xp], 1)) if feats else out
         bk = (((idx < 768).sum(1) - 2) // 4).clamp(0, a.buckets - 1) if a.buckets > 1 else torch.zeros(idx.shape[0], dtype=torch.long, device=idx.device)
@@ -111,6 +117,9 @@ class Net(torch.nn.Module):
         base = ph * lin[:, 0] + (1 - ph) * lin[:, 1]
         if M == 1:
             out = base + self.cb[bk] + (xo * self.wo[bk]).sum(1) + (xp * self.wp[bk]).sum(1)
+            if a.prod:
+                h = H // 2; co = ao.clamp(0, 1); cp = ap_.clamp(0, 1)
+                out = out + (co[:, :h] * co[:, h:] * self.qo[bk]).sum(1) + (cp[:, :h] * cp[:, h:] * self.qp[bk]).sum(1) + (co * cp * self.qx[bk]).sum(1)
             return (out, torch.cat([xo, xp], 1)) if feats else out
         e = bk[:, None] * M + torch.arange(M, device=idx.device)                                        # the piece-count group's experts
         outs = (xo[:, None, :] * self.wo[e]).sum(2) + (xp[:, None, :] * self.wp[e]).sum(2) + self.cb[e]
@@ -125,7 +134,7 @@ class Net(torch.nn.Module):
             if M > 1:
                 f.write(struct.pack('<iiiiii', 0x4F555235, H, NEX, NKB, M, G))
             else:
-                f.write(struct.pack('<iiii', 0x4F555233, H, a.buckets, NKB) if NKB > 1 else struct.pack('<iii', 0x4F555232, H, a.buckets))
+                f.write(struct.pack('<iiii', 0x4F555236 if a.prod else 0x4F555233, H, a.buckets, NKB) if NKB > 1 or a.prod else struct.pack('<iii', 0x4F555232, H, a.buckets))
             for t in (self.E[:NKB * 768], self.b):
                 f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
             for k in range(NEX):
@@ -135,6 +144,10 @@ class Net(torch.nn.Module):
             f.write(self.cb.detach().cpu().numpy().astype('<f4').tobytes())
             if M > 1:
                 f.write(self.gw.detach().cpu().numpy().astype('<f4').tobytes()); f.write(self.gb.detach().cpu().numpy().astype('<f4').tobytes())
+            if a.prod:
+                for k in range(NEX):
+                    for t in (self.qo[k], self.qp[k], self.qx[k]):
+                        f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
             if PVAL is not None:
                 f.write(struct.pack('<i5i', 0x4C415650, *PVAL))
 

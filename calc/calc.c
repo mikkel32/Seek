@@ -131,6 +131,7 @@ static void *big_alloc(size_t bytes) {
 }
 static float NGW[NBMAX][128], NGB[NBMAX];
 static float *NE, NB[HMAX], NWO[NBMAX][HMAX], NWP[NBMAX][HMAX], NCB[NBMAX], NC = 0, NS[768], NC2 = 0, NS2[768];
+static float NQO[NBMAX][HMAX / 2], NQP[NBMAX][HMAX / 2], NQX[NBMAX][HMAX]; static int NPROD = 0;   // product terms (see evaluate)
 static int have_net = 0, taper = 0;   // taper: second (endgame) linear table, blended by remaining material
 static int NKB = 1;                      // king buckets for the hidden-layer inputs (1 = none); mirrored so the king is on files a-d
 static const int KBT[32] = {0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6};
@@ -331,9 +332,9 @@ static int load_net(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f) return 0;
     int hdr[2], nb = 1, nk = 1, nm = 1, ng = 0;
-    if (fread(hdr, 4, 2, f) != 2 || (hdr[0] != 0x4F55524F && hdr[0] != 0x4F555232 && hdr[0] != 0x4F555233 && hdr[0] != 0x4F555235) || hdr[1] < 0 || hdr[1] > HMAX) { fclose(f); return 0; }
+    if (fread(hdr, 4, 2, f) != 2 || (hdr[0] != 0x4F55524F && hdr[0] != 0x4F555232 && hdr[0] != 0x4F555233 && hdr[0] != 0x4F555235 && hdr[0] != 0x4F555236) || hdr[1] < 0 || hdr[1] > HMAX) { fclose(f); return 0; }
     if (hdr[0] != 0x4F55524F && (fread(&nb, 4, 1, f) != 1 || nb < 1 || nb > NBMAX)) { fclose(f); return 0; }
-    if ((hdr[0] == 0x4F555233 || hdr[0] == 0x4F555235) && (fread(&nk, 4, 1, f) != 1 || nk < 1 || nk > 16)) { fclose(f); return 0; }
+    if ((hdr[0] == 0x4F555233 || hdr[0] == 0x4F555235 || hdr[0] == 0x4F555236) && (fread(&nk, 4, 1, f) != 1 || nk < 1 || nk > 16)) { fclose(f); return 0; }
     if (hdr[0] == 0x4F555235 && (fread(&nm, 4, 1, f) != 1 || fread(&ng, 4, 1, f) != 1 || nm < 1 || nb % nm || ng < 1 || ng > 64)) { fclose(f); return 0; }
     have_net = 0; NH = hdr[1]; NBK = nb / nm; NKB = nk; NM = nm; NG = ng;
     free(NE); NE = (float *)big_alloc((size_t)nk * 768 * (NH ? NH : 1) * 4);
@@ -347,6 +348,8 @@ static int load_net(const char *path) {
     taper = ok && fread(&NC2, 4, 1, f) == 1 && fread(NS2, 4, 768, f) == 768;
     if (hdr[0] != 0x4F55524F) ok &= fread(NCB, 4, nb, f) == (size_t)nb;
     if (nm > 1) { for (int k = 0; k < nb; k++) ok &= fread(NGW[k], 4, 2 * ng, f) == (size_t)(2 * ng); ok &= fread(NGB, 4, nb, f) == (size_t)nb; }
+    NPROD = hdr[0] == 0x4F555236 && NH;
+    if (NPROD) for (int k = 0; k < nb; k++) { ok &= fread(NQO[k], 4, NH / 2, f) == (size_t)(NH / 2); ok &= fread(NQP[k], 4, NH / 2, f) == (size_t)(NH / 2); ok &= fread(NQX[k], 4, NH, f) == (size_t)NH; }
     { int tag = 0, pv[5]; if (ok && fread(&tag, 4, 1, f) == 1 && tag == 0x4C415650 && fread(pv, 4, 5, f) == 5) set_piece_values(pv); }
     fclose(f);
     if (!taper) { NC2 = 0; memset(NS2, 0, sizeof NS2); }
@@ -374,6 +377,29 @@ static inline float screlu_dot(const float *a, const float *w, int n) {
     lo = _mm_hadd_ps(lo, lo); lo = _mm_hadd_ps(lo, lo); out = _mm_cvtss_f32(lo);
 #endif
     for (; i < n; i++) { float x = a[i] < 0 ? 0 : (a[i] > 1 ? 1 : a[i]); out += w[i] * x * x; }
+    return out;
+}
+// sum_i w[i] * clamp(a[i], 0, 1) * clamp(b[i], 0, 1): two different hidden units multiplied. A square can only say "this
+// pattern, strongly"; a product says "this pattern AND that one" (two of my own, or one of mine and one of the opponent's).
+static inline float prod_dot(const float *a, const float *b, const float *w, int n) {
+    int i = 0; float out = 0;
+#if defined(__AVX512F__)
+    __m512 acc = _mm512_setzero_ps(); const __m512 zero = _mm512_setzero_ps(), one = _mm512_set1_ps(1.0f);
+    for (; i + 16 <= n; i += 16) {
+        __m512 x = _mm512_min_ps(_mm512_max_ps(_mm512_loadu_ps(a + i), zero), one), y = _mm512_min_ps(_mm512_max_ps(_mm512_loadu_ps(b + i), zero), one);
+        acc = _mm512_fmadd_ps(_mm512_mul_ps(x, y), _mm512_loadu_ps(w + i), acc);
+    }
+    out = _mm512_reduce_add_ps(acc);
+#elif defined(__AVX2__) && defined(__FMA__)
+    __m256 acc = _mm256_setzero_ps(); const __m256 zero = _mm256_setzero_ps(), one = _mm256_set1_ps(1.0f);
+    for (; i + 8 <= n; i += 8) {
+        __m256 x = _mm256_min_ps(_mm256_max_ps(_mm256_loadu_ps(a + i), zero), one), y = _mm256_min_ps(_mm256_max_ps(_mm256_loadu_ps(b + i), zero), one);
+        acc = _mm256_fmadd_ps(_mm256_mul_ps(x, y), _mm256_loadu_ps(w + i), acc);
+    }
+    __m128 lo = _mm_add_ps(_mm256_castps256_ps128(acc), _mm256_extractf128_ps(acc, 1));
+    lo = _mm_hadd_ps(lo, lo); lo = _mm_hadd_ps(lo, lo); out = _mm_cvtss_f32(lo);
+#endif
+    for (; i < n; i++) { float x = a[i] < 0 ? 0 : (a[i] > 1 ? 1 : a[i]), y = b[i] < 0 ? 0 : (b[i] > 1 ? 1 : b[i]); out += w[i] * x * y; }
     return out;
 }
 static int evaluate(void) {
@@ -413,6 +439,7 @@ static int evaluate(void) {
     const float *wo = NWO[bk], *wp = NWP[bk];
     float out = lin + NCB[bk];
     out += screlu_dot(ao, wo, n) + screlu_dot(ap, wp, n);
+    if (NPROD) out += prod_dot(ao, ao + n / 2, NQO[bk], n / 2) + prod_dot(ap, ap + n / 2, NQP[bk], n / 2) + prod_dot(ao, ap, NQX[bk], n);
     int v = (int)(out * 271.58f);        // logit of win probability -> centipawns
     return v > 20000 ? 20000 : (v < -20000 ? -20000 : v);
 }
