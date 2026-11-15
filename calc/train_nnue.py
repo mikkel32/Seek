@@ -33,6 +33,8 @@ ap.add_argument('--ytag', default='y')                   # which value target to
 ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresight heads (training only; the exported network is unchanged). Needs data/ev_<tag>_aux.npy
 ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
 ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
+ap.add_argument('--extrap', type=float, default=0.0)     # move every label this share further away from what the STARTING network says (in score units): the search
+                                                         # corrects the evaluator only part of the way, and game results sit further along the same line (zero/teacher2.py)
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
 
@@ -231,6 +233,11 @@ class MatOpt:
 matopt = MatOpt(net.E, a.opt) if a.opt != 'adam' else None
 opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8, fused=DEV.type == 'cuda')
 fwd = torch.compile(net) if DENSE and DEV.type == 'cuda' else net        # the compiled model is the same network in fewer GPU kernels
+REF = None
+if a.extrap != 0:                                                        # a frozen copy of the network as it starts
+    REF = Net().to(DEV); REF.load_state_dict(net.state_dict())
+    for p_ in REF.parameters():
+        p_.requires_grad_(False)
 if ema is not None:
     ema.load_state_dict(net.state_dict())
 VX = torch.from_numpy(np.load(f'data/ev_{a.val}_x.npy').astype(np.int64)).to(DEV); VY = torch.from_numpy(np.load(f'data/ev_{a.val}_y.npy').astype(np.float32)).to(DEV)
@@ -299,7 +306,11 @@ while not done:
                 run_main = loss.detach(); loss = loss + a.aux * la
             else:
                 xb = mirrored(X[k].long()) if a.mirror > 0 else X[k].long()
-                loss = F.binary_cross_entropy_with_logits(fwd(xb), Y[k].float() / 255); run_main = loss.detach()
+                yb = Y[k].float() / 255
+                if REF is not None:
+                    with torch.no_grad():
+                        ly = torch.logit(yb.clamp(1 / 510, 1 - 1 / 510)); yb = torch.sigmoid(ly + a.extrap * (ly - REF(xb)))
+                loss = F.binary_cross_entropy_with_logits(fwd(xb), yb); run_main = loss.detach()
             opt.zero_grad(set_to_none=True)
             if matopt is not None:
                 net.E.grad = None

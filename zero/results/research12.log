@@ -1,0 +1,16 @@
+[09:53:35] start: generation 81 weights, 716 raw files, OURO at step 455000
+46003505 positions, 11362481 played. Held-out log-loss against our own game result: evaluator 0.5079  search 0.4934  OURO 0.4991  evaluator+search 0.4932  evaluator+search+OURO 0.4923
+weights without OURO (evaluator, search, offset) [-0.117  1.092 -0.027]   with OURO (evaluator, search, OURO, offset) [-0.299  0.901  0.384 -0.026]
+scale brought back to the search score: divided by 0.986 (without OURO) and 0.997 (with)
+mean |label - search score|: production 0.0186, without OURO 0.0055, with OURO 0.0135; with against without 0.0122
+[10:39:21] arm y95: positions 46.0M, hidden 384, steps 8423, train loss loss 0.47620  [169s]
+[10:42:11] arm yN: positions 46.0M, hidden 384, steps 8423, train loss loss 0.47904  [170s]
+[10:43:38] arm yO: positions 46.0M, hidden 384, steps 8423, train loss loss 0.48019  [87s]
+[10:43:39] arm y95 evaluates the opening position at eval 36
+[10:43:40] arm yN evaluates the opening position at eval 31
+[10:43:41] arm yO evaluates the opening position at eval 34
+[10:47:13] 20,000 positions per move, yO vs y95: 
+[10:50:02] 20,000 positions per move, yN vs y95: {"n": 2000, "w": 730, "d": 653, "l": 617, "score": 0.5282, "elo": 19.7, "lo": 7.2, "hi": 32.2, "avg_plies": 15
+[10:52:41] 20,000 positions per move, yO vs yN: {"n": 2000, "w": 636, "d": 697, "l": 667, "score": 0.4923, "elo": -5.4, "lo": -17.7, "hi": 6.9, "avg_plies": 1
+[10:56:50] clock 10+0.1, yO vs y95: {"opponent": "y95", "tc": "10+0.1", "n": 300, "w": 77, "d": 155, "l": 68, "score": 0.515, "elo": 10.4, "lo": -16.9, "hi": 37.9, "avg_plies": 151.2, "o
+[10:56:50] finished
