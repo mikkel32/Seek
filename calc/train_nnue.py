@@ -31,6 +31,8 @@ ap.add_argument('--widen', default='')                   # start from a narrower
 ap.add_argument('--dense', type=int, default=-1)         # 1 = matrix-product formulation (fast on a GPU), 0 = lookup-and-sum (fast on a CPU), -1 = choose by device
 ap.add_argument('--ytag', default='y')                   # which value target to train on: y (production), ys (smoothed), yl (lambda-return) -- see zero/foresight.py
 ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresight heads (training only; the exported network is unchanged). Needs data/ev_<tag>_aux.npy
+ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
+ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
 
@@ -264,8 +266,19 @@ def aux_loss(feat, ax):
     return total_, {k_: float(v_) for k_, v_ in parts.items()}
 
 
+def mirrored(idx):
+    """a random share of the rows mirrored left-right. The network never sees castling rights; a position whose kings have
+    both left their home squares is exactly as legal and exactly as good mirrored. In the mover's view the own king's home
+    is e1 (feature 5*64+4) and the opponent's is e8 (feature 11*64+60)."""
+    m = torch.rand(idx.shape[0], device=idx.device) < a.mirror
+    if not a.mirror_all:
+        m &= ~((idx == 324) | (idx == 764)).any(1)
+    return torch.where(m[:, None] & (idx < 768), (idx // 64) * 64 + ((idx % 64) ^ 7), idx)
+
+
 AUXLOG = {}
 done = False
+assert not (a.mirror > 0 and a.aux > 0), 'the foresight targets are not mirrored'
 while not done:
     for ci in rs.permutation(len(chunks)):
         fi, s = chunks[ci]
@@ -285,7 +298,8 @@ while not done:
                 la, AUXLOG = aux_loss(feat_, AX[k])
                 run_main = loss.detach(); loss = loss + a.aux * la
             else:
-                loss = F.binary_cross_entropy_with_logits(fwd(X[k].long()), Y[k].float() / 255); run_main = loss.detach()
+                xb = mirrored(X[k].long()) if a.mirror > 0 else X[k].long()
+                loss = F.binary_cross_entropy_with_logits(fwd(xb), Y[k].float() / 255); run_main = loss.detach()
             opt.zero_grad(set_to_none=True)
             if matopt is not None:
                 net.E.grad = None
