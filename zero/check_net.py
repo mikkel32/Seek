@@ -34,7 +34,7 @@ def ev(b):
     if prod:
         h = H // 2; pr = (co[:h] * co[h:]) @ w['qo'][bk] + (cp[:h] * cp[h:]) @ w['qp'][bk] + (co * cp) @ w['qx'][bk]
     if mlp:                                  # the layered read-out of this bucket
-        h1 = w['L1'].shape[0] // nb; x = np.concatenate([co ** 2, cp ** 2])
+        h1 = w['L1'].shape[0] // nb; hk = w['L1'].shape[1] // 2; x = np.concatenate([(co ** 2)[:hk], (cp ** 2)[:hk]])
         u = (w['L1'][bk * h1:(bk + 1) * h1] @ x + w['b1'][bk * h1:(bk + 1) * h1]).clip(0, 1) ** 2
         hd = w['L3'][bk] @ (w['L2'][bk] @ u + w['b2'][bk]).clip(0, 1); HP.append(abs(hd) * 271.58); pr = pr + hd
     PARTS.append(abs(pr) * 271.58)

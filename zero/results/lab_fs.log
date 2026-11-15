@@ -1,0 +1,5 @@
+[17:46:31] arm S384 (): played held-out 0.519248 in 1359s
+[17:52:36] arm S384H (--head 16,32): played held-out 0.518504 in 1724s
+[17:55:43] from scratch: with the layers (S384H) against without (S384), 30,000 positions per move: {"opponent": "S384", "tc": "30000 positions per move", "n": 2000, "w": 724, "d": 686, "l": 590, "score": 0.5335, "elo": 23.3, "lo": 11.0, "hi": 35.7, "avg_plies": 150.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.9}
+[17:56:47] from scratch on 270M (S384) against the generational network (N384), 30,000 positions per move: {"opponent": "N384", "tc": "30000 positions per move", "n": 1000, "w": 294, "d": 359, "l": 347, "score": 0.4735, "elo": -18.4, "lo": -35.7, "hi": -1.2, "avg_plies": 155.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 1.1}
+[17:56:47] finished

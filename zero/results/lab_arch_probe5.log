@@ -1,0 +1,9 @@
+60M training positions from 4 shards, 1.0M held out from another shard, 155051 played positions; 8000 steps of 8192; every variant from scratch, same order
+plain 384                          parameters     303k   held-out label loss 0.50317   played positions (half score, half result) 0.52696   322k positions/s
+pairwise 384                       parameters     300k   held-out label loss 0.50323   played positions (half score, half result) 0.52698   362k positions/s
+pairwise 768                       parameters     598k   held-out label loss 0.50234   played positions (half score, half result) 0.52640   562k positions/s
+pairwise 512                       parameters     399k   held-out label loss 0.50286   played positions (half score, half result) 0.52708   1004k positions/s
+pawn pairs near 384                parameters     991k   held-out label loss 0.50263   played positions (half score, half result) 0.52616   563k positions/s
+pawn pairs all 384                 parameters    6594k   held-out label loss 0.50419   played positions (half score, half result) 0.52798   333k positions/s
+pawn pairs near + mirrored 384     parameters     991k   held-out label loss 0.50211   played positions (half score, half result) 0.52582   190k positions/s
+pawn pairs near + pairwise 512     parameters    1317k   held-out label loss 0.50219   played positions (half score, half result) 0.52578   189k positions/s

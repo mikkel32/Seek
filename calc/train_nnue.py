@@ -35,6 +35,7 @@ ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresig
 ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
 ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
 ap.add_argument('--lr_end', type=float, default=0.0)      # learning rate at the last step (0 = the usual 2% of --lr). Long runs of other self-taught engines decay to 1e-6
+ap.add_argument('--hk', type=int, default=0)             # with --head: the layers read only the first hk units of each side (0 = all); the engine pays per unit read
 ap.add_argument('--hm', type=int, default=0)             # 1 = mirrored inputs: a view's inputs are flipped left-right when its own king is on files a-d (one set of weights for both wings)
 ap.add_argument('--head', default='')                    # '16,32' = a small layered read-out per piece-count bucket on top of the direct one (2H -> 16 -> 32 -> 1); starts at zero
 ap.add_argument('--prod', type=int, default=0)           # 1 = product terms on top of the squares: unit i x unit i+H/2 within each view, and my unit i x the opponent's unit i
@@ -53,7 +54,7 @@ DEV = torch.device('cuda' if a.device == 'cuda' or (a.device == 'auto' and torch
 M = a.experts; G = min(a.gate, a.h); NEX = a.buckets * M       # NEX output experts in total
 ROUTE = {'tau': 1.0, 'hard': False, 'train': True}                       # router temperature / hard top-1 routing (set by the training loop)
 NKB = a.kb
-HEAD = [int(x) for x in a.head.split(',')] if a.head else None
+HEAD = [int(x) for x in a.head.split(',')] if a.head else None; HK = a.hk or a.h
 KBT = torch.tensor([0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5] + [6] * 16)
 KB11 = torch.tensor([0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8] + [9] * 16 + [10] * 32)
 
@@ -92,7 +93,7 @@ class Net(torch.nn.Module):
             self.qo = torch.nn.Parameter(torch.zeros(NEX, H // 2)); self.qp = torch.nn.Parameter(torch.zeros(NEX, H // 2)); self.qx = torch.nn.Parameter(torch.zeros(NEX, H))
         if HEAD:                                                # the last layer starts at zero: a network grown from one without the layers computes the same function
             h1, h2 = HEAD; P_ = torch.nn.Parameter
-            self.L1 = P_(torch.randn(NEX * h1, 2 * H) / math.sqrt(2 * H)); self.b1 = P_(torch.zeros(NEX * h1))
+            self.L1 = P_(torch.randn(NEX * h1, 2 * HK) / math.sqrt(2 * HK)); self.b1 = P_(torch.zeros(NEX * h1))
             self.L2 = P_(torch.randn(NEX, h2, h1) / math.sqrt(h1)); self.b2 = P_(torch.zeros(NEX, h2)); self.L3 = P_(torch.zeros(NEX, h2))
         self.S = torch.nn.Parameter(torch.zeros(769, 2))            # [:,0] middlegame, [:,1] endgame
         self.c = torch.nn.Parameter(torch.zeros(2))
@@ -102,7 +103,7 @@ class Net(torch.nn.Module):
     def layered(self, xo, xp, bk):
         """the layered read-out of the position's own bucket: squared clipped units, then clipped units, then a sum"""
         h1, h2 = HEAD; B = xo.shape[0]; ar = torch.arange(B, device=xo.device)
-        u = (torch.cat([xo, xp], 1) @ self.L1.T + self.b1).view(B, NEX, h1)[ar, bk].clamp(0, 1) ** 2
+        u = (torch.cat([xo[:, :HK], xp[:, :HK]], 1) @ self.L1.T + self.b1).view(B, NEX, h1)[ar, bk].clamp(0, 1) ** 2
         v = (torch.bmm(self.L2[bk], u[:, :, None]).squeeze(2) + self.b2[bk]).clamp(0, 1)
         return (v * self.L3[bk]).sum(1)
 
@@ -185,7 +186,7 @@ class Net(torch.nn.Module):
             if a.hm:
                 f.write(struct.pack('<i', 0x3152494D))          # trailer 'MIR1': mirrored inputs (the engine reads it from calc_s14 on)
             if HEAD:                                            # trailer 'MLP1': the layered read-out (the engine reads it from calc_s13 on)
-                f.write(struct.pack('<iii', 0x31504C4D, *HEAD))
+                f.write(struct.pack('<iii', 0x31504C4D, *HEAD) if HK == H else struct.pack('<iiii', 0x32504C4D, *HEAD, HK))     # 'MLP2' (calc_s16 on): the layers read the first HK units a side
                 for t in (self.L1, self.b1, self.L2, self.b2, self.L3):
                     f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
 

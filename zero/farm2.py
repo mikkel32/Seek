@@ -16,7 +16,7 @@ are deleted. One file in 25 of the first shard is held out, whole, as validation
   python3 zero/farm2.py <engine binary> <network> <workers> <shards to make> [files per shard=240] [positions searched per move=2500]
   -> data/ev_b<N>_c.npy, data/ev_b<N>_y.npy, data/ev_bval_x.npy, data/ev_bval_y.npy          stop early: touch zero/FARM_STOP
 """
-import glob, os, re, shutil, signal, subprocess, sys, time
+import glob, os, re, shutil, signal, subprocess, sys, threading, time
 import numpy as np
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')); sys.path.insert(0, 'zero')
 from compact import encode
@@ -29,18 +29,27 @@ os.makedirs('/tmp/sp', exist_ok=True); os.makedirs('data', exist_ok=True)
 worker = f'i=$1; while [ ! -f zero/FARM_STOP ]; do f=/tmp/sp/w${{i}}_$(date +%s%N); {ENGINE} {NET} selfplay $f.tmp 200 {NODES} $(( ($(date +%s%N) / 1000 + i * 7919) % 2000000000 )) 1 4 0 > /dev/null 2>&1 && mv $f.tmp $f.bin; rm -f $f.tmp; done'
 procs = [subprocess.Popen(['bash', '-c', worker, 'w', str(i)], start_new_session=True) for i in range(W)]
 num = lambda f: int(re.search(r'ev_b(\d+)_c', f).group(1))
-done = max([num(f) for f in glob.glob('data/ev_b[0-9]*_c.npy')] + [-1]) + 1; NSH += done; t0 = time.time(); total = 0; paused = False
-print(f'{W} self-play workers on {NET}, {NODES} positions per move; {PER} files a shard; shards {done} -> {NSH}', flush=True)
-try:
-    while done < NSH and not os.path.exists('zero/FARM_STOP'):
+done = max([num(f) for f in glob.glob('data/ev_b[0-9]*_c.npy')] + [-1]) + 1; NSH += done; t0 = time.time(); total = 0
+def watcher():
+    """freeze or thaw every worker (its shell and its engine) within a second of zero/FARM_PAUSE appearing or going; the main
+    loop may be busy for minutes writing a shard, and a match that needs the processors cannot wait for it"""
+    paused = False
+    while True:
         want = os.path.exists('zero/FARM_PAUSE') or shutil.disk_usage('.').free < 2.5e9
-        if want != paused:                                               # freeze or thaw every worker (its shell and its engine)
+        if want != paused:
             for p in procs:
                 try:
                     os.killpg(p.pid, signal.SIGSTOP if want else signal.SIGCONT)
                 except Exception:
                     pass
             paused = want; print(f'[{time.strftime("%H:%M:%S", time.gmtime())}] workers {"paused" if paused else "running again"}', flush=True)
+        time.sleep(1)
+
+
+threading.Thread(target=watcher, daemon=True).start()
+print(f'{W} self-play workers on {NET}, {NODES} positions per move; {PER} files a shard; shards {done} -> {NSH}', flush=True)
+try:
+    while done < NSH and not os.path.exists('zero/FARM_STOP'):
         files = sorted(glob.glob('/tmp/sp/*.bin'), key=os.path.getmtime)
         if len(files) < PER:
             time.sleep(5); continue

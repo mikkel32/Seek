@@ -19,6 +19,11 @@ width buys: an idea is worth building into the engine if it beats that at fewer 
                              Variants: only some kinds of piece (am='pawn', 'nonslide' = pawn, knight, king, 'slide' = bishop,
                              rook, queen, 'colour' = one map per side, 'class' = pawn / knight+bishop / rook / queen / king),
                              and feeding the maps into only the first amk hidden units (the engine pays per unit fed).
+  pairwise                   the read-out sums products of pairs of clipped units (unit i x unit i+H/2 of the same side)
+                             instead of squares: half as many terms to sum, and every term joins two units
+  pawn pairs                 one input per pair of pawns: 'near' = the second pawn stands beside or up to two ranks ahead on
+                             the same or a neighbouring file (chains, levers, doubled and passed pawns; 1,792 inputs),
+                             'all' = any two pawns (16,384 inputs). Pawns move rarely, so the engine would pay almost nothing.
   threats                    one input per (kind of attacker, attacked piece on its square), 12 x 768 of them, added into
                              the same hidden layer: who attacks whom, without the attacker's own square
   layered head               the hidden layer is read by a small network (16 -> 32 units per piece-count bucket) on top of
@@ -110,6 +115,20 @@ def attack_map(idx):
 
 
 @torch.no_grad()
+def pawn_pairs(idx, near):
+    """every pair of pawns once (lower square first) as one input number -> (inputs, start of each position's list); idx is one side's view"""
+    valid, code, sq, occ = pieces(idx); pawn = valid & ((code == 0) | (code == 6))
+    m = pawn[:, :, None] & pawn[:, None, :] & (sq[:, :, None] < sq[:, None, :])
+    dx = (sq[:, None, :] & 7) - (sq[:, :, None] & 7); dy = (sq[:, None, :] >> 3) - (sq[:, :, None] >> 3)
+    if near:
+        m = m & (dx.abs() <= 1) & (dy <= 2)
+    b, i, j = m.nonzero(as_tuple=True); ty = (code[b, i] == 6).long() * 2 + (code[b, j] == 6).long()
+    f = (ty * 64 + sq[b, i]) * 7 + dy[b, i, j] * 3 + dx[b, i, j] - 1 if near else ty * 4096 + sq[b, i] * 64 + sq[b, j]
+    off = torch.zeros(idx.shape[0] + 1, dtype=torch.long, device=DEV); off[1:] = torch.bincount(b, minlength=idx.shape[0]).cumsum(0)
+    return f, off[:-1]
+
+
+@torch.no_grad()
 def threat_lists(idx):
     """every attack or defence piece i -> piece j as one input number per side's view: attacker kind * 768 + the target's piece-on-square
     -> (inputs in the mover's view, in the opponent's view, start of each position's list)"""
@@ -137,12 +156,14 @@ def multi_hot(idx):
 
 
 class Net(torch.nn.Module):
-    def __init__(self, H, hm=False, kb=False, rel=0, am=False, head=None, thr=False, amk=0, h1=16, h2=32, direct=True, hk=0, nar=0, nam=False):
+    def __init__(self, H, hm=False, kb=False, rel=0, am=False, head=None, thr=False, amk=0, h1=16, h2=32, direct=True, hk=0, nar=0, nam=False, pw=False, pp=None):
         super().__init__(); self.H, self.hm, self.kb, self.rel, self.head, self.thr = H, hm, kb, rel, head, thr
-        self.am = 'all' if am is True else am; self.amk = amk or H; self.h1, self.h2, self.direct, self.hk, self.nar, self.nam = h1, h2, direct, hk, nar, nam; din = 2 * (nar or hk or H)
+        self.am = 'all' if am is True else am; self.amk = amk or H; self.h1, self.h2, self.direct, self.hk, self.nar, self.nam, self.pw, self.pp = h1, h2, direct, hk, nar, nam, pw, pp; HO = H // 2 if pw else H; din = 2 * (nar or hk or H)
         P = torch.nn.Parameter
         self.E = P(torch.randn(768, H) * 0.05); self.b = P(torch.full((H,), 0.1))
-        self.wo = P(torch.randn(8, H) / math.sqrt(H)); self.wp = P(torch.randn(8, H) / math.sqrt(H)); self.cb = P(torch.zeros(8))
+        self.wo = P(torch.randn(8, HO) / math.sqrt(HO)); self.wp = P(torch.randn(8, HO) / math.sqrt(HO)); self.cb = P(torch.zeros(8))
+        if pp:
+            self.E4 = P(torch.zeros(1792 if pp == 'near' else 16384, H))
         self.S = P(torch.zeros(768, 2)); self.c = P(torch.zeros(2))
         if kb:
             self.D = P(torch.zeros(11 * 768 + 1, H))                           # correction per king region; starts at zero
@@ -181,9 +202,14 @@ class Net(torch.nn.Module):
         if self.am:                                                            # the same attack map seen from each side
             Am = attack_map(idx); pad = (0, self.H - self.amk)
             ao = ao + F.pad(am_groups(Am, self.am) @ self.E2, pad); ap = ap + F.pad(am_groups(Am[:, LUT768], self.am) @ self.E2, pad)
+        if self.pp:                                                            # each side's view of the pawn pairs
+            f, off = pawn_pairs(idx, self.pp == 'near'); ao = ao + F.embedding_bag(f, self.E4, off, mode='sum')
+            f, off = pawn_pairs(LUT[idx], self.pp == 'near'); ap = ap + F.embedding_bag(f, self.E4, off, mode='sum')
         if self.thr:
             fo, fp, off = threat_lists(idx); ao = ao + F.embedding_bag(fo, self.E3, off, mode='sum'); ap = ap + F.embedding_bag(fp, self.E3, off, mode='sum')
         xo = ao.clamp(0, 1) ** 2; xp = ap.clamp(0, 1) ** 2
+        if self.pw:
+            co, cp = ao.clamp(0, 1), ap.clamp(0, 1); h = self.H // 2; xo = co[:, :h] * co[:, h:]; xp = cp[:, :h] * cp[:, h:]
         out = ph * lin[:, 0] + (1 - ph) * lin[:, 1] + self.cb[bk]
         if self.direct:
             out = out + (xo * self.wo[bk]).sum(1) + (xp * self.wp[bk]).sum(1)
@@ -263,7 +289,11 @@ VAR = [('plain 384', dict(H=384)), ('plain 768', dict(H=768)), ('attack maps 384
        # fourth round: wide and shallow for the pieces, narrow and deep for the relations
        ('two-speed: narrow 64 with maps', dict(H=384, head='mlp', nar=64, h1=32, nam=True)), ('two-speed: narrow 32 with maps', dict(H=384, head='mlp', nar=32, h1=32, nam=True)),
        ('two-speed: narrow 128 with maps', dict(H=384, head='mlp', nar=128, h1=32, nam=True)), ('two-speed: narrow 64 with maps, wide 256', dict(H=256, head='mlp', nar=64, h1=32, nam=True)),
-       ('two-speed: narrow 64 with maps, mirrored', dict(H=384, hm=True, head='mlp', nar=64, h1=32, nam=True)), ('two-speed: narrow 64 with maps, 64-32 layers', dict(H=384, head='mlp', nar=64, h1=64, nam=True))]
+       ('two-speed: narrow 64 with maps, mirrored', dict(H=384, hm=True, head='mlp', nar=64, h1=32, nam=True)), ('two-speed: narrow 64 with maps, 64-32 layers', dict(H=384, head='mlp', nar=64, h1=64, nam=True)),
+       # fifth round: suggestions from outside
+       ('pairwise 384', dict(H=384, pw=True)), ('pairwise 768', dict(H=768, pw=True)), ('pairwise 512', dict(H=512, pw=True)),
+       ('pawn pairs near 384', dict(H=384, pp='near')), ('pawn pairs all 384', dict(H=384, pp='all')), ('pawn pairs near + mirrored 384', dict(H=384, pp='near', hm=True)),
+       ('pawn pairs near + pairwise 512', dict(H=512, pp='near', pw=True))]
 for name, kw in VAR:
     if WHICH is None or any(wh in name for wh in WHICH):
         run(name, **kw)
