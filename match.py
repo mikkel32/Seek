@@ -138,19 +138,60 @@ class SFPlayer:
         self.e.quit()
 
 
+class RawUCI:
+    """a UCI engine driven over plain pipes: one write and a few reads per move. The chess library's engine layer
+    (a background event loop that parses every info line) cost about as much per move as a 4,000-node search."""
+    def __init__(self, cmd):
+        import subprocess
+        self.p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
+        self.send('uci'); self.wait('uciok'); self.send('isready'); self.wait('readyok')
+
+    def send(self, line):
+        self.p.stdin.write(line + '\n'); self.p.stdin.flush()
+
+    def wait(self, word):
+        last = ''
+        while True:
+            line = self.p.stdout.readline()
+            if not line:
+                raise RuntimeError('engine process died')
+            if line.startswith(word):
+                return line, last
+            if line.startswith('info') and ' depth ' in line:
+                last = line
+
+    def configure(self, opts):
+        for k, v in opts.items():
+            self.send(f'setoption name {k} value {v}')
+
+    def play(self, board, nodes=None, seconds=None):
+        """-> (move, nodes searched, depth reached)"""
+        fen = getattr(board, 'start_fen', None) or board.root().fen()        # the worker notes the opening on the board: rebuilding it costs a full replay
+        self.send('position fen ' + fen + (' moves ' + ' '.join(m.uci() for m in board.move_stack) if board.move_stack else ''))
+        self.send(f'go nodes {int(nodes)}' if nodes else f'go movetime {max(1, int(1000 * seconds))}')
+        best, info = self.wait('bestmove')
+        t = info.split(); g = lambda k: int(t[t.index(k) + 1]) if k in t else 0
+        return chess.Move.from_uci(best.split()[1]), g('nodes'), g('depth')
+
+    def quit(self):
+        try:
+            self.send('quit'); self.p.wait(timeout=2)
+        except Exception:
+            self.p.kill()
+
+
 class CalcPlayer:
     """the C calculator: calc:<weights file | none>:<seconds per move, or nodes if >= 100>[:<engine binary>[:<Option=value,...>]]"""
     def __init__(self, net, t, binary='calc/calc', opts=''):
-        self.e = chess.engine.SimpleEngine.popen_uci([binary] + ([net] if net != 'none' else []))
+        self.e = RawUCI([binary] + ([net] if net != 'none' else []))
         if opts:                                   # engine options, e.g. ProbCut=180,CutLmr=1
             self.e.configure({k: int(v) for k, v in (kv.split('=') for kv in opts.split(','))})
         self.t = float(t); self.moves = 0; self.secs = 0.0; self.nodes = 0; self.depth = 0
 
     def go(self, board, t):
-        lim = chess.engine.Limit(nodes=int(t)) if t >= 100 else chess.engine.Limit(time=t)     # >= 100 means a node budget
-        r = self.e.play(board, lim, info=chess.engine.INFO_BASIC)
-        self.nodes += r.info.get('nodes', 0); self.depth += r.info.get('depth', 0)
-        return r.move
+        m, n, d = self.e.play(board, nodes=t) if t >= 100 else self.e.play(board, seconds=t)     # >= 100 means a node budget
+        self.nodes += n; self.depth += d
+        return m
 
     def move(self, board, history):
         t = time.time()
@@ -276,7 +317,7 @@ def _worker(args):
     out = []
     for f in fens:
         for a_white in (True, False):
-            board = chess.Board(f)
+            board = chess.Board(f); board.start_fen = f
             hist = [board._transposition_key()]
             while True:
                 r = result_of(board, max_plies, sf)

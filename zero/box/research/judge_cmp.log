@@ -1,0 +1,22 @@
+/root/loopchess/zero/judge_cmp.py:12: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  sd = torch.load(sys.argv[1], map_location=DEV); ck = torch.load(sys.argv[2], map_location=DEV)
+120000 fresh played positions; OURO at step 16000; network hidden 256
+  calculator network (static)        vs result 0.4886   vs search score 0.5354   vs production target 0.5120
+  search score itself (5000 nodes)   vs result 0.4679   vs search score 0.5264   vs production target 0.4971
+  OURO, 1 loop(s)                    vs result 0.4588   vs search score 0.5381   vs production target 0.4985
+  OURO, 2 loop(s)                    vs result 0.4592   vs search score 0.5377   vs production target 0.4985
+  average of network and OURO        vs result 0.4700   vs search score 0.5326   vs production target 0.5013
+  correlation of their errors: 0.761
+  OURO, 4 loop(s)                    vs result 0.4595   vs search score 0.5375   vs production target 0.4985
+recalibrated to the result (fitted on half, tested on the other half):
+  calculator network   log-loss vs result 0.4755   weights [1.549, -0.023]
+  search score         log-loss vs result 0.4559   weights [1.54, -0.033]
+  OURO                 log-loss vs result 0.4537   weights [1.346, -0.03]
+  network + search     log-loss vs result 0.4550   weights [-0.559, 2.041, -0.035]
+  search + OURO        log-loss vs result 0.4508   weights [0.656, 0.804, -0.032]
+  network + OURO       log-loss vs result 0.4531   weights [-0.34, 1.604, -0.031]
+  all three            log-loss vs result 0.4466   weights [-1.216, 1.33, 1.178, -0.036]
+  pieces  2-10:  33753 positions   network 0.4156   search 0.3964   OURO 0.3817
+  pieces 11-20:  35964 positions   network 0.4075   search 0.3789   OURO 0.3705
+  pieces 21-28:  28165 positions   network 0.5628   search 0.5403   OURO 0.5344
+  pieces 29-32:  22118 positions   network 0.6370   search 0.6295   OURO 0.6239

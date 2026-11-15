@@ -1,0 +1,11 @@
+fs: 7493 files, 292035 games, 77.11M positions (23.33M played), validation 478136 played positions
+  foresight valid 0.869 of played; move known 0.679; mean plies to end 58.7; mean |score change over 2 plies| 0.0243
+  mean |target difference| on played positions: next-turn score vs production 0.0106, lambda-return vs production 0.0662
+[23:54:37] data: 77109554 positions; every network trains 6000 steps = 1.2749 epochs, hidden 256
+[00:03:20] base: done: steps 6000, val (log-loss, MAE) raw (0.4996916949748993, 0.12516947090625763) averaged (0.49971744418144226, 0.12520603835582733), 510s -> zero/  
+[00:12:05] aux15: done: steps 6000, val (log-loss, MAE) raw (0.5028306841850281, 0.12844513356685638) averaged (0.5028707981109619, 0.12849457561969757), 1035s -> zero/  | foresight later 0.526 left 0.122 mat8 0.208 matend 0.037 move 4.421 vol 0.112
+[00:17:51] next: done: steps 6000, val (log-loss, MAE) raw (0.4995866119861603, 0.12488487362861633) averaged (0.4996097683906555, 0.12491811066865921), 336s -> zero/f  
+[00:22:56] aux50: done: steps 6000, val (log-loss, MAE) raw (0.5053567290306091, 0.1308421641588211) averaged (0.505393922328949, 0.13087747991085052), 641s -> zero/fs_  | foresight later 0.528 left 0.121 mat8 0.208 matend 0.037 move 4.406 vol 0.112
+[00:27:21] lam: done: steps 6000, val (log-loss, MAE) raw (0.49991559982299805, 0.12588149309158325) averaged (0.4999392032623291, 0.12591564655303955), 260s -> zero/  
+[00:30:10] aux15 vs base: 332-378-1290  score 0.2605  Elo -181.3 (-196.7 to -166.5)
+[00:32:35] aux50 vs base: 231-214-1555  score 0.169  Elo -276.7 (-295.6 to -259.0)

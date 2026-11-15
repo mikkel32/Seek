@@ -20,6 +20,7 @@ LR = float(E('OURO_LR', 0.5)); MIN_FILL = int(E('OURO_MIN', 300_000)); MAX_REUSE
 CFG = dict(d=160, heads=5, mlp=480, n_in=2, n_rec=3, n_out=2, max_loops=4)
 OREC = np.dtype([('board', 'u1', 64), ('castle', 'u1'), ('ep', 'u1'), ('move', '<u2'), ('score', '<i2'), ('result', 'i1'), ('ply', 'u1')])
 torch.set_num_threads(int(E('OURO_THREADS', 2)))
+torch.backends.cuda.matmul.allow_tf32 = True; torch.backends.cudnn.allow_tf32 = True     # the GPU's faster 32-bit matrix mode: +50% measured, negligible precision loss
 LOG = open('zero/ouro.log', 'a')
 
 

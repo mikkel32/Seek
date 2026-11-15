@@ -343,25 +343,52 @@ def _ns5(G, steps=5):
     return X.T if t else X
 
 
+def _ns5_batched(G, steps=5):
+    """the same iteration as _ns5 for a stack of equally shaped matrices (K, m, n): one batched product instead of K small ones"""
+    a, b, c = 3.4445, -4.7750, 2.0315
+    X = G / (G.flatten(1).norm(dim=1)[:, None, None] + 1e-7)
+    t = G.size(1) > G.size(2)
+    if t:
+        X = X.transpose(1, 2)
+    for _ in range(steps):
+        A = X @ X.transpose(1, 2)
+        Bm = b * A + c * A @ A
+        X = a * X + Bm @ X
+    return X.transpose(1, 2) if t else X
+
+
 class Muon(torch.optim.Optimizer):
+    """Muon (momentum, then orthogonalise the update). Matrices of the same shape are orthogonalised together: the model has
+    47 of them in three shapes, and doing them one by one cost about 750 tiny matrix products per step, more time than the
+    forward and backward pass together. The arithmetic is unchanged."""
     def __init__(self, params, lr=0.02, momentum=0.95, wd=0.0):
         super().__init__(params, dict(lr=lr, momentum=momentum, wd=wd))
+        self._stacks = {}
 
     @torch.no_grad()
     def step(self):
-        for g in self.param_groups:
+        for gi, g in enumerate(self.param_groups):
+            by_shape = {}
             for p in g['params']:
-                if p.grad is None:
-                    continue
-                st = self.state[p]
-                if 'buf' not in st:
-                    st['buf'] = torch.zeros_like(p.grad)
-                buf = st['buf']
-                buf.lerp_(p.grad, 1 - g['momentum'])
-                upd = _ns5(p.grad.lerp(buf, g['momentum']))
-                if g['wd']:
-                    p.mul_(1 - g['lr'] * g['wd'])
-                p.add_(upd, alpha=-g['lr'] * max(1.0, p.size(0) / p.size(1)) ** 0.5)
+                if p.grad is not None:
+                    by_shape.setdefault(tuple(p.shape), []).append(p)
+            for shape, ps in by_shape.items():
+                key = (gi, shape, len(ps))
+                S = self._stacks.get(key)
+                if S is None or any(self.state[p].get('buf') is None or self.state[p]['buf'].data_ptr() != S[i].data_ptr() for i, p in enumerate(ps)):
+                    # (re)build the stacked momentum buffer; each parameter's 'buf' is a view into it, so checkpoints keep working
+                    S = torch.stack([self.state[p]['buf'] if 'buf' in self.state[p] else torch.zeros_like(p.grad) for p in ps])
+                    for i, p in enumerate(ps):
+                        self.state[p]['buf'] = S[i]
+                    self._stacks[key] = S
+                G = torch.stack([p.grad for p in ps])
+                S.lerp_(G, 1 - g['momentum'])
+                U = _ns5_batched(G.lerp(S, g['momentum']))
+                scale = -g['lr'] * max(1.0, shape[0] / shape[1]) ** 0.5
+                for i, p in enumerate(ps):
+                    if g['wd']:
+                        p.mul_(1 - g['lr'] * g['wd'])
+                    p.add_(U[i], alpha=scale)
 
 
 def make_optimizers(model, muon_lr=0.02, adam_lr=3e-3, wd=0.0, use_muon=True):
@@ -371,7 +398,7 @@ def make_optimizers(model, muon_lr=0.02, adam_lr=3e-3, wd=0.0, use_muon=True):
             hidden.append(p)
         else:
             other.append(p)
-    opts = [torch.optim.AdamW(other, lr=adam_lr, betas=(0.9, 0.95), weight_decay=0.0)]
+    opts = [torch.optim.AdamW(other, lr=adam_lr, betas=(0.9, 0.95), weight_decay=0.0, fused=all(p.is_cuda for p in other))]
     if hidden:
         opts.append(Muon(hidden, lr=muon_lr, momentum=0.95, wd=wd))
     return opts
