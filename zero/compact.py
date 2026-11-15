@@ -7,8 +7,8 @@ order (16 bytes): 2.7 times as many positions on the same disk. The trainer deco
 data/ev_<tag>_c.npy when it exists).
 
   python3 zero/compact.py check <tag>            encode data/ev_<tag>_x.npy in memory, decode, compare (as sets of features)
-  python3 zero/compact.py archive                forever: every shard data/ev_sh<N>_x.npy that is not yet archived becomes
-                                                 data/ev_a<N>_c.npy (+ a hard link to its targets as data/ev_a<N>_y.npy)
+  python3 zero/compact.py archive [keep=40]     forever: every shard that leaves the training window is kept as data/ev_a<N>_c.npy
+                                                 (+ its targets, data/ev_a<N>_y.npy); at most `keep` of them
 """
 import glob, os, re, sys, time
 import numpy as np
@@ -68,21 +68,35 @@ if __name__ == '__main__':
             pass
         print(msg); sys.exit(0 if same else 1)
     if sys.argv[1] == 'archive':
+        # Production writes a 15M-position shard every few minutes and deletes it when it leaves the training window. A hard link
+        # (data/keep) costs no space while the window still holds the shard; once the loop has deleted its own name, the linked
+        # data is rewritten in the compact form and the link removed. At most KEEP archived shards are kept (oldest dropped).
+        KEEP = int(sys.argv[2]) if len(sys.argv) > 2 else 40; os.makedirs('data/keep', exist_ok=True)
+        num = lambda f: int(re.search(r'(\d+)(?:_[xyc])?\.npy$', f).group(1))
         while not os.path.exists('zero/ARCHIVE_STOP'):
-            for src in sorted(glob.glob('data/ev_sh*_x.npy'), key=lambda f: int(re.search(r'ev_sh(\d+)_x', f).group(1)) if re.search(r'ev_sh(\d+)_x', f) else -1):
+            for src in glob.glob('data/ev_sh*_x.npy'):
                 m = re.search(r'ev_sh(\d+)_x\.npy$', src)
                 if not m:
                     continue
-                n = m.group(1); dst = f'data/ev_a{n}_c.npy'; ysrc = f'data/ev_sh{n}_y.npy'
-                if os.path.exists(dst) or not os.path.exists(ysrc) or time.time() - os.path.getmtime(ysrc) < 30:      # not while the loop is still writing it
+                n = m.group(1); ysrc = f'data/ev_sh{n}_y.npy'
+                if os.path.exists(f'data/keep/x{n}.npy') or os.path.exists(f'data/ev_a{n}_c.npy') or not os.path.exists(ysrc) or time.time() - os.path.getmtime(ysrc) < 30:
                     continue
                 try:
-                    if not os.path.exists(f'data/ev_a{n}_y.npy'):
-                        os.link(ysrc, f'data/ev_a{n}_y.npy')
-                    t0 = time.time(); k = encode_file(src, dst)
-                    print(f'[{time.strftime("%H:%M:%S", time.gmtime())}] shard {n}: {k/1e6:.1f}M positions archived in {time.time() - t0:.0f}s', flush=True)
-                except FileNotFoundError:                                # the loop dropped it meanwhile
-                    for f in (dst + '.tmp', f'data/ev_a{n}_y.npy'):
-                        if os.path.exists(f) and not os.path.exists(dst):
-                            os.remove(f)
-            time.sleep(30)
+                    os.link(ysrc, f'data/keep/y{n}.npy'); os.link(src, f'data/keep/x{n}.npy')
+                except OSError:
+                    pass
+            for kx in sorted(glob.glob('data/keep/x*.npy'), key=num):
+                n = num(kx)
+                if os.path.exists(f'data/ev_sh{n}_x.npy'):               # still in the window
+                    continue
+                ky = f'data/keep/y{n}.npy'
+                if not os.path.exists(ky):
+                    os.remove(kx); continue
+                t0 = time.time(); k = encode_file(kx, f'data/ev_a{n}_c.npy'); os.replace(ky, f'data/ev_a{n}_y.npy'); os.remove(kx)
+                print(f'[{time.strftime("%H:%M:%S", time.gmtime())}] shard {n} left the window: {k/1e6:.1f}M positions archived in {time.time() - t0:.0f}s', flush=True)
+            old = sorted(glob.glob('data/ev_a*_c.npy'), key=num)
+            for f in old[:max(0, len(old) - KEEP)]:
+                os.remove(f); y = f.replace('_c.npy', '_y.npy')
+                if os.path.exists(y):
+                    os.remove(y)
+            time.sleep(20)

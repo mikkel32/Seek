@@ -186,7 +186,10 @@ elif a.pst:
     with torch.no_grad():
         net.S[:768, 0] = torch.from_numpy(z['S_mg']); net.S[:768, 1] = torch.from_numpy(z['S_eg'])
         net.c[0] = float(z['c_mg']); net.c[1] = float(z['c_eg'])
-files = [(np.load(f'data/ev_{t}_x.npy', mmap_mode='r'), np.load(f'data/ev_{t}_{a.ytag}.npy', mmap_mode='r'),
+import os
+def _positions(t):                                       # a shard in the usual form (32 feature numbers a position) or the compact one (24 bytes, zero/compact.py)
+    return np.load(f'data/ev_{t}_x.npy', mmap_mode='r') if os.path.exists(f'data/ev_{t}_x.npy') else np.load(f'data/ev_{t}_c.npy', mmap_mode='r')
+files = [(_positions(t), np.load(f'data/ev_{t}_{a.ytag}.npy', mmap_mode='r'),
           np.load(f'data/ev_{t}_aux.npy', mmap_mode='r') if a.aux > 0 else None) for t in a.files.split(',')]
 if a.max_rows:
     files = [(x[:a.max_rows], y[:a.max_rows], None if ax is None else ax[:a.max_rows]) for x, y, ax in files]
@@ -307,6 +310,15 @@ def mirrored(idx):
     return torch.where(m[:, None] & (idx < 768), (idx // 64) * 64 + ((idx % 64) ^ 7), idx)
 
 
+def unpack(c):
+    """(n,24) bytes -> (n,32) feature numbers: 64 occupancy bits, then a 4-bit piece code for each occupied square in square order"""
+    b = c[:, :8].long(); occ = sum(b[:, k] << (8 * k) for k in range(8))
+    bits = ((occ[:, None] >> torch.arange(64, device=c.device)) & 1).bool()
+    sq = torch.where(bits, torch.arange(64, device=c.device, dtype=torch.int16), torch.tensor(64, device=c.device, dtype=torch.int16)).sort(1).values[:, :32]
+    code = torch.stack([c[:, 8:] & 15, c[:, 8:] >> 4], 2).reshape(len(c), 32).to(torch.int16)
+    return torch.where(sq < 64, code * 64 + sq, torch.tensor(768, device=c.device, dtype=torch.int16))
+
+
 AUXLOG = {}
 done = False
 assert not (a.mirror > 0 and a.aux > 0), 'the foresight targets are not mirrored'
@@ -314,6 +326,8 @@ while not done:
     for ci in rs.permutation(len(chunks)):
         fi, s = chunks[ci]
         X = torch.from_numpy(np.ascontiguousarray(files[fi][0][s:s + a.chunk])).to(DEV); Y = torch.from_numpy(np.ascontiguousarray(files[fi][1][s:s + a.chunk])).to(DEV)
+        if X.shape[1] == 24:                                     # compact shard: unpack on the device, half a million positions at a time
+            X = torch.cat([unpack(X[j:j + 500_000]) for j in range(0, len(X), 500_000)])
         AX = torch.from_numpy(np.ascontiguousarray(files[fi][2][s:s + a.chunk])).to(DEV) if a.aux > 0 else None
         perm = torch.randperm(len(X), device=DEV)
         for j in range(0, len(X) - a.bs + 1, a.bs):

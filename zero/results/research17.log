@@ -1,0 +1,12 @@
+r17: 444 files, 86967 games, 28.03M positions (6.91M played), validation 147738 played positions
+  square map 8 plies on valid 0.755 of played (squares empty/mine/theirs: 0.70 / 0.15 / 0.15); reply known 0.553
+  foresight valid 0.855 of played; move known 0.681; mean plies to end 58.0; mean |score change over 2 plies| 0.0311
+  mean |target difference| on played positions: next-turn score vs production 0.0133, lambda-return vs production 0.0653
+[12:43:21] arm base (): played held-out 0.504508  
+[12:44:57] arm inv (--aux 0.02 --aux_set inv): played held-out 0.505092  foresight vol 0.143 squares 0.458 reply 5.069
+(the transformer-labelling step ran out of memory on the shared card: no labels were written, so the tlabel arm below never trained and its match result is void)
+[12:45:12] arm tlabel (labels from the transformer): played held-out 
+[12:45:12] trained; the two matches are in the test queue
+[12:46:05] 20,000 positions per move, inv vs base: {"opponent": "base", "tc": "20000 positions per move", "n": 526, "w": 169, "d": 169, "l": 188, "score": 0.4819, "elo": -12.6, "lo": -37.1, "hi": 11.9, "avg_plies": 151.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.8, "verdict": "decided after 526 games: not +20 rather than 0"}
+[12:46:12] 20,000 positions per move, tlabel vs base: {"opponent": "base", "tc": "20000 positions per move", "n": 80, "w": 1, "d": 2, "l": 77, "score": 0.025, "elo": -636.4, "lo": -1600.0, "hi": -495.7, "avg_plies": 93.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.1, "verdict": "decided after 80 games: not +20 rather than 0"}
+[12:46:12] finished
