@@ -201,10 +201,29 @@ class Ouro(nn.Module):
     amp = True
 
     def __init__(self, d=96, heads=4, mlp=288, n_in=2, n_rec=3, n_out=2, use_rel=True, use_cnt=True,
-                 max_loops=4):
+                 max_loops=4, smolgen=0, fut=0):
         super().__init__()
         self.cfg = dict(d=d, heads=heads, mlp=mlp, n_in=n_in, n_rec=n_rec, n_out=n_out,
                         use_rel=use_rel, use_cnt=use_cnt, max_loops=max_loops)
+        if smolgen:
+            self.cfg['smolgen'] = smolgen
+        if fut:
+            self.cfg['fut'] = fut
+        self.smolgen = smolgen
+        if smolgen:
+            # Smolgen (Leela Chess Zero's transformers): attention biases GENERATED from the whole position. The rule graph
+            # already supplies exact who-attacks-whom biases; this adds a learned, position-dependent bias on top. Each
+            # token is squeezed to 8 numbers, the 512 numbers of the board go through a bottleneck of `smolgen` units to
+            # 64 numbers per head, and one shared map turns those into a 64x64 bias per head. One generator for the
+            # recurrent block (run at every loop, from that loop's state) and one for the output block. The shared map
+            # starts at zero: the network begins as the same function without it.
+            self.sg_comp = nn.ModuleList([nn.Linear(d, 8, bias=False) for _ in range(2)])
+            self.sg_1 = nn.ModuleList([nn.Linear(512, smolgen) for _ in range(2)])
+            self.sg_2 = nn.ModuleList([nn.Linear(smolgen, heads * 64) for _ in range(2)])
+            self.sg_out = nn.Linear(64, 4096, bias=False)
+            nn.init.zeros_(self.sg_out.weight)
+        # training-only head: who will hold each square 8 plies from now (empty / mine / theirs), read off each square's token
+        self.fut = nn.Linear(d, 3) if fut else None
         self.d = d
         self.heads = heads
         self.max_loops = max_loops
@@ -240,6 +259,12 @@ class Ouro(nn.Module):
         nn.init.zeros_(self.v2.bias)
 
     # ---- stages -----------------------------------------------------------
+    def _smol(self, g, u):
+        B = u.shape[0]
+        h = norm(F.gelu(self.sg_1[g](self.sg_comp[g](u).reshape(B, 512))))
+        h = norm(F.gelu(self.sg_2[g](h)).view(B, self.heads, 64))
+        return self.sg_out(h).reshape(B * self.heads, 64, 64)
+
     def _biases(self, rel, B):
         """attention-logit bias for each group: 1x1 conv over the exact relation planes + a learned static map."""
         out = []
@@ -276,14 +301,16 @@ class Ouro(nn.Module):
            u_t = N(s_{t-1} + x),  s_t = N(F(u_t)),  s_0 = x"""
         x = ctx['x']
         u = x if s is None else norm(s + x)
+        bias = ctx['rec_bias'] + self._smol(0, u) if self.smolgen else ctx['rec_bias']
         for blk in self.rec:
-            u = blk(u, ctx['rec_bias'], self.amp)
+            u = blk(u, bias, self.amp)
         return norm(u)
 
     def readout(self, ctx, s, aux=False):
         z = s
+        ob = ctx['out_bias'] + self._smol(1, s) if self.smolgen else ctx['out_bias']
         for blk in self.out:
-            z = blk(z, ctx['out_bias'], self.amp)
+            z = blk(z, ob, self.amp)
         z = norm(z)
         B = z.shape[0]
         with torch.autocast(z.device.type, dtype=torch.bfloat16, enabled=self.amp):
@@ -304,7 +331,10 @@ class Ouro(nn.Module):
         f2, t2, f3, t3 = la.float().split(64, dim=-1)
         pv2 = torch.baddbmm(self.la_static[0].expand(B, 64, 64), f2, t2.transpose(1, 2), alpha=0.125)
         pv3 = torch.baddbmm(self.la_static[1].expand(B, 64, 64), f3, t3.transpose(1, 2), alpha=0.125)
-        return pol, v, ql, torch.stack([pv2.reshape(B, 4096), pv3.reshape(B, 4096)], 1)
+        pvl = torch.stack([pv2.reshape(B, 4096), pv3.reshape(B, 4096)], 1)
+        if self.fut is not None:
+            return pol, v, ql, (pvl, self.fut(z))
+        return pol, v, ql, pvl
 
     def forward(self, board, castle, ep, loops=1, tbptl=True, aux=False):
         ctx = self.prepare(board, castle, ep)

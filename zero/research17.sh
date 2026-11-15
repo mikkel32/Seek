@@ -12,7 +12,7 @@ say() { echo "[$(date -u +%H:%M:%S)] $*" >> $L; }
 while ! grep -q "\] finished" zero/research16.log 2>/dev/null; do sleep 20; done          # the card is busy until then
 G=$(python3 -c "import json;print(json.load(open('zero/cont_state.json'))['gen'])"); cp zero/g$G.bin zero/r17_net.bin; cp zero/ouro.pt zero/ouro_eval.pt
 for lam in 15 40; do
-  r=$(OURO_GPU=1 python3 match.py --a duo:zero/r17_net.bin:zero/ouro_eval.pt:20000:$lam:40:p:calc/calc_w --b calc:zero/r17_net.bin:20000:calc/calc_w --openings 100 --workers 6 2>/dev/null | tail -1 | cut -c1-120)
+  r=$(OURO_GPU=1 python3 match.py --a duo:zero/r17_net.bin:zero/ouro_eval.pt:20000:$lam:40:p:calc/calc_w --b calc:zero/r17_net.bin:20000:calc/calc_w --openings 100 --workers 3 2>/dev/null | tail -1 | cut -c1-120)
   say "calculator + transformer at the root ($lam centipawns per unit of preference) vs calculator alone, 20,000 positions per move: $r"
 done
 while [ "$(ls zero/rawkeep 2>/dev/null | wc -l)" -lt ${NFILES:-700} ]; do sleep 15; done

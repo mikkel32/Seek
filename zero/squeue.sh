@@ -11,8 +11,8 @@ while [ ! -e zero/SQ_STOP ]; do
     n=$((n + 1)); line=$(sed -n "${n}p" zero/search_queue.txt)
     case "$line" in
       "") ;;
-      "run "*) bash zero/burst.sh 48 bash -c "${line#run }" ;;          # any other match: "run <shell command>"
-      *) bash zero/burst.sh 48 bash zero/stest.sh $line ;;
+      "run "*) bash zero/burst.sh 54 bash -c "${line#run }" ;;          # any other match: "run <shell command>"
+      *) bash zero/burst.sh 54 bash zero/stest.sh $line ;;
     esac
   else sleep 15; fi
 done
