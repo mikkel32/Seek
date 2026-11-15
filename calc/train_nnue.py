@@ -34,6 +34,7 @@ ap.add_argument('--aux_set', default='all')              # all = every foresight
 ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresight heads (training only; the exported network is unchanged). Needs data/ev_<tag>_aux.npy
 ap.add_argument('--mirror', type=float, default=0.0)     # share of training rows shown mirrored left-right (the game is symmetric; doubles what each game teaches)
 ap.add_argument('--mirror_all', type=int, default=0)     # 0 = only rows where both kings have left their home squares (castling is certainly gone), 1 = every row
+ap.add_argument('--lr_end', type=float, default=0.0)      # learning rate at the last step (0 = the usual 2% of --lr). Long runs of other self-taught engines decay to 1e-6
 ap.add_argument('--prod', type=int, default=0)           # 1 = product terms on top of the squares: unit i x unit i+H/2 within each view, and my unit i x the opponent's unit i
                                                          # (piece-pair interactions the squares cannot express; a few thousand extra output weights, the big input table unchanged)
 ap.add_argument('--extrap', type=float, default=0.0)     # move every label this share further away from what the STARTING network says (in score units): the search
@@ -332,7 +333,8 @@ while not done:
         perm = torch.randperm(len(X), device=DEV)
         for j in range(0, len(X) - a.bs + 1, a.bs):
             k = perm[j:j + a.bs]
-            lr = a.lr * (0.02 + 0.98 * 0.5 * (1 + math.cos(math.pi * min(1.0, step / steps_total)))) * min(1.0, (step + 1) / 200)
+            end_ = a.lr_end / a.lr if a.lr_end > 0 else 0.02
+            lr = a.lr * (end_ + (1 - end_) * 0.5 * (1 + math.cos(math.pi * min(1.0, step / steps_total)))) * min(1.0, (step + 1) / 200)
             for g in opt.param_groups:
                 g['lr'] = lr
             frac = step / max(1, steps_total)
