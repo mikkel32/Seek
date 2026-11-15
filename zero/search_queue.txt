@@ -1,0 +1,3 @@
+picker-equal-positions-20k calc_s1 calc_s0 1000 10+0.1 - - 20000
+picker-clock-10+0.1 calc_s1 calc_s0 300 10+0.1
+clock-use-10+0.1 calc_s2 calc_s2 300 10+0.1 TmNew=1 TmNew=0

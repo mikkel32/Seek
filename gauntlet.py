@@ -39,8 +39,11 @@ class Engine:
     def new_game(self):
         self.send('ucinewgame'); self.send('isready'); self.wait('readyok')
 
-    def go(self, fen, moves, wt, bt, inc):
+    def go(self, fen, moves, wt, bt, inc, nodes=0):
         self.send('position fen ' + fen + (' moves ' + ' '.join(moves) if moves else ''))
+        if nodes:                                   # both sides search the same number of positions per move: no clock, no speed advantage
+            self.send(f'go nodes {nodes}')
+            return self.wait('bestmove').split()[1]
         self.send(f'go wtime {max(1, int(wt * 1000))} btime {max(1, int(bt * 1000))} winc {int(inc * 1000)} binc {int(inc * 1000)}')
         return self.wait('bestmove').split()[1]
 
@@ -56,7 +59,7 @@ def parse_opts(s):
 
 
 def play(args):
-    us_cmd, us_opts, opp_cmd, opp_opts, base, inc, games = args
+    us_cmd, us_opts, opp_cmd, opp_opts, base, inc, games, nodes = args
     us, opp = Engine(us_cmd, parse_opts(us_opts)), Engine(opp_cmd, parse_opts(opp_opts))
     out = []
     for fen, us_white in games:
@@ -70,8 +73,8 @@ def play(args):
             else:
                 eng = us if (board.turn == chess.WHITE) == us_white else opp
                 t0 = time.perf_counter()
-                mv = eng.go(fen, moves, clock[chess.WHITE], clock[chess.BLACK], inc)
-                clock[board.turn] -= time.perf_counter() - t0
+                mv = eng.go(fen, moves, clock[chess.WHITE], clock[chess.BLACK], inc, nodes)
+                clock[board.turn] -= 0 if nodes else time.perf_counter() - t0
                 try:
                     m = chess.Move.from_uci(mv); legal = m in board.legal_moves
                 except Exception:
@@ -92,6 +95,7 @@ if __name__ == '__main__':
     ap.add_argument('--opp', required=True)                     # name|command|Option=value,...
     ap.add_argument('--tc', default='10+0.1'); ap.add_argument('--openings', type=int, default=100)
     ap.add_argument('--workers', type=int, default=8); ap.add_argument('--seed', type=int, default=7); ap.add_argument('--out', default='')
+    ap.add_argument('--nodes', type=int, default=0)             # > 0: no clock, both engines search this many positions per move
     a = ap.parse_args()
     name, cmd, opts = (a.opp.split('|') + [''])[:3]
     base, inc = (float(x) for x in a.tc.split('+'))
@@ -99,10 +103,10 @@ if __name__ == '__main__':
     chunks = [games[i::a.workers] for i in range(a.workers)]
     t0 = time.time()
     with Pool(a.workers) as pool:
-        res = [r for part in pool.map(play, [(a.us, a.us_opts, cmd, opts, base, inc, c) for c in chunks if c]) for r in part]
+        res = [r for part in pool.map(play, [(a.us, a.us_opts, cmd, opts, base, inc, c, a.nodes) for c in chunks if c]) for r in part]
     w = sum(r[0] == 1.0 for r in res); d = sum(r[0] == 0.5 for r in res); l = sum(r[0] == 0.0 for r in res)
     e = elo_from(w, d, l)
-    out = dict(opponent=name, tc=a.tc, **e, avg_plies=round(sum(r[1] for r in res) / len(res), 1),
+    out = dict(opponent=name, tc=f'{a.nodes} positions per move' if a.nodes else a.tc, **e, avg_plies=round(sum(r[1] for r in res) / len(res), 1),
                our_time_losses=sum(r[2] == 'us_time' for r in res), their_time_losses=sum(r[2] == 'opp_time' for r in res),
                illegal=sum(bool(r[2]) and r[2].endswith('illegal') for r in res), minutes=round((time.time() - t0) / 60, 1))
     line = json.dumps(out); print(line)

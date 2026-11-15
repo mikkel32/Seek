@@ -1,0 +1,6 @@
+[10:56:55] start: generation 90 weights, 26 shards
+[10:58:55] arm K0 (--widen zero/r13_start.pt ; 0.5215 passes): train loss loss 0.47853 -> played held-out 0.510904  [119s]
+[11:25:58] arm K11 (--kb 11 --warm zero/r13_start.pt ; 1.5644 passes): train loss loss 0.47631 -> played held-out 0.510808  [1622s]
+[11:28:49] 20,000 positions per move, K11 vs K0: {"n": 2000, "w": 644, "d": 680, "l": 676, "score": 0.492, "elo": -5.6, "lo": -17.9, "hi": 6.8, "avg_plies": 15
+[11:32:44] clock 10+0.1, K11 vs K0: {"opponent": "K0", "tc": "10+0.1", "n": 300, "w": 48, "d": 163, "l": 89, "score": 0.4317, "elo": -47.8, "lo": -74.6, "hi": -21.5, "avg_plies": 153.3, 
+[11:32:44] finished
