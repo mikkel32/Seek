@@ -23,9 +23,9 @@ SIDE = max(1, NPROC - NPLAY)
 ENGINE = E('ENGINE', 'calc/calc_z5')
 NODES = int(E('NODES', 5000)); TREE = int(E('TREE', 4)); FILE_GAMES = int(E('FILE_GAMES', 100))
 MIN_NEW = int(E('MIN_NEW', 24000))                               # games a new shard must hold before the next network is trained
-WINDOW = int(E('WINDOW', 6)); EPOCHS = float(E('EPOCHS', 2.0)); LAM = float(E('LAM', 0.5))
+WINDOW = int(E('WINDOW', 32)); EPOCHS = float(E('EPOCHS', 2.0)); LAM = float(E('LAM', 0.5))   # a long memory: the same evaluator trained on 18 shards beat the 6-shard loop by 37 Elo at the clock
 RATE_EVERY = int(E('RATE_EVERY', 3))
-WINDOW_POS = int(E('WINDOW_POS', 120_000_000)); SAMPLE_CAP = int(E('SAMPLE_CAP', 160_000_000))    # bounds on the window and on one generation's training
+WINDOW_POS = int(E('WINDOW_POS', 480_000_000)); SAMPLE_CAP = int(E('SAMPLE_CAP', 240_000_000))    # bounds on the window and on one generation's training
 LAMBDA = float(E('LAMBDA', 0.95))                                # lambda-return value targets (0 = the old half-score, half-result target)
 DEVICE = E('DEVICE') or ('cuda' if subprocess.run('python3 -c "import torch,sys; sys.exit(0 if torch.cuda.is_available() else 1)"', shell=True).returncode == 0 else 'cpu')
 HIDDEN = lambda g: 128 if g <= 5 else (256 if g <= 11 else 384)

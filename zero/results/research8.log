@@ -1,0 +1,13 @@
+[06:22:39] start: current generation 55; every kept shard = r5s26,r5s27,r5s28,r5s29,r5s30,r5s31,ar38,ar39,ar40,ar41,ar43,ar44,ar45,ar46,ar47,ar48,ar49,ar50 (shard 42 stays held out)
+[06:23:15] arm X1 (--lr 1e-3 ; 0.9994 passes over 4 shards): train loss loss 0.48163 -> held-out 0.481740  [36s]
+[06:25:35] arm X2 (--lr 1e-4 ; 5.9169 passes over 4 shards): train loss loss 0.48144 -> held-out 0.481738  [140s]
+[06:28:07] arm X3 (--lr 1e-3 ; 1.3257 passes over 18 shards): train loss loss 0.48023 -> held-out 0.481029  [152s]
+[06:30:21] arm X4 (--lr 1e-4 ; 1.3257 passes over 18 shards): train loss loss 0.48105 -> held-out 0.481657  [134s]
+[06:35:20] clock 10+0.1, current generation vs generation 35: {"opponent": "generation 35", "tc": "10+0.1", "n": 400, "w": 107, "d": 191, "l": 102, "score": 0.5062, "elo": 4.3, "lo": -20.3, "hi": 29.0, "avg_plies
+[06:40:10] clock 10+0.1, generation 35 vs generation 27: {"opponent": "generation 27", "tc": "10+0.1", "n": 400, "w": 108, "d": 192, "l": 100, "score": 0.51, "elo": 6.9, "lo": -17.6, "hi": 31.6, "avg_plies":
+[06:45:15] clock 10+0.1, current generation vs generation 27: {"opponent": "generation 27", "tc": "10+0.1", "n": 400, "w": 115, "d": 162, "l": 123, "score": 0.49, "elo": -6.9, "lo": -33.3, "hi": 19.3, "avg_plies"
+[06:49:16] clock 10+0.1, X1 vs generation 35 (its start): {"opponent": "generation 35", "tc": "10+0.1", "n": 300, "w": 64, "d": 156, "l": 80, "score": 0.4733, "elo": -18.5, "lo": -46.0, "hi": 8.6, "avg_plies"
+[06:53:07] clock 10+0.1, X2 vs generation 35 (its start): {"opponent": "generation 35", "tc": "10+0.1", "n": 300, "w": 69, "d": 138, "l": 93, "score": 0.46, "elo": -27.9, "lo": -57.0, "hi": 0.9, "avg_plies": 
+[06:57:01] clock 10+0.1, X3 vs generation 35 (its start): {"opponent": "generation 35", "tc": "10+0.1", "n": 300, "w": 91, "d": 150, "l": 59, "score": 0.5533, "elo": 37.2, "lo": 9.6, "hi": 65.3, "avg_plies": 
+[07:01:02] clock 10+0.1, X4 vs generation 35 (its start): {"opponent": "generation 35", "tc": "10+0.1", "n": 300, "w": 65, "d": 168, "l": 67, "score": 0.4967, "elo": -2.3, "lo": -28.5, "hi": 23.8, "avg_plies"
+[07:01:02] finished
