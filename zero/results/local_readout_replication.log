@@ -1,0 +1,1 @@
+[14:10:55] where-to-search read-out, weight 1000 (replication): {"opponent": "without", "tc": "30000 positions per move", "n": 448, "w": 162, "d": 156, "l": 130, "score": 0.5357, "elo": 24.9, "lo": -1.1, "hi": 51.1, "avg_plies": 152.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.4, "verdict": "decided after 448 games: at least +10 rather than +-10"}

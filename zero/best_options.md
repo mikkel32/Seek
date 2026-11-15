@@ -38,3 +38,16 @@ The engine change holds at both time controls; the option set is a fast-time-con
 | Fruit 2.1 | 94-4-2 | +552 |
 
 This morning's engine scored 5.3% against Stockfish 14.1 (about −500) and −175 against its hand-written evaluator.
+
+## What holds at the long time control, and what does not (later the same day)
+
+| Test at 60+0.6 | Games | Result |
+|---|---|---|
+| Pruning and extension half alone (`PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1`) against defaults | 122 | 26-85-11, +43 (10 to 77) |
+| Standing against Stockfish 14.1 on its hand-written evaluator (full option set) | 100 | 14-51-35, −74 (−123 to −28) |
+
+The where-to-search read-out (`PolW=1000`) was +13 and +25 at 30,000 positions per move and −53 (−95 to −13) at
+10+0.1 on top of the pruning half: not adopted.
+
+Recommended options for now: `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1` (confirmed at 10+0.1 within the full set and
+at 60+0.6 alone); the uncertainty options are a fast-time-control gain whose long-time-control test is still running.
