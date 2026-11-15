@@ -579,8 +579,10 @@ static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 1};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0};
 static U64 nodes, node_limit, check_mask = 2047;
+// (Option TtBucket, off by default: +19 Elo with a 1 MB table at 100,000 positions per move, but -9 at 60+0.6 and -10 at
+// 30,000 positions per move with the usual 64 MB, where the table is not under pressure.)
 // Hash table with two entries per position slot. A stored position is returned; otherwise the entry to overwrite: one
 // left over from an earlier search before one from this search, and of two from the same search the shallower. (With one
 // entry per slot, every store destroyed whatever was there: at long time controls the table kept losing its deep results.)

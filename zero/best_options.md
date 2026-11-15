@@ -16,3 +16,25 @@ The clock-based tuning of the numeric parameters (`zero/spsa_clock.py`) starts f
 
 `zero/nets/g102.bin` is generation 102 without read-outs; `zero/nets/g101_vol_pol.bin` adds the where-to-search read-out
 (`PolW=1000` was +13, −6 to 32, at equal positions; heavier weights lose).
+
+## At the long time control (60+0.6)
+
+| Test | Games | Result |
+|---|---|---|
+| `calc_s4.c` against the old engine | 80 | 23-52-5, +80 Elo (37 to 125) |
+| the option set above against default options | 200 + 300 | 92-329-79 together, about +9 (−11 to 29) |
+| two-entry hash buckets (`calc_s10.c`, `TtBucket=1`) against one entry per slot, 64 MB | 194 | 25-139-30, −9 (−35 to 17) |
+
+The engine change holds at both time controls; the option set is a fast-time-control gain.
+
+## Standing with the option set (10+0.1, one thread, 64 MB, every opening with both colours)
+
+| Opponent | Wins-draws-losses | Elo difference |
+|---|---|---|
+| Stockfish 14.1 | 2-32-166 | −402 (−473 to −349) |
+| Stockfish 14.1 on its hand-written evaluator | 32-71-97 | −117 (−158 to −79) |
+| Toga II 3.0 | 94-6-0 | +604 |
+| Glaurung 2.2 | 95-3-2 | +576 |
+| Fruit 2.1 | 94-4-2 | +552 |
+
+This morning's engine scored 5.3% against Stockfish 14.1 (about −500) and −175 against its hand-written evaluator.
