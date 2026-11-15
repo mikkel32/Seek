@@ -51,3 +51,17 @@ The where-to-search read-out (`PolW=1000`) was +13 and +25 at 30,000 positions p
 
 Recommended options for now: `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1` (confirmed at 10+0.1 within the full set and
 at 60+0.6 alone); the uncertainty options are a fast-time-control gain whose long-time-control test is still running.
+
+## The uncertainty half at 60+0.6, and why the read-out lost
+
+| Test | Games | Result |
+|---|---|---|
+| Uncertainty half alone (`VolMix=150 VolRef=70 VolLmr=1 VolTm=1 ContCorr=1 NpCorr=0`) against defaults, 60+0.6 | 300 | 50-201-49, +1 (−22 to 24) |
+| Where-to-search read-out on top of the pruning half, 30,000 positions per move | 536 | 150-208-178, −18 (−41 to 5) |
+| the same read-out without the pruning half, 30,000 positions per move (three runs) | 448 / 1,428 / 614 | +25, +8, +18 |
+
+So: the pruning half is the part of the day's settings that holds at the long time control (+43); the uncertainty options
+are worth about +30 at 50,000 positions per move, +8 at 5+0.05 and nothing at 60+0.6. The read-out helps only without the
+pruning half and clashes with it, and the pruning half is worth more.
+
+**Settings to use:** `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1`.
