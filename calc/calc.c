@@ -115,6 +115,18 @@ static int NH = 0;                       // hidden width; 0 = linear piece-squar
 #define NBMAX 32
 static int NBK = 1;                      // piece-count groups of output experts
 static int NM = 1, NG = 0;               // experts per group (chosen by a learned router) and router inputs per side
+// big tables (hash table, input weights, accumulator stack) on 2 MB pages where the system allows it: far fewer TLB misses
+#include <sys/mman.h>
+static void *big_alloc(size_t bytes) {
+    size_t sz = (bytes + ((size_t)2 << 20) - 1) & ~(((size_t)2 << 20) - 1);
+    void *p = aligned_alloc((size_t)2 << 20, sz);
+    if (!p) { p = aligned_alloc(64, (bytes + 63) / 64 * 64); sz = (bytes + 63) / 64 * 64; }
+#ifdef MADV_HUGEPAGE
+    else madvise(p, sz, MADV_HUGEPAGE);
+#endif
+    memset(p, 0, sz);
+    return p;
+}
 static float NGW[NBMAX][128], NGB[NBMAX];
 static float *NE, NB[HMAX], NWO[NBMAX][HMAX], NWP[NBMAX][HMAX], NCB[NBMAX], NC = 0, NS[768], NC2 = 0, NS2[768];
 static int have_net = 0, taper = 0;   // taper: second (endgame) linear table, blended by remaining material
@@ -322,7 +334,7 @@ static int load_net(const char *path) {
     if ((hdr[0] == 0x4F555233 || hdr[0] == 0x4F555235) && (fread(&nk, 4, 1, f) != 1 || nk < 1 || nk > 16)) { fclose(f); return 0; }
     if (hdr[0] == 0x4F555235 && (fread(&nm, 4, 1, f) != 1 || fread(&ng, 4, 1, f) != 1 || nm < 1 || nb % nm || ng < 1 || ng > 64)) { fclose(f); return 0; }
     have_net = 0; NH = hdr[1]; NBK = nb / nm; NKB = nk; NM = nm; NG = ng;
-    free(NE); NE = (float *)aligned_alloc(64, ((size_t)nk * 768 * (NH ? NH : 1) * 4 + 63) / 64 * 64);
+    free(NE); NE = (float *)big_alloc((size_t)nk * 768 * (NH ? NH : 1) * 4);
     size_t ok = 1;
     memset(NCB, 0, sizeof NCB);
     if (NH) {
@@ -436,7 +448,7 @@ static int see(Move m) {
 
 // ------------------------------------------------------------------ transposition table
 enum { TT_NONE, TT_EXACT, TT_LOWER, TT_UPPER };
-static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb << 20) n *= 2; free(tt); tt = (TTE *)calloc(n, sizeof(TTE)); tt_mask = n - 1; }
+static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb << 20) n *= 2; free(tt); tt = (TTE *)big_alloc(n * sizeof(TTE)); tt_mask = n - 1; }
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
@@ -949,7 +961,7 @@ static void selfplay(const char *path, int ngames, int nodes_per_move, U64 seed,
 
 int main(int argc, char **argv) {
     init_tables(); init_pext(); init_zobrist(); tt_alloc(32);
-    accs = (Acc *)aligned_alloc(64, sizeof(Acc) * 2048);
+    accs = (Acc *)big_alloc(sizeof(Acc) * 2048);
     init_lmr();
     set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     if (argc > 1 && !strcmp(argv[1], "mob")) { eval_mode = 1; int unit[5] = {100, 100, 100, 100, 100}; set_piece_values(unit); }

@@ -28,6 +28,7 @@ ap.add_argument('--mlr', type=float, default=0.03)       # learning rate of the 
 ap.add_argument('--max_rows', type=int, default=0)       # use only this many positions per file (quick experiments)
 ap.add_argument('--gate', type=int, default=32)          # the router reads this many hidden units per side
 ap.add_argument('--widen', default='')                   # start from a narrower network: copy its units, new units start with zero output weights
+ap.add_argument('--dense', type=int, default=-1)         # 1 = matrix-product formulation (fast on a GPU), 0 = lookup-and-sum (fast on a CPU), -1 = choose by device
 ap.add_argument('--ytag', default='y')                   # which value target to train on: y (production), ys (smoothed), yl (lambda-return) -- see zero/foresight.py
 ap.add_argument('--aux', type=float, default=0.0)        # weight of the foresight heads (training only; the exported network is unchanged). Needs data/ev_<tag>_aux.npy
 a = ap.parse_args()
@@ -76,6 +77,18 @@ class Net(torch.nn.Module):
             self.A = torch.nn.Linear(2 * H, 153)
 
     def forward(self, idx, feats=False):
+        if DENSE:
+            # The same network written as matrix products with a (batch, 768) piece-count matrix. On a GPU the lookup-and-sum
+            # form spends over 80% of a step scattering gradients into a 769-row table; this form is about six times faster.
+            B = idx.shape[0]; one = torch.ones(idx.shape, device=idx.device)
+            Mo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, idx, one)[:, :768]
+            Mp = torch.zeros(B, 769, device=idx.device).scatter_add_(1, LUT[idx], one)[:, :768]
+            bk = ((Mo.sum(1) - 2) // 4).clamp(0, a.buckets - 1).long() if a.buckets > 1 else torch.zeros(B, dtype=torch.long, device=idx.device)
+            xo = (self.b + Mo @ self.E[:768]).clamp(0, 1) ** 2; xp = (self.b + Mp @ self.E[:768]).clamp(0, 1) ** 2
+            lin = self.c + Mo @ self.S[:768]; ph = ((Mo @ PT_W[:768]) / 24).clamp(max=1.0)
+            heads = xo @ self.wo.T + xp @ self.wp.T + self.cb                       # every piece-count head at once; the position's own is picked below
+            out = ph * lin[:, 0] + (1 - ph) * lin[:, 1] + (heads * F.one_hot(bk, NEX).to(heads.dtype)).sum(1)
+            return (out, torch.cat([xo, xp], 1)) if feats else out
         bk = (((idx < 768).sum(1) - 2) // 4).clamp(0, a.buckets - 1) if a.buckets > 1 else torch.zeros(idx.shape[0], dtype=torch.long, device=idx.device)
         if a.phase and a.overlap > 0 and ROUTE['train']:          # a position one capture away from the next phase sometimes trains that phase's specialist
             o = ((idx < 768).sum(1) - 2) % 4; pick = torch.rand(idx.shape[0], device=idx.device) < a.overlap
@@ -165,6 +178,9 @@ steps_total = int(a.epochs * total / a.bs)
 net.to(DEV)
 if ema is not None:
     ema.to(DEV)
+DENSE = (a.dense == 1 or (a.dense < 0 and DEV.type == 'cuda')) and NKB == 1 and not a.phase and M == 1
+if DEV.type == 'cuda':
+    torch.backends.cuda.matmul.allow_tf32 = True
 LUT, PT_W, KBT, KB11 = LUT.to(DEV), PT_W.to(DEV), KBT.to(DEV), KB11.to(DEV)
 
 
@@ -211,7 +227,8 @@ class MatOpt:
 
 
 matopt = MatOpt(net.E, a.opt) if a.opt != 'adam' else None
-opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8)
+opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8, fused=DEV.type == 'cuda')
+fwd = torch.compile(net) if DENSE and DEV.type == 'cuda' else net        # the compiled model is the same network in fewer GPU kernels
 if ema is not None:
     ema.load_state_dict(net.state_dict())
 VX = torch.from_numpy(np.load(f'data/ev_{a.val}_x.npy').astype(np.int64)).to(DEV); VY = torch.from_numpy(np.load(f'data/ev_{a.val}_y.npy').astype(np.float32)).to(DEV)
@@ -263,12 +280,12 @@ while not done:
             frac = step / max(1, steps_total)
             ROUTE['tau'] = max(0.3, 1.0 - frac); ROUTE['hard'] = frac >= 0.7      # soft mixture first, exactly-one-expert for the last 30%
             if a.aux > 0:
-                out_, feat_ = net(X[k].long(), feats=True)
+                out_, feat_ = fwd(X[k].long(), feats=True)
                 loss = F.binary_cross_entropy_with_logits(out_, Y[k].float() / 255)
                 la, AUXLOG = aux_loss(feat_, AX[k])
-                run_main = float(loss); loss = loss + a.aux * la
+                run_main = loss.detach(); loss = loss + a.aux * la
             else:
-                loss = F.binary_cross_entropy_with_logits(net(X[k].long()), Y[k].float() / 255); run_main = float(loss)
+                loss = F.binary_cross_entropy_with_logits(fwd(X[k].long()), Y[k].float() / 255); run_main = loss.detach()
             opt.zero_grad(set_to_none=True)
             if matopt is not None:
                 net.E.grad = None
@@ -280,9 +297,9 @@ while not done:
                     d = min(a.ema, (1 + step) / (10 + step))
                     for pe, pm in zip(ema.parameters(), net.parameters()):
                         pe.lerp_(pm, 1 - d)
-            step += 1; seen += a.bs; run += run_main; nrun += 1
+            step += 1; seen += a.bs; run = run + run_main; nrun += 1          # the loss stays on the GPU until it is printed: no wait every step
             if step % 500 == 0:
-                print(f'step {step}/{steps_total} seen {seen/1e6:.1f}M loss {run/nrun:.5f} {seen/(time.time()-t0)/1e3:.0f}k pos/s'
+                print(f'step {step}/{steps_total} seen {seen/1e6:.1f}M loss {float(run)/nrun:.5f} {seen/(time.time()-t0)/1e3:.0f}k pos/s'
                       + ('  foresight ' + ' '.join(f'{k_} {v_:.3f}' for k_, v_ in AUXLOG.items()) if AUXLOG else ''), flush=True)
                 run = 0.0; nrun = 0
             if step >= steps_total or time.time() - t0 > a.minutes * 60:
