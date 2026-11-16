@@ -20,3 +20,13 @@
 [11:09:12] BIGM2 finished
 [12:04:03] options of the new network in its matches: Hash=64,PvPrune=1,ChkExt=0,SeDouble=20,CutIir=1
 [12:04:03] training BIGX: 1536 wide, 16 king buckets with a shared table, from scratch, 2 passes over e:0-11,f:0-39,h:0-59,s:0-406,t:0-22 --ytag yc
+[15:34:59] network BIGX trained in 12656s: done: steps 499047, val (log-loss, MAE) raw (0.5430712103843689, 0.056508563458919525) averaged (0.5424685478210449, 0.055754467844963074), 12648s -> 
+[15:35:03] engine against trainer: 1000 random positions, hidden 1536, king buckets 16, product terms off: largest difference 49.99 centipawns, mean 5.110; evaluations range -
+[15:35:10] speed, BIGM: depth 14: 3,190,837 positions in 1.51s = 2118k per second; signature d40b5b0644
+[15:35:12] speed, BIGX: depth 14: 3,295,762 positions in 1.96s = 1677k per second; signature d95c96586e
+[15:35:22] options of the new network in its matches: Hash=64,PvPrune=1,ChkExt=0,SeDouble=20,CutIir=1
+[15:35:22] training BIGS: 768 wide, 16 king buckets with a shared table, from scratch, 2 passes over e:0-11,f:0-39,h:0-59,s:0-406,t:0-22 --ytag yc --distill zero/w_BIGX.bin.ema.pt+sf:/root/ext/sf141_embedded.bin --dw 0.5
+[15:40:16] BIGX against BIGM, 30,000 positions per move: {"opponent": "BIGM", "tc": "30000 positions per move", "n": 2000, "w": 681, "d": 893, "l": 426, "score": 0.5637, "elo": 44.5, "lo": 33.2, "hi": 55.9, "avg_plies": 155.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.1}
+[15:41:22] BIGX against Stockfish 14.1, 10000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 138, "d": 329, "l": 533, "score": 0.3025, "elo": -145.1, "lo": -163.8, "hi": -127.2, "avg_plies": 144.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 1.1}
+[15:44:15] BIGX against Stockfish 14.1, 30000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 94, "d": 384, "l": 522, "score": 0.286, "elo": -158.9, "lo": -176.7, "hi": -141.9, "avg_plies": 141.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.9}
+[15:44:15] BIGX finished
