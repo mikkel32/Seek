@@ -1,0 +1,20 @@
+[20:40:33] child G1a of BIGS: 768 wide, files g:0-3*4,u:0-3*2,e:0-11/5,f:0-39/7,h:0-59/9,s:0-406/50,t:0-22/11 --distill zero/w_BIGX.bin.ema.pt+sf:/root/ext/sf141_embedded.bin --dw 0.5
+[20:51:23] network G1a trained in 650s: done: steps 17497, val (log-loss, MAE) raw (0.5435882210731506, 0.0581355020403862) averaged (0.5435566306114197, 0.057745032012462616), 644s -> zero/
+[20:51:30] engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 18.86 centipawns, mean 2.822; 
+[20:55:16] G1a against BIGS, 30,000 positions per move: {"opponent": "BIGS", "tc": "30000 positions per move", "n": 2000, "w": 490, "d": 1003, "l": 507, "score": 0.4958, "elo": -3.0, "lo": -13.7, "hi": 7.8, "avg_plies": 150.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.7}
+[20:56:08] G1a against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 129, "d": 300, "l": 571, "score": 0.279, "elo": -164.9, "lo": -184.4, "hi": -146.4, "avg_plies": 141.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
+[20:56:08] G1a finished
+[20:56:08] child C1a of BIGS: 768 wide, files e:0-11/5,f:0-39/7,h:0-59/9,s:0-406/50,t:0-22/11 --distill zero/w_BIGX.bin.ema.pt+sf:/root/ext/sf141_embedded.bin --dw 0.5
+[21:04:58] network C1a trained in 530s: done: steps 13533, val (log-loss, MAE) raw (0.5436021089553833, 0.05790654569864273) averaged (0.5436518788337708, 0.057930123060941696), 526s -> zero
+[21:05:06] engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 19.20 centipawns, mean 3.058; 
+[21:08:54] C1a against BIGS, 30,000 positions per move: {"opponent": "BIGS", "tc": "30000 positions per move", "n": 2000, "w": 511, "d": 1014, "l": 475, "score": 0.509, "elo": 6.3, "lo": -4.4, "hi": 17.0, "avg_plies": 145.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.8}
+[21:09:46] C1a against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 151, "d": 291, "l": 558, "score": 0.2965, "elo": -150.1, "lo": -169.6, "hi": -131.5, "avg_plies": 138.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
+[21:09:46] C1a finished
+[21:09:50] child X1a of BIGX: 1536 wide, files g:0-3*4,u:0-3*2,e:0-11/5,f:0-39/7,h:0-59/9,s:0-406/50,t:0-22/11 
+[21:17:59] network X1a trained in 489s: done: steps 17497, val (log-loss, MAE) raw (0.5415058135986328, 0.05499551072716713) averaged (0.5414634943008423, 0.054708875715732574), 480s -> zero
+[21:18:08] engine against trainer: 1000 random positions, hidden 1536, king buckets 16, product terms off: largest difference 76.51 centipawns, mean 4.740;
+[21:24:05] X1a against BIGX, 30,000 positions per move: {"opponent": "BIGX", "tc": "30000 positions per move", "n": 2000, "w": 486, "d": 986, "l": 528, "score": 0.4895, "elo": -7.3, "lo": -18.2, "hi": 3.5, "avg_plies": 154.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.9}
+[21:25:07] X1a against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 157, "d": 311, "l": 532, "score": 0.3125, "elo": -137.0, "lo": -155.9, "hi": -118.8, "avg_plies": 143.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 1.0}
+[21:25:07] X1a finished
+[21:25:10] child G1b of BIGS: 768 wide, files g:0-3*8,u:0-3*4,e:1-11/5,f:1-39/7,h:1-59/9,s:1-406/50,t:1-22/11 --distill zero/w_BIGX.bin.ema.pt+sf:/root/ext/sf141_embedded.bin --dw 0.5 --lr 1e-3
+

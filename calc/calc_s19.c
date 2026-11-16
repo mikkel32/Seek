@@ -976,13 +976,13 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
-#define NPAR 56
-enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3 };
-static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3"};
+#define NPAR 59
+enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3, SEL, SEL_A, SEL_B };
+static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3", "Sel", "SelA", "SelB"};
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0, 0, 250, 100};
 // PruneV2 (bit flags, 0 = off): 1 = a late quiet move whose two continuation histories are both negative is skipped when
 // its reduced depth is under 5; 2 = quiet futility counts the reduced depth and the move's history; 4 = a quiet table move
 // that cuts off straight from the table is rewarded in the histories; 8 = one ply less reduction when the parent node is
@@ -1327,6 +1327,55 @@ static Move mp_next(Picker *p) {
     }
 }
 
+// What is known about a late move before it is searched (the same record serves the collection build and the model below).
+typedef struct {
+    short hs, hmain, hc1, hc2, ev_alpha, v_alpha, caph, see, tt_alpha, best_alpha;
+    unsigned char depth, legal, ply, rstd, nd, rootd, pmcount, nq, nc, piece, victim, prune, ttdepth, ttflag, from, to;
+    unsigned char f1, f2; unsigned short gid;
+} LRec;
+static inline short clip16(int v) { return (short)(v > 32000 ? 32000 : (v < -32000 ? -32000 : v)); }
+// The learned judgment of late moves (options Sel, SelA, SelB, SelFile): an additive model gives the log-odds that a full-depth
+// look at the move would beat the bound; the late-move reduction is SelA/100 - SelB/100 x (log-odds + 5) plies. The model file
+// is written by ext/lsel_fit.py from records of the collection build: a bias, then per feature its bucket edges and weights.
+#define LS_NF 34
+static const signed char ls_kind[LS_NF] = {0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2, 1, 0, 1, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};   // 0 the value up to a cap, 1 edges, 2 edges and a bucket for "none", 3 one bit
+static const signed char ls_cap[LS_NF] = {20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 5, 6, 3, 20};
+static int ls_ne[LS_NF], ls_edge[LS_NF][20], ls_ok; static float ls_w[LS_NF][24], ls_bias;
+static int ls_load(const char *path) {
+    FILE *f = fopen(path, "r"); ls_ok = 0;
+    if (!f) return 0;
+    if (fscanf(f, "%f", &ls_bias) != 1) { fclose(f); return 0; }
+    for (int k = 0; k < LS_NF; k++) {
+        int nw; char bar[4];
+        if (fscanf(f, "%d", &ls_ne[k]) != 1 || ls_ne[k] < 0 || ls_ne[k] > 20) { fclose(f); return 0; }
+        for (int i = 0; i < ls_ne[k]; i++) if (fscanf(f, "%d", &ls_edge[k][i]) != 1) { fclose(f); return 0; }
+        if (fscanf(f, "%3s %d", bar, &nw) != 2 || nw < 1 || nw > 24) { fclose(f); return 0; }
+        for (int i = 0; i < 24; i++) ls_w[k][i] = 0;
+        for (int i = 0; i < nw; i++) if (fscanf(f, "%f", &ls_w[k][i]) != 1) { fclose(f); return 0; }
+    }
+    fclose(f); ls_ok = 1; return 1;
+}
+static inline float ls_logit(const LRec *r) {
+    const int v[LS_NF] = {r->depth, r->legal, r->ply, r->hs, r->hmain, r->hc1, r->hc2, r->ev_alpha, r->see, r->caph, r->tt_alpha, r->best_alpha, r->nq, r->nc, r->pmcount, r->piece, r->victim, r->ttflag, r->nd,
+                          r->f1 & 1, (r->f1 >> 1) & 1, (r->f1 >> 2) & 1, (r->f1 >> 3) & 1, (r->f1 >> 4) & 1, (r->f1 >> 5) & 1, (r->f1 >> 6) & 1, (r->f1 >> 7) & 1,
+                          r->f2 & 1, (r->f2 >> 1) & 1, (r->f2 >> 2) & 1, (r->f2 >> 3) & 1, (r->f2 >> 4) & 1, (r->f2 >> 5) & 1, (r->f2 >> 6) & 1};
+    float z = ls_bias;
+    for (int k = 0; k < LS_NF; k++) {
+        int b;
+        if (ls_kind[k] == 3) b = v[k];
+        else if (ls_kind[k] == 0) b = v[k] > ls_cap[k] ? ls_cap[k] : v[k];
+        else if (ls_kind[k] == 2 && v[k] == -32000) b = ls_ne[k] + 1;
+        else { b = 0; while (b < ls_ne[k] && ls_edge[k][b] <= v[k]) b++; }
+        z += ls_w[k][b];
+    }
+    return z;
+}
+#ifdef LSEL
+// Collection build: a sample of the moves after the first one is searched at full depth whatever the rules say, and what
+// was known about the move beforehand is written out together with what the full-depth look found (LSEL_FILE, LSEL_RATE).
+static LRec *lsel_buf; static int lsel_n; static FILE *lsel_f; static unsigned lsel_rate = 64; static U64 lsel_ctr = 88172645463325252ULL; static unsigned short lsel_gid;
+static void lsel_flush(void) { if (lsel_f && lsel_n) { fwrite(lsel_buf, sizeof(LRec), lsel_n, lsel_f); fflush(lsel_f); lsel_n = 0; } }
+#endif
 static int qsearch(int alpha, int beta, int ply) {
     if ((++nodes & check_mask) == 0) check_time();
     if (stop_flag) return 0;
@@ -1476,6 +1525,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
     Move quiets[256], caps[64];
     int legal = 0, nq = 0, nc = 0, best = -INF, a0 = alpha;
     Move bestm = 0, m;
+    U64 ls_thr = 0; int ls_thr_ok = 0;                                     // the opponent's attack map, worked out once per node when the judgment model needs it
     Picker mp; mp_init(&mp, ttm, ply, 0);
     mp.pol = have_pol && par[POL_W] && !chk && depth >= par[POL_DEPTH];
     int is_capture_tt = mp.ttm && is_capture(mp.ttm);
@@ -1484,6 +1534,13 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         int quiet = !is_capture(m) && !PROMO(m);
         int hs = quiet ? mp.hist : 0;
         int ext = 0;
+        int samp = 0, prn = 0, want = 0; LRec lr;
+#ifdef LSEL
+        if (lsel_f && legal >= 1 && depth >= 2 && !excl) {
+            unsigned rate = depth >= 8 ? lsel_rate / 8 : (depth >= 5 ? lsel_rate / 3 : lsel_rate); if (rate < 1) rate = 1;
+            lsel_ctr = lsel_ctr * 6364136223846793005ULL + 1442695040888963407ULL; samp = ((lsel_ctr >> 33) % rate) == 0;
+        }
+#endif
         // singular extension: if every other move falls clearly short of the table move, search the table move deeper
         if (m == ttm && !excl && depth >= par[SE_DEPTH] && tt_depth >= depth - 3 && (tt_flag == TT_LOWER || tt_flag == TT_EXACT) &&
             tt_score > -MATE_IN && tt_score < MATE_IN && ply + depth < MAXPLY - 8) {
@@ -1496,7 +1553,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
             else if (sbeta >= beta) { ST(21); return sbeta; }                        // several moves beat beta: cut
             else if (par[NEG_EXT] && (tt_score >= beta || cutnode)) ext = -1;   // not singular and probably a cutoff anyway: look less
         }
-        if ((!pv_node || (par[PV_PRUNE] && ply > 0)) && !chk && best > -MATE_IN) {
+        if (!samp && (!pv_node || (par[PV_PRUNE] && ply > 0)) && !chk && best > -MATE_IN) {
             if (quiet) {
                 int pd = depth;                                             // the depth the pruning rules reason about
                 if (par[LMR_PRUNE]) { pd = depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] - !improving; if (pd < 1) pd = 1; }
@@ -1525,6 +1582,40 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                      ev + mat_val[P.sq[TO(m)] % 6] + 120 + 150 * (depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 0 ? 0 : depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1]) <= alpha) continue;
             else if ((par[PRUNE_V2] & 16) && !pv_node && legal >= 1 && is_capture(m) && FLAG(m) != F_EP && !PROMO(m) &&
                      depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 6 && caph[(int)P.sq[FROM(m)]][TO(m)][P.sq[TO(m)] % 6] < 0) continue;
+        }
+        want = samp || (par[SEL] && ls_ok && depth >= 3 && (quiet || par[CAP_LMR]) && legal + 1 > 1 + 2 * pv_node);
+        if (want) {
+            int f = FROM(m), t = TO(m), pc = (int)P.sq[f];
+            if (!ls_thr_ok) { ls_thr = attacks_by(P.side ^ 1); ls_thr_ok = 1; }
+            U64 thr = ls_thr;
+            if (samp && (!pv_node || (par[PV_PRUNE] && ply > 0)) && !chk && best > -MATE_IN) {  // which rule would have dropped it
+                if (quiet) {
+                    if (depth <= par[LMP_DEPTH] && legal >= (par[LMP_BASE] + depth * depth) / (2 - improving)) prn = 1;
+                    else if (depth <= 7 && ev + (par[FUT_BASE] + par[FUT_MUL] * depth) * vm / 256 <= alpha) prn = 2;
+                    else if (depth <= 3 && hs < -par[HIST_PRUNE] * depth) prn = 3;
+                    else if (depth <= 6 && see(m) < -par[SEE_Q] * depth) prn = 4;
+                } else if (depth <= 6 && mp.bad_now && mp.see_now < -par[SEE_C] * depth) prn = 5;
+            }
+            memset(&lr, 0, sizeof lr);
+            lr.hs = clip16(hs / 4); lr.hmain = clip16(quiet ? HIST(m, ply) / 2 : 0);
+            lr.hc1 = (quiet && ply > 0 && move_stack[ply - 1]) ? cmh[piece_stack[ply - 1]][TO(move_stack[ply - 1])][pc][t] : 0;
+            lr.hc2 = (quiet && ply > 1 && move_stack[ply - 2]) ? fuh[piece_stack[ply - 2]][TO(move_stack[ply - 2])][pc][t] : 0;
+            lr.ev_alpha = chk ? -32000 : clip16(ev - alpha);
+            lr.caph = (!quiet && P.sq[t] != EMPTY) ? caph[pc][t][P.sq[t] % 6] : 0;
+            lr.see = clip16(see(m));
+            lr.tt_alpha = tt_flag == TT_NONE ? -32000 : clip16(tt_score - alpha);
+            lr.best_alpha = best <= -MATE_IN ? -32000 : clip16(best - alpha);
+            lr.depth = (unsigned char)(depth > 255 ? 255 : depth); lr.legal = (unsigned char)(legal + 1 > 255 ? 255 : legal + 1); lr.ply = (unsigned char)ply;
+            lr.rootd = (unsigned char)root_depth; lr.pmcount = (unsigned char)(ply > 0 ? (mcount[ply - 1] > 255 ? 255 : mcount[ply - 1]) : 0);
+            lr.nq = (unsigned char)nq; lr.nc = (unsigned char)nc; lr.piece = (unsigned char)(pc % 6);
+            lr.victim = (unsigned char)(FLAG(m) == F_EP ? PAWN : (P.sq[t] == EMPTY ? NO_PT : P.sq[t] % 6));
+            lr.prune = (unsigned char)prn; lr.ttdepth = (unsigned char)(tt_depth < 0 ? 255 : tt_depth); lr.ttflag = (unsigned char)tt_flag; lr.from = (unsigned char)f; lr.to = (unsigned char)t;
+            lr.f1 = (unsigned char)(pv_node | (cutnode << 1) | (improving << 2) | (chk << 3) | (quiet << 5) | ((m == killers[ply][0] || m == killers[ply][1]) << 6) | ((ttm != 0) << 7));
+            lr.f2 = (unsigned char)((ttm && is_capture(ttm)) | ((!quiet && mp.bad_now) << 1) | ((PROMO(m) != 0) << 2) | (((thr >> f) & 1) << 3) | (((thr >> t) & 1) << 4) |
+                                    (((pawn_att[P.side][t] & P.bb[P.side ^ 1][PAWN]) != 0) << 5) | ((tt_flag == TT_UPPER && tt_score <= alpha) << 6));
+#ifdef LSEL
+            lr.gid = lsel_gid;
+#endif
         }
         move_stack[ply] = m; piece_stack[ply] = P.sq[FROM(m)];
 #ifdef CHECK_GC
@@ -1559,8 +1650,24 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 if (r < 0) r = 0;
                 if (r > nd - 1) r = nd - 1;
             }
+            if (want) {
+                lr.nd = (unsigned char)(nd < 0 ? 0 : nd); lr.f1 |= (unsigned char)(in_check() << 4);
+                if (par[SEL] && ls_ok && depth >= 3 && (quiet || par[CAP_LMR]) && legal > 1 + 2 * pv_node) {       // the learned judgment sets the reduction
+                    float z = ls_logit(&lr);
+                    r = (int)floorf((par[SEL_A] - par[SEL_B] * (z + 5.0f)) / 100.0f + 0.5f);
+                    if (r < 0) r = 0;
+                    if (r > nd - 1) r = nd - 1;
+                }
+                if (samp) { lr.rstd = (unsigned char)r; r = 0; }
+            }
             cutn[ply + 1] = r ? 1 : !cutnode; if (r) { ST(16); STA(31, r); }
             v = -search(nd - r, -alpha - 1, -alpha, ply + 1, 1);
+#ifdef LSEL
+            if (samp && !stop_flag) {                                       // what the full-depth look found
+                lr.v_alpha = clip16(v - alpha); lr.f2 |= (unsigned char)((v > alpha) << 7);
+                lsel_buf[lsel_n++] = lr; if (lsel_n >= 65536) lsel_flush();
+            }
+#endif
             if (v > alpha && r) { ST(17);
                 // the shallow look liked the move. Much more than the best so far: verify one ply deeper; barely: the shallow answer will do
                 int nd2 = nd;
@@ -1675,6 +1782,9 @@ static Move search_root(int max_depth) {
     for (int i = 0; i < n; i++) if (make(list[i])) { unmake(); root_moves[n_root++] = list[i]; }
     if (!n_root) return 0;
     Move best = root_moves[0];
+#ifdef LSEL
+    lsel_gid++;
+#endif
     memset(killers, 0, sizeof killers);
     corr_ply = 0; evals_stack[0] = in_check() ? -INF : eval_corr();
     root_vol = (have_vol && !in_check()) ? eval_vol() : 0;
@@ -1887,6 +1997,9 @@ int main(int argc, char **argv) {
 #endif
     accs = (Acc *)big_alloc(sizeof(Acc) * 2048);
     init_lmr();
+#ifdef LSEL
+    if (getenv("LSEL_FILE")) { lsel_f = fopen(getenv("LSEL_FILE"), "ab"); lsel_buf = (LRec *)malloc(65536 * sizeof(LRec)); if (getenv("LSEL_RATE")) lsel_rate = (unsigned)atoi(getenv("LSEL_RATE")); }
+#endif
     set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     if (argc > 1 && !strcmp(argv[1], "mob")) { eval_mode = 1; int unit[5] = {100, 100, 100, 100, 100}; set_piece_values(unit); }
     else if (argc > 1) load_net(argv[1]);
@@ -1905,6 +2018,7 @@ int main(int argc, char **argv) {
         } else if (!strcmp(line, "isready")) printf("readyok\n");
         else if (!strncmp(line, "setoption name EvalFile value ", 30)) { if (!load_net(line + 30)) printf("info string cannot load %s\n", line + 30); }
         else if (!strncmp(line, "setoption name Hash value ", 26)) tt_alloc(atoi(line + 26));
+        else if (!strncmp(line, "setoption name SelFile value ", 29)) { if (!ls_load(line + 29)) printf("info string cannot read the model %s\n", line + 29); }
         else if (!strncmp(line, "setoption name TmNew value ", 27)) tm_new = atoi(line + 27);
         else if (!strncmp(line, "setoption name TmSoft value ", 28)) tm_soft = atoi(line + 28);
         else if (!strncmp(line, "setoption name ", 15) && strstr(line, " value ") && strncmp(line + 15, "Bonus", 5) && strncmp(line + 15, "EvalFile", 8)) {
@@ -1995,6 +2109,9 @@ int main(int argc, char **argv) {
 #endif
         else if (!strncmp(line, "see ", 4)) { Move m = parse_move(line + 4); printf("see %d\n", m ? see(m) : -99999); }
         else if (!strcmp(line, "quit")) {
+#ifdef LSEL
+            lsel_flush();
+#endif
 #ifdef TSTAT
             { unsigned long long tot = ts_go ? ts_go : 1; printf("info string evaluations %llu; cycles per evaluation: sums %.0f, read-out %.0f; share of all cycles: sums %.1f%%, read-out %.1f%%; cycles per position searched %.0f\n", ts_n, (double)ts_acc / (ts_n ? ts_n : 1), (double)ts_out / (ts_n ? ts_n : 1), 100.0 * ts_acc / tot, 100.0 * ts_out / tot, (double)ts_go / (ts_nodes ? ts_nodes : 1)); }
 #endif
