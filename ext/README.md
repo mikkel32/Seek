@@ -42,6 +42,7 @@ Our options: `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1`.
 | LE (257M, 384 wide) | −246 (−295 to −205), 200 games | | 0 (−38 to 38) | −21 (−62 to 20) |
 | LFf (787M, 384 wide) | −215 (−257 to −178), 200 games | −191 (−233 to −153), 150 games | +56 (19 to 94) | +56 (20 to 94) |
 | BIGW (4.37 billion, 768 wide) | −153 (−179 to −129), 400 games | −168 (−196 to −143), 300 games | +100 (74 to 127), 400 games | +51 (20 to 82), 200 games |
+| BIGK (4.37 billion, 768 wide, 16 king buckets; engine `calc_s18`) | −143 (−169 to −119), 400 games | −163 (−190 to −137), 300 games | | |
 
 ## King-bucketed inputs
 
@@ -53,6 +54,8 @@ training machine, 1,059k against 1,170k on the match machine). `ext/bigk.sh`, `z
 | Test | Games | Result |
 |---|---|---|
 | 16 king buckets (BIGK) against plain (BIGW), both 768 wide on the 4.37 billion, 30,000 positions per move | 2,000 | 654-879-467, +33 (21 to 44) |
+| the same pair at the clock, 10+0.1 | 400 | 86-254-60, +23 (2 to 43) |
+| the same pair at the clock, 60+0.6 | 200 | 34-144-22, +21 (−5 to 46) |
 
 Held-out loss on one million Lichess game positions no network was trained on (`ival`):
 

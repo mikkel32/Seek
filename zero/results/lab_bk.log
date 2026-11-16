@@ -1,0 +1,8 @@
+[03:02:53] speed, BIGW: depth 14: 3,058,337 positions in 2.61s = 1170k per second; signature 1e469e8fd6
+[03:02:55] speed, BIGK: depth 14: 3,992,331 positions in 3.77s = 1059k per second; signature e8aaccc6d4
+[03:07:08] BIGK (16 king buckets) against BIGW (plain), both 768 wide on 4.37 billion positions, at the clock, 10+0.1: {"opponent": "BIGW", "tc": "10+0.1", "n": 400, "w": 86, "d": 254, "l": 60, "score": 0.5325, "elo": 22.6, "lo": 2.1, "hi": 43.3, "avg_plies": 161.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.1}
+[03:11:07] standing, BIGK with the confirmed options: against Stockfish 14.1, 10+0.1: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 400, "w": 30, "d": 184, "l": 186, "score": 0.305, "elo": -143.1, "lo": -168.9, "hi": -118.7, "avg_plies": 156.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[03:27:02] standing, BIGK with the confirmed options: against Stockfish 14.1, 60+0.6: {"opponent": "Stockfish 14.1", "tc": "60+0.6", "n": 300, "w": 7, "d": 155, "l": 138, "score": 0.2817, "elo": -162.6, "lo": -189.9, "hi": -137.2, "avg_plies": 158.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 15.9}
+[03:39:08] BIGK (16 king buckets) against BIGW (plain), both 768 wide on 4.37 billion positions, at the clock, 60+0.6: {"opponent": "BIGW", "tc": "60+0.6", "n": 200, "w": 34, "d": 144, "l": 22, "score": 0.53, "elo": 20.9, "lo": -4.5, "hi": 46.4, "avg_plies": 158.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 12.1}
+[03:39:08] finished
+
