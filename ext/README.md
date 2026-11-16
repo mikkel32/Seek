@@ -480,7 +480,15 @@ speed as BIGM (1,270k against 1,299k positions a second on the bench).
 | BIGS against Stockfish 14.1, 10,000 nodes each, 1,000 games | −179 (−199 to −160); BIGM −173 |
 | BIGS against Stockfish 14.1, 30,000 nodes each, 1,000 games | −162 (−179 to −145); BIGM −185 on the same machine the same evening |
 
-BIGS is the 768-wide network the generation loop below starts from. Not yet played at the clock.
+At the clock on the one machine now in use (22 boards, 1,000 games each, `zero/results/vault_clock.log`):
+
+| 10+0.1 against Stockfish 14.1 | Result |
+|---|---|
+| BIGM | 26-590-384, −130 (−143 to −117) |
+| **BIGS** | 34-624-342, **−111 (−123 to −98)** |
+
+BIGS is the standing network: +20 at the clock, +16 at equal nodes, the same speed. (BIGM's −116 in the table further up
+was played on the stopped match machine; on this machine it is −130, so numbers from the two machines are not compared.)
 
 ## Generations on this line (from 16 November, evening)
 
@@ -491,3 +499,45 @@ loop's lambda-return labels, and positions from inside the search trees with the
 weights trained further with the parent's own recipe on that data mixed with a slice of all the earlier data
 (`ext/gen_round.sh`), and is then played against its parent at 30,000 nodes (2,000 games) and against Stockfish 14.1 at
 10,000. Every round has a control: the same further training without the self-play data.
+
+Round 1a, 53 million self-play positions (9.5 million played, 44 million from the trees), each child against its own
+parent over 2,000 games at 30,000 nodes (`zero/results/vault_gen_round.log`):
+
+| Child | Against its parent | Against Stockfish 14.1 at 10,000 nodes (BIGS −179, BIGX −145) |
+|---|---|---|
+| G1a: BIGS, self-play positions 22% of the mix, learning rate 3e-4 | −3 (−14 to +8) | −165 |
+| C1a: BIGS, the same further training without self-play (control) | +6 (−4 to +17) | −150 |
+| X1a: BIGX on its own self-play, same mix | −7 (−18 to +4) | −137 |
+| G1b: BIGS, self-play 37% of the mix, learning rate 1e-3 | **−18 (−29 to −7)** | −179 |
+
+No child beats its parent, the control is the best of them, and the stronger dose is clearly worse. These networks already
+hold labels from far deeper analysis than a 5,000-node search of ours; learning from their own shallow search pulls them
+down. The self-taught line climbed by generations because it had no better teacher. Self-play is paused.
+
+## A learned judgment of late moves (16 November, night)
+
+`calc_s19.c -DLSEL` searches a sample of the moves after the first at full depth whatever the rules say and writes what
+was known about the move beforehand (34 features: move number, histories, exchange value, static evaluation minus the
+bound, what the hash table says, node type, checks, attacked squares, ...) with whether the full-depth look beat the bound
+(`ext/lsel_collect.py`; 2,399 positions from self-play on openings the test sets do not use, 300,000 nodes each, 16.5
+million records). `ext/lsel_fit.py` fits what the standing rule knows (its reduction, the depth, the pruning rule that
+would have fired), an additive model over buckets of every feature, and a small network, and judges them on a fifth of
+the searches held out (1.2 million records):
+
+| Predictor | Log-loss removed | Area under the curve | Depth 8+: share of the moves that matter inside the half judged safest |
+|---|---|---|---|
+| standing rule | 15.3% | 0.822 | 10.4% |
+| additive model | 31.6% | 0.907 | 2.0% |
+| small network | 33.2% | 0.914 | 1.8% |
+
+The additive model went into the engine (options `Sel`, `SelA`, `SelB`, `SelFile`; reduction = SelA/100 − SelB/100 × (log-odds
++ 5) plies; 5% slower). Against the standing rule at 300,000 nodes on the quality test (`zero/results/vault_sel_test.log`,
+standard error 0.26 to 0.30): 210/50 +0.11, 175/75 −0.33, 135/100 +0.16, 260/50 +0.42, 185/100 +0.06, 160/50 −0.02. Level.
+The model tells far better which late moves matter, and that buys nothing: a move that beats the bound at full depth
+nearly always beats it in the reduced look too and is then searched again in full, so the standing rule was not losing
+those moves. Not adopted.
+
+Where the nodes go (`-DSSTAT`, 1,000,000 nodes a position): quiescence 32%, main nodes with one ply left 33%, two plies
+14%, three 7.5%, four 5%, everything deeper 9%. By what the search was doing: inside a reduced look 67%, inside a null-move
+try 17 to 20% (a try succeeds 45 to 49% of the time), re-searches after a reduced look liked the move 5.5%, singular tests
+4%, full-window re-searches 2 to 6%. No single bucket explains a factor of three.

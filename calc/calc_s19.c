@@ -1009,6 +1009,12 @@ static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 1
 static U64 nodes, node_limit, check_mask = 2047;
 #ifdef SSTAT                               // where the search spends its nodes (printed at quit); no effect on the search
 static U64 st_[40];
+static U64 st_d[24], st_dm[24], st_dq[24], st_p[8]; static int st_mode;   // st_p: nodes by what the search was doing (0 first look, 1 inside a null-move try, 2 a singular test, 3 a re-search after a reduced look liked the move, 4 a full-window re-search, 5 a reduced look)
+#define STM(m, code) { int o_ = st_mode; st_mode = (m); code; st_mode = o_; }
+#else
+#define STM(m, code) { code; }
+#endif
+#ifdef SSTAT        // main-search nodes by remaining depth; moves searched there; quiet moves among them
 #define ST(i) (st_[i]++)
 #define STA(i, v) (st_[i] += (U64)(v))
 #else
@@ -1381,6 +1387,9 @@ static int qsearch(int alpha, int beta, int ply) {
     if (stop_flag) return 0;
     if (ply >= MAXPLY - 1) return evaluate();
     ST(0);
+#ifdef SSTAT
+    st_p[st_mode]++;
+#endif
     TTE *e = tt_find(P.key);
     Move ttm = 0;
     if (e->key == P.key) {
@@ -1438,6 +1447,9 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
     if (beta > MATE - ply - 1) beta = MATE - ply - 1;
     if (alpha >= beta) return alpha;
     ST(1); if (pv_node) ST(30);
+#ifdef SSTAT
+    st_d[depth > 23 ? 23 : depth]++; st_p[st_mode]++;
+#endif
 
     TTE *e = tt_find(P.key);
     Move ttm = 0, excl = excluded[ply];
@@ -1487,7 +1499,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
             if (par[VOL_NMP]) R -= vcls;                                    // a reliable evaluation: trust the null move more; an unreliable one: less
             move_stack[ply] = 0; cutn[ply + 1] = !cutnode; ST(5);
             make_null();
-            int v = -search(depth - 1 - R, -beta, -beta + 1, ply + 1, 0);
+            int v; STM(1, v = -search(depth - 1 - R, -beta, -beta + 1, ply + 1, 0));
             unmake_null();
             if (stop_flag) return 0;
             if (v >= beta) { ST(6); return v > MATE_IN ? beta : v; }
@@ -1546,7 +1558,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
             tt_score > -MATE_IN && tt_score < MATE_IN && ply + depth < MAXPLY - 8) {
             int sbeta = tt_score - par[SE_MUL] * depth; ST(19);
             excluded[ply] = m;
-            int v = search((depth - 1) / 2, sbeta - 1, sbeta, ply, 0);
+            int v; STM(2, v = search((depth - 1) / 2, sbeta - 1, sbeta, ply, 0));
             excluded[ply] = 0;
             if (stop_flag) return 0;
             if (v < sbeta) { ext = (par[SE_DOUBLE] && !pv_node && v < sbeta - par[SE_DOUBLE] && ply < 2 * root_depth) ? 2 : 1; ST(20); }
@@ -1626,6 +1638,9 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         if (gcq >= 0 && gcq != in_check()) { printf("the check test disagrees with the board: move %d\n", m); fflush(stdout); abort(); }
 #endif
         legal++; ST(26); mcount[ply] = legal;
+#ifdef SSTAT
+        st_dm[depth > 23 ? 23 : depth]++; if (quiet) st_dq[depth > 23 ? 23 : depth]++;
+#endif
         int v, nd = depth - 1 + ext;
         if (legal == 1) { cutn[ply + 1] = pv_node ? 0 : !cutnode; v = -search(nd, -beta, -alpha, ply + 1, 1); }
         else {
@@ -1661,7 +1676,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 if (samp) { lr.rstd = (unsigned char)r; r = 0; }
             }
             cutn[ply + 1] = r ? 1 : !cutnode; if (r) { ST(16); STA(31, r); }
-            v = -search(nd - r, -alpha - 1, -alpha, ply + 1, 1);
+            if (r) { STM(5, v = -search(nd - r, -alpha - 1, -alpha, ply + 1, 1)); } else v = -search(nd - r, -alpha - 1, -alpha, ply + 1, 1);
 #ifdef LSEL
             if (samp && !stop_flag) {                                       // what the full-depth look found
                 lr.v_alpha = clip16(v - alpha); lr.f2 |= (unsigned char)((v > alpha) << 7);
@@ -1673,9 +1688,9 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 int nd2 = nd;
                 if (par[DEEPER]) nd2 += (v > best + 50 + 2 * nd) - (v < best + 10);
                 cutn[ply + 1] = !cutnode;
-                if (nd2 > nd - r) v = -search(nd2, -alpha - 1, -alpha, ply + 1, 1);
+                if (nd2 > nd - r) STM(3, v = -search(nd2, -alpha - 1, -alpha, ply + 1, 1));
             }
-            if (v > alpha && v < beta) { cutn[ply + 1] = 0; ST(18); v = -search(nd, -beta, -alpha, ply + 1, 1); }
+            if (v > alpha && v < beta) { cutn[ply + 1] = 0; ST(18); STM(4, v = -search(nd, -beta, -alpha, ply + 1, 1)); }
         }
         unmake();
         if (stop_flag) return 0;
@@ -2124,6 +2139,10 @@ int main(int argc, char **argv) {
                      100.0 * t[9] / cut, 100.0 * t[27] / cut, 100.0 * t[32] / cut, t[10] / cut, 100.0 * t[28] / (double)(t[8] + t[22]), (double)t[23] / (t[22] ? t[22] : 1));
               printf("info string cutoffs at nodes with a table move %.1f%% of all (on the first move %.1f%%); without one: on the first move %.1f%%, by a capture %.1f%%, by a killer %.1f%%, mean move number %.2f\n",
                      100.0 * t[33] / cut, 100.0 * t[34] / (t[33] ? t[33] : 1), 100.0 * t[36] / (t[35] ? t[35] : 1), 100.0 * t[37] / (t[35] ? t[35] : 1), 100.0 * t[38] / (t[35] ? t[35] : 1), (double)t[39] / (t[35] ? t[35] : 1));
+              printf("info string nodes by purpose: first look %.1f%%, inside a null-move try %.1f%%, inside a singular test %.1f%%, inside a reduced look %.1f%%, re-search after a reduced look %.1f%%, full-window re-search %.1f%%\n", 100.0 * st_p[0] / all, 100.0 * st_p[1] / all, 100.0 * st_p[2] / all, 100.0 * st_p[5] / all, 100.0 * st_p[3] / all, 100.0 * st_p[4] / all);
+              printf("info string main nodes by depth left (share of all nodes %%, moves searched per node, quiet share):");
+              for (int d = 1; d < 24; d++) if (st_d[d]) printf(" %d: %.1f%% %.2f %.0f%% |", d, 100.0 * st_d[d] / all, (double)st_dm[d] / st_d[d], 100.0 * st_dq[d] / (st_dm[d] ? st_dm[d] : 1));
+              printf("\n");
               printf("info string moves searched %.0f; skipped: late-move %llu, futility %llu, history %llu, losing quiet %llu, losing capture %llu (events; the first two end all quiets of the node)\n", (double)t[26], t[11], t[12], t[13], t[14], t[15]);
               printf("info string reduced searches %.1f%% of moves searched, mean reduction %.2f, re-searched %.1f%% of them; full-window re-searches %llu; singular tests %llu (extended %.0f%%, multi-cut %.0f%%); table-move-less depth cuts %llu\n",
                      100.0 * t[16] / t[26], (double)t[31] / (t[16] ? t[16] : 1), 100.0 * t[17] / (t[16] ? t[16] : 1), t[18], t[19], 100.0 * t[20] / (t[19] ? t[19] : 1), 100.0 * t[21] / (t[19] ? t[19] : 1), t[29]); }
