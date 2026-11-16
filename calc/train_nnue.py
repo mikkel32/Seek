@@ -49,6 +49,7 @@ ap.add_argument('--sharp', type=float, default=1.0)      # train on labels made 
                                                          # exported network's values are sharp times larger: play it with EvalScale = 100 / sharp.
 ap.add_argument('--distill', default='')                 # a teacher network's weights (.ema.pt; king-bucketed with the shared table folded or not, any width,
                                                          # the same bucket scheme as the student): its win chance for each training position joins the label
+                                                         # Several teachers joined by '+' (e.g. zero/w_BIGX.bin.ema.pt+sf:<file>): the mean of their win chances
 ap.add_argument('--dw', type=float, default=0.7)         # the teacher's share of the training target (1 = the teacher alone)
                                                          # --distill sf:<file>: the teacher is Stockfish 14.1's own network (ext/sfteach.py, the file from
                                                          # ext/sfnet_extract.py); its value is brought to the labels' scale with --tscale
@@ -339,21 +340,22 @@ matopt = MatOpt(net.E, a.opt) if a.opt != 'adam' else None
 opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8, fused=DEV.type == 'cuda')
 fwd = torch.compile(net) if DENSE and DEV.type == 'cuda' and NKB == 1 else net        # the compiled model is the same network in fewer GPU kernels (bucketed inputs: batch-dependent shapes, not compiled)
 TEACH = None
-if a.distill.startswith('sf:'):
-    import sys; sys.path.insert(0, 'ext'); import sfteach
-    _sf = sfteach.load(a.distill[3:], DEV); print(f'teacher: Stockfish 14.1 network from {a.distill[3:]}, share of the target {a.dw}, scale {a.tscale}', flush=True)
 
-    def TEACH(idx):
-        return _sf(idx)[1] * (a.tscale / 271.58)
-elif a.distill:
-    _t = {k: v.to(DEV) for k, v in torch.load(a.distill, map_location='cpu').items()}
+
+def _teacher(spec):
+    """one teacher: 'sf:<file>' = Stockfish 14.1's network (ext/sfteach.py), otherwise the weights of one of our own networks. Returns positions -> logit"""
+    if spec.startswith('sf:'):
+        import sys; sys.path.insert(0, 'ext'); import sfteach
+        _sf = sfteach.load(spec[3:], DEV); print(f'teacher: Stockfish 14.1 network from {spec[3:]}, scale {a.tscale}', flush=True)
+        return lambda idx: _sf(idx)[1] * (a.tscale / 271.58)
+    _t = {k: v.to(DEV) for k, v in torch.load(spec, map_location='cpu').items()}
     _TE = _t['E'][:-1]; _TN = _TE.shape[0] // 768; _TH = _TE.shape[1]
     assert _TN == NKB and NKB in (7, 16, 32), 'the teacher must use the student\'s king buckets'
     _TW = _TE.view(_TN, 768, _TH); _TW = (_TW + _t['Esh'][:768] if 'Esh' in _t else _TW).contiguous()
-    print(f'teacher {a.distill}: {_TH} wide, {_TN} king buckets, share of the target {a.dw}', flush=True)
+    print(f'teacher {spec}: {_TH} wide, {_TN} king buckets', flush=True)
 
     @torch.no_grad()
-    def TEACH(idx):
+    def f_(idx):
         """the teacher's value (a logit) for a batch of positions: the same arithmetic as Net.forward's king-bucketed dense form"""
         B = idx.shape[0]; one = torch.ones(idx.shape, device=idx.device)
         Mo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, idx, one)[:, :768]
@@ -369,6 +371,18 @@ elif a.distill:
             inv = torch.empty_like(order); inv[order] = torch.arange(B, device=ix.device)
             heads = heads + torch.cat([((_t['b'] + sg @ _TW[k]).clamp(0, 1) ** 2) @ w.T for k, sg in enumerate(Ms.split(cnt)) if cnt[k]])[inv]
         return ph * lin[:, 0] + (1 - ph) * lin[:, 1] + heads.gather(1, bk[:, None])[:, 0]
+    return f_
+
+
+if a.distill:                                                            # several teachers, joined by '+': the student is shown the mean of their win chances
+    _TS = [_teacher(t_) for t_ in a.distill.split('+')]
+    print(f'{len(_TS)} teacher(s), share of the target {a.dw}', flush=True)
+
+    @torch.no_grad()
+    def TEACH(idx):
+        if len(_TS) == 1:
+            return _TS[0](idx)
+        return torch.logit(torch.stack([torch.sigmoid(t_(idx)) for t_ in _TS]).mean(0).clamp(1e-6, 1 - 1e-6))
 REF = None
 if a.extrap != 0:                                                        # a frozen copy of the network as it starts
     REF = Net().to(DEV); REF.load_state_dict(net.state_dict())
