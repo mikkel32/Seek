@@ -1,0 +1,1 @@
+[07:21:19] standing, p_mixr with EvalScale=65 (engine s19): against Stockfish 14.1, 10+0.1: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 500, "w": 29, "d": 218, "l": 253, "score": 0.276, "elo": -167.5, "lo": -191.2, "hi": -145.2, "avg_plies": 153.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.6}

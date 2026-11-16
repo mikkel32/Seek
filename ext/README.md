@@ -154,13 +154,27 @@ search sees it); the best setting tried is given.
 | Lichess game positions (reference) | | −281 (−306 to −259) | −20 | −224 |
 | engine-game positions, score only | +5 (−7 to +17), 604-820-576 | −254; −243 with `EvalScale=60` | −56 | −218 |
 | engine-game positions, 0.75 score + 0.25 game result | −39 (−51 to −27) | −264; **−218 with `EvalScale=70`**; −231 with 50 | | |
-| half Lichess, half engine-game (score only), 1.09 billion | **+57 (45 to 68)** | −238 | | |
+| half Lichess, half engine-game (score only), 1.09 billion | +57 (45 to 68) | −238; −216 with `EvalScale=75` | | |
+| the same mix, engine-game labels with the game result | +39 (27 to 50) | −241; −209 with `EvalScale=65` | | |
+| the same mix, engine-game labels rescaled to ours (score scale 950) with the game result (`ext/s2yc.py`, `--ytag yc`) | **+60 (48 to 71)** | **−218; −216 with `EvalScale=80`** | | |
 | 1536 wide, Lichess | +38 (28 to 49); search 31% slower | | | |
 | 1024 wide, Lichess | +12 (1 to 23) | −240 | | |
 
 For scale: BIGK, the same design after four passes over 4.37 billion Lichess positions, scores −223 against Stockfish at
 10,000 nodes; with `EvalScale` 60 / 80 / 130 it scores −225 / −224 / −250 (its scale is right; a value that is too large
 costs far more than one that is too small: the engine-game probe at 130 scores −341).
+
+Every variant with engine-game positions lands between −209 and −218 against Stockfish once its scale is right, about 65
+better than the same network on Lichess positions alone and level with BIGK, which had sixteen times the training. The
+label details do not separate at 1,000 games; the rescaled labels need no scale correction and are the ones used at full
+scale: **BIGM** = the same network, two passes over the 4.37 billion Lichess positions and 3.83 billion engine-game
+positions (seven of the twelve files; the disk holds no more next to the Lichess shards), `ext/big_run.sh`.
+
+At the clock the result-mixed probe with `EvalScale=65` stands at −168 (−191 to −145, 500 games) against Stockfish 14.1 at
+10+0.1 (`lab_probe_clock.log`).
+
+The search self-tuning on BIGK (15,000 iterations at 20+0.2) ended with every value within a few percent of where it
+started; tuned against standing values at 10+0.1: 160-660-180, −7 (−20 to +6), 1,000 games. The standing values stay.
 
 Two readings. The engine-game network is worse than the Lichess one with almost no search (−56 against −20 at 300 nodes)
 and better with more (−243 against −281 at 10,000): it gives up shallow tactical knowledge the search supplies anyway and

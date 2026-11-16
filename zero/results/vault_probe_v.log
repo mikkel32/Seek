@@ -21,3 +21,13 @@
 [06:46:23]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 5.84 centipawns, mean 1.032; evaluations range -30
 [06:46:24]   speed (calc/calc_s19b): depth 14: 3,609,743 positions in 1.63s = 2217k per second; signature ed1188314b
 [06:53:21]   mix against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 751, "d": 821, "l": 428, "score": 0.5807, "elo": 56.6, "lo": 44.9, "hi": 68.4, "avg_plies": 153.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.9}
+[07:03:08] mixr (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag ym): held-out loss 0.5445342659950256, mean error 0.05873866379261017; 500s, 2204k pos/s
+[07:03:11]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 5.05 centipawns, mean 1.037; evaluations range -28
+[07:03:13]   speed (calc/calc_s19c): depth 14: 4,108,194 positions in 1.76s = 2336k per second; signature ae581275ef
+[07:08:55]   mixr against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 695, "d": 831, "l": 474, "score": 0.5553, "elo": 38.5, "lo": 26.9, "hi": 50.3, "avg_plies": 155.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.7}
+[07:08:55] probes finished
+[07:17:15] mixc (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5432880520820618, mean error 0.057154133915901184; 497s, 2220k pos/s
+[07:17:18]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 13.22 centipawns, mean 2.012; evaluations range -2
+[07:17:20]   speed (calc/calc_s19c): depth 14: 3,271,778 positions in 1.63s = 2010k per second; signature 17e76828d1
+[07:22:57]   mixc against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 725, "d": 889, "l": 386, "score": 0.5847, "elo": 59.5, "lo": 48.1, "hi": 70.9, "avg_plies": 159.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.6}
+[07:22:57] probes finished

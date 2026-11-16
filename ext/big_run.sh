@@ -8,7 +8,7 @@ cd /root/loopchess; N=$1; EP=$2; KB=$3; W=$4; G=$5; OPP=$6; E=$7; shift 7
 say() { echo "[$(date -u +%H:%M:%S)] $*" >> big_run.log; }
 tg=""; for r in ${G//,/ }; do pre=${r%%:*}; rg=${r#*:}; tg="$tg,$(seq -s, -f "$pre%g" ${rg%-*} ${rg#*-})"; done; tg=${tg#,}
 O="Hash=64,PvPrune=1,ChkExt=0,SeDouble=20,CutIir=1"; OU="$O${US_EXTRA:+,$US_EXTRA}"
-touch zero/FARM_PAUSE
+touch zero/FARM_PAUSE; ulimit -n 65536     # one memory map per shard file: more than a thousand of them
 say "options of the new network in its matches: $OU"
 say "training $N: $W wide, $KB king buckets with a shared table, from scratch, $EP passes over $G $*"
 t0=$(date +%s); python3 calc/train_nnue.py --h $W --buckets 8 --kb $KB --kf 1 --ema 0.999 --files $tg --val ival --epochs $EP --bs 32768 --lr 1.4e-3 --threads 4 --device cuda --pst zero/g101s.npz --out zero/w_$N.bin "$@" > zero/w_$N.train.log 2>&1
