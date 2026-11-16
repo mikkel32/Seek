@@ -1,7 +1,0 @@
-[07:41:34] fetched: 34 engine-game shards, 26G in memory
-[08:02:05] products (--prod 1): held-out loss 0.5432080626487732, mean error 0.0570487342774868; 1231s, 900k pos/s
-[08:02:05]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms on: largest difference 11.95 centipawns, mean 2.039; evaluations range -1993 to 1957, the product terms supply 220 centipawns on avera
-[08:02:21]   speed, p_mixc: depth 13: 2,021,622 positions in 2.37s = 853k per second; signature e4d884a660
-[08:02:23]   speed, p_products: depth 13: 2,364,477 positions in 3.23s = 732k per second; signature a58ec8ce1b
-[08:11:46]   products against the reference probe, 30,000 positions per move: {"opponent": "p_mixc", "tc": "30000 positions per move", "n": 2000, "w": 551, "d": 935, "l": 514, "score": 0.5092, "elo": 6.4, "lo": -4.7, "hi": 17.6, "avg_plies": 153.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 9.3}
-[08:15:44]   products against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 2000, "w": 214, "d": 479, "l": 1307, "score": 0.2268, "elo": -213.1, "lo": -228.2, "hi": -198.7, "avg_plies": 136.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}

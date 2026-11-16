@@ -193,13 +193,27 @@ At the clock the result-mixed probe with `EvalScale=65` stands at −168 (−191
 The search self-tuning on BIGK (15,000 iterations at 20+0.2) ended with every value within a few percent of where it
 started; tuned against standing values at 10+0.1: 160-660-180, −7 (−20 to +6), 1,000 games. The standing values stay.
 
+Architecture on the mixed data, same recipe with one change, on the match machine's card (`ext/lab_probe.sh`,
+`lab_probe_mixed.log`; 2,000 games against the mixed reference probe at 30,000 nodes, 2,000 against Stockfish 14.1 at
+10,000 nodes; speed on equal node budgets, `ext/nodetime.py`):
+
+| Change | Against the reference | Against Stockfish 14.1 (reference: −218, −229 to −208 over 4,000 games) | Search speed |
+|---|---|---|---|
+| product terms (`--prod 1`) | +6 (−5 to +18) | −213 (−228 to −199) | −18% |
+| layered read-out on 64 units a side (`--head 16,32 --hk 64`) | +12 (1 to 23) | −207 (−222 to −193) | −15% |
+
+Neither pays for its speed. Search options under the new network family, the mixed probe against Stockfish 14.1 at 10,000
+nodes, 4,000 games each (`ext/lab_sweep.sh`, `lab_sweep.log`): as it is −218; `CutLmr=1` −211; `ProbCut=150` −217;
+`NegExt=1` −217; `TtCapLmr=1` −214; `TtBucket=1` −217; `NmpBase=4` −217; `SeDepth=6` −212; `SeDouble=0` −220. Each
+interval is ±10: nothing moves.
+
 Two readings. The engine-game network is worse than the Lichess one with almost no search (−56 against −20 at 300 nodes)
 and better with more (−243 against −281 at 10,000): it gives up shallow tactical knowledge the search supplies anyway and
 gains what the search cannot supply. And a match between two of our own networks does not predict the match against
 Stockfish (the result-mixed probe loses to the reference by 39 and is 63 better against Stockfish): candidates are now
 judged against Stockfish at 10,000 nodes or more.
 
-Held-out loss of further one-pass variants on the match machine's card (`lab_probe.log`): plain 768 0.54447; 16 buckets
+Held-out loss of further one-pass variants on the match machine's card (`lab_probe_loss.log`): plain 768 0.54447; 16 buckets
 0.54250; 16 buckets without the shared table 0.54335; 32 buckets 0.54253; 7 buckets 0.54263; half the learning rate 0.54290;
 twice the learning rate 0.54289.
 

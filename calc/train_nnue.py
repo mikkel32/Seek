@@ -44,6 +44,9 @@ ap.add_argument('--prod', type=int, default=0)           # 1 = product terms on 
                                                          # (piece-pair interactions the squares cannot express; a few thousand extra output weights, the big input table unchanged)
 ap.add_argument('--extrap', type=float, default=0.0)     # move every label this share further away from what the STARTING network says (in score units): the search
                                                          # corrects the evaluator only part of the way, and game results sit further along the same line (zero/teacher2.py)
+ap.add_argument('--sharp', type=float, default=1.0)      # train on labels made steeper: win chance -> sigmoid(sharp x its logit). 2 = the loss sees a 50-centipawn error near
+                                                         # equality twice as large (Stockfish's own trainer uses a scale about 2.5 times steeper than these labels'). The
+                                                         # exported network's values are sharp times larger: play it with EvalScale = 100 / sharp.
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
 
@@ -345,6 +348,7 @@ def validate(m=None):
     keep = dict(ROUTE); ROUTE.update(tau=1.0, hard=True, train=False)   # validate the way the engine runs
     out = torch.cat([m(VX[i:i + 50000]) for i in range(0, len(VX), 50000)])
     ROUTE.update(keep)
+    out = out / a.sharp                                                 # back on the labels' own scale, so the figures stay comparable
     return float(F.binary_cross_entropy_with_logits(out, VY)), float((torch.sigmoid(out) - VY).abs().mean())
 
 
@@ -425,6 +429,8 @@ while not done:
             else:
                 xb = mirrored(X[k].long()) if a.mirror > 0 else X[k].long()
                 yb = Y[k].float() / 255
+                if a.sharp != 1.0:
+                    yb = torch.sigmoid(a.sharp * torch.logit(yb.clamp(1 / 510, 1 - 1 / 510)))
                 if REF is not None:
                     with torch.no_grad():
                         ly = torch.logit(yb.clamp(1 / 510, 1 - 1 / 510)); yb = torch.sigmoid(ly + a.extrap * (ly - REF(xb)))
