@@ -17,3 +17,10 @@
 [09:27:28]   mix3 against the reference probe, 30,000 positions per move: {"opponent": "p_mixc", "tc": "30000 positions per move", "n": 2000, "w": 567, "d": 894, "l": 539, "score": 0.507, "elo": 4.9, "lo": -6.5, "hi": 16.2, "avg_plies": 152.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 10.5}
 [10:42:45] fetched: 23 first-stage shards, 34G in memory
 [12:10:35] fetched: 23 first-stage shards, 34G in memory
+[12:40:27] mixc_w1536 (--h 1536; h:0-33,s:0-33): held-out loss 0.5423020124435425, mean error 0.0555366612970829; 1792s, 612k pos/s
+[12:40:31] fetched: 23 first-stage shards, 34G in memory
+[12:40:27]   engine against trainer: 1000 random positions, hidden 1536, king buckets 16, product terms off: largest difference 21.96 centipawns, mean 3.697; evaluations range -2137 to 2151, the product terms supply 0 centipawns on avera
+[12:46:41]   mixc_w1536 against the reference probe, 30,000 positions per move: {"opponent": "p_mixc", "tc": "30000 positions per move", "n": 2000, "w": 677, "d": 885, "l": 438, "score": 0.5597, "elo": 41.7, "lo": 30.4, "hi": 53.2, "avg_plies": 153.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.0}
+[12:49:22]   mixc_w1536 against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 2000, "w": 245, "d": 548, "l": 1207, "score": 0.2595, "elo": -182.2, "lo": -196.4, "hi": -168.5, "avg_plies": 143.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.7}
+[12:49:22] second round of probes finished
+[12:57:23]   mixc_w1536 against the reference probe, 10+0.1: {"opponent": "p_mixc", "tc": "10+0.1", "n": 1000, "w": 172, "d": 576, "l": 252, "score": 0.46, "elo": -27.9, "lo": -41.9, "hi": -13.9, "avg_plies": 154.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 8.0}

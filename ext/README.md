@@ -237,6 +237,21 @@ Bigger networks on the mixed data, one pass over 1.09 billion positions, against
 nodes (2,000 games, `vault_probe_v.log`): 32 king buckets −3 (−14 to +9); 1024 wide +14 (3 to 25), held-out loss 0.54287
 against 0.54329.
 
+**Width at the clock.** The 1536-wide probe (one pass over the same 1.09 billion mixed positions, `lab_probe_mixed.log`):
+
+| Test | Games | Result |
+|---|---|---|
+| against the 768-wide reference probe, 30,000 nodes | 2,000 | 677-885-438, +42 (30 to 53) |
+| against Stockfish 14.1, 10,000 nodes each | 2,000 | −182 (−196 to −169); reference −218 |
+| against the reference probe, 10+0.1 | 1,000 | 172-576-252, **−28 (−42 to −14)** |
+
+Search speed on equal node budgets (`ext/nodetime.py`): on the quiet training machine 768 wide 2.92 million nodes a second,
+1024 wide 2.57 million (−12%), 1536 wide 2.17 million (−26%); on the match machine under match load (76 games on 88
+threads) 768 wide 443k to 536k, 1536 wide 239k to 299k (about −45%). A wider network gains at equal nodes and gives it back
+in speed; under our match conditions it gives back more than it gains. The installed Stockfish needs 1.9 times our time per
+node on the quiet machine as well (1.55 against 2.96 million nodes a second), so that handicap is its build and its larger
+network, not the load.
+
 32 king buckets together with 1024 wide: +12 (1 to 23), no better than 1024 wide alone. **BIGX**, the full-scale 1536-wide
 network (16 buckets, two passes over 1.8 billion Lichess, 6.02 billion second-stage and 0.35 billion first-stage positions),
 is the run that tests whether width pays where data no longer does. The trainer can also teach a network from another

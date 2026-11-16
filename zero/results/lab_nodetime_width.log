@@ -1,0 +1,7 @@
+768 wide: 100000 nodes asked, 71583 reported on the last info line; 225.83 ms per search = 443k nodes per second of wall time
+1536 wide: 100000 nodes asked, 66209 reported on the last info line; 334.68 ms per search = 299k nodes per second of wall time
+1024 wide (earlier probe): 100000 nodes asked, 67617 reported on the last info line; 227.71 ms per search = 439k nodes per second of wall time
+768 wide: 100000 nodes asked, 71583 reported on the last info line; 186.68 ms per search = 536k nodes per second of wall time
+1536 wide: 100000 nodes asked, 66209 reported on the last info line; 418.75 ms per search = 239k nodes per second of wall time
+1024 wide (earlier probe): 100000 nodes asked, 67617 reported on the last info line; 278.76 ms per search = 359k nodes per second of wall time
+ 12:59:20 up 6 days, 18:13,  0 users,  load average: 71.83, 64.71, 51.64
