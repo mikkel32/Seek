@@ -43,6 +43,8 @@ Our options: `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1`.
 | LFf (787M, 384 wide) | −215 (−257 to −178), 200 games | −191 (−233 to −153), 150 games | +56 (19 to 94) | +56 (20 to 94) |
 | BIGW (4.37 billion, 768 wide) | −153 (−179 to −129), 400 games | −168 (−196 to −143), 300 games | +100 (74 to 127), 400 games | +51 (20 to 82), 200 games |
 | BIGK (4.37 billion, 768 wide, 16 king buckets; engine `calc_s18`) | −143 (−169 to −119), 400 games | −163 (−190 to −137), 300 games | | |
+| BIGK again with engine `calc_s19` | −137 (−161 to −115), 500 games | | | |
+| **BIGM** (4.37 billion Lichess + 3.83 billion engine-game positions, same network; engine `calc_s19`) | **−116 (−136 to −97), 500 games** | (playing) | | |
 
 ## King-bucketed inputs
 
@@ -186,6 +188,20 @@ better than the same network on Lichess positions alone and level with BIGK, whi
 label details do not separate at 1,000 games; the rescaled labels need no scale correction and are the ones used at full
 scale: **BIGM** = the same network, two passes over the 4.37 billion Lichess positions and 3.83 billion engine-game
 positions (seven of the twelve files; the disk holds no more next to the Lichess shards), `ext/big_run.sh`.
+
+**BIGM, the full-scale mixed-data network** (`vault_big_run.log`, `lab_bigm_clock.log`; held-out Lichess loss 0.54174, mean error 0.0552):
+
+| Test | Games | Result |
+|---|---|---|
+| BIGM against BIGK, 30,000 positions per move | 2,000 | 709-853-438, +47 (36 to 59) |
+| BIGM against BIGK, 10+0.1 | 500 | 131-309-60, +50 (31 to 69) |
+| BIGM against Stockfish 14.1, 10,000 nodes each | 1,000 | −188 (−209 to −169); BIGK −223, the one-pass mixed probe −218 |
+| BIGM against Stockfish 14.1, 30,000 nodes each | 1,000 | −185 (−204 to −167); BIGK −247, the one-pass mixed probe −231 |
+| standing against Stockfish 14.1, 10+0.1 | 500 | −116 (−136 to −97); BIGK −137 and −143 |
+
+Composition of the mix hardly matters at probe scale: 85% engine-game positions against the half-and-half reference
+−9 (−20 to +3); a third each of Lichess, second-stage and first-stage (Stockfish's own self-play, `ext/s1data.sh`)
+positions +5 (−7 to +16).
 
 At the clock the result-mixed probe with `EvalScale=65` stands at −168 (−191 to −145, 500 games) against Stockfish 14.1 at
 10+0.1 (`lab_probe_clock.log`).

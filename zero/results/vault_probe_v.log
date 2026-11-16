@@ -31,3 +31,8 @@
 [07:17:20]   speed (calc/calc_s19c): depth 14: 3,271,778 positions in 1.63s = 2010k per second; signature 17e76828d1
 [07:22:57]   mixc against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 725, "d": 889, "l": 386, "score": 0.5847, "elo": 59.5, "lo": 48.1, "hi": 70.9, "avg_plies": 159.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.6}
 [07:22:57] probes finished
+[09:38:01] s2x (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5460716485977173, mean error 0.06047951057553291; 558s, 1920k pos/s
+[09:38:07]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 12.73 centipawns, mean 2.183; evaluations range -2
+[09:38:09]   speed (calc/calc_s19c): depth 14: 3,717,882 positions in 2.27s = 1635k per second; signature 996006f078
+[09:46:05]   s2x against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 535, "d": 880, "l": 585, "score": 0.4875, "elo": -8.7, "lo": -20.1, "hi": 2.7, "avg_plies": 157.2, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.9}
+[09:46:05] probes finished

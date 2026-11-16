@@ -1,0 +1,10 @@
+[07:23:36] options of the new network in its matches: Hash=64,PvPrune=1,ChkExt=0,SeDouble=20,CutIir=1
+[07:23:36] training BIGM: 768 wide, 16 king buckets with a shared table, from scratch, 2 passes over e:0-11,f:0-39,h:0-209,s:0-258 --ytag yc
+[09:28:21] network BIGM trained in 7485s: done: steps 500809, val (log-loss, MAE) raw (0.5423537492752075, 0.05606434494256973) averaged (0.5417413711547852, 0.05517800152301788), 7481s -> zer
+[09:28:24] engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 49.97 centipawns, mean 6.184; evaluations range -2
+[09:28:31] speed, BIGK: depth 14: 3,992,331 positions in 1.64s = 2427k per second; signature e8aaccc6d4
+[09:28:33] speed, BIGM: depth 14: 3,190,837 positions in 1.50s = 2129k per second; signature d40b5b0644
+[09:32:48] BIGM against BIGK, 30,000 positions per move: {"opponent": "BIGK", "tc": "30000 positions per move", "n": 2000, "w": 709, "d": 853, "l": 438, "score": 0.5677, "elo": 47.4, "lo": 35.9, "hi": 59.0, "avg_plies": 151.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.3}
+[09:33:44] BIGM against Stockfish 14.1, 10000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 119, "d": 268, "l": 613, "score": 0.253, "elo": -188.1, "lo": -208.6, "hi": -168.7, "avg_plies": 142.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
+[09:36:23] BIGM against Stockfish 14.1, 30000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 87, "d": 338, "l": 575, "score": 0.256, "elo": -185.3, "lo": -204.2, "hi": -167.4, "avg_plies": 145.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.6}
+[09:36:23] BIGM finished
