@@ -161,7 +161,12 @@ BIGM by 43 (26 to 61) at scale 100: of the equal-node gap, roughly 105 is the se
 | on top of `HistV2=15`, `PruneV2=1`: skip late quiet moves with two negative continuation histories at reduced depth under 5 | −36 (−45 to −27) |
 | on top of `HistV2=15`, `PruneV2=2`: futility on the reduced depth with a history term | 0 (−9 to +8) |
 
-Every attempt to prune more has lost (also `LmrPrune` above); better move ordering is what has paid.
+The history batch does not survive deeper searches: `HistV2=7` against the standing search is +19 at 10,000 nodes,
+−10 (−21 to +1, 2,000 games) at 30,000, −9 (−22 to +5, 1,000 games) at 100,000 and 144-661-195, −18 (−30 to −5), at 10+0.1;
+it has no cost in speed (487k against 486k nodes a second under match load). It is not adopted. The lesson is about the
+test: 10,000 nodes a move rewards what suits a shallow search, so the search options above are being re-run at 100,000
+nodes (`lab_deep_sweep.log`).
+
 
 Search statistics of our engine at 300,000 nodes per position (`-DSSTAT`): quiescence 28% of nodes; 60% of main-search
 nodes end by reverse futility; 82% of move-loop cutoffs come on the first move; reduced searches are re-searched 1.5% of
@@ -225,6 +230,10 @@ positions (seven of the twelve files; the disk holds no more next to the Lichess
 | standing against Stockfish 14.1, 60+0.6 | 300 | −115 (−139 to −93); BIGK −163 |
 | BIGM against BIGK, 60+0.6 | 200 | 38-150-12, +45 (22 to 69) |
 | BIGM against Stockfish 14.1, 10,000 nodes each, again on the match machine | 4,000 | −173 (−183 to −164) |
+
+Bigger networks on the mixed data, one pass over 1.09 billion positions, against the mixed reference probe at 30,000
+nodes (2,000 games, `vault_probe_v.log`): 32 king buckets −3 (−14 to +9); 1024 wide +14 (3 to 25), held-out loss 0.54287
+against 0.54329.
 
 Tried on top of the mixed recipe and not adopted:
 
