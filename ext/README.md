@@ -140,27 +140,28 @@ Our search with Stockfish's network against Stockfish 14.1, 10,000 nodes each (`
 | our search + Stockfish's network against Stockfish 14.1 | 1,000 | 157-319-524, **−134 (−153 to −116)** |
 | our search + BIGM against Stockfish 14.1 (for comparison) | 4,000 | −173 (−183 to −164) |
 
-With the same evaluator on both sides we are 134 behind: about three quarters of the remaining equal-node gap is
-Stockfish's search, about a quarter its network. No single search setting moves anything (below), so the difference is in
-what the search does, not in how it is tuned.
+The result depends on how Stockfish's units are converted to ours (`EvalScale`, 100 = 361 of its units to 100 of ours):
+−163 at 70, −134 at 100, **−105 (−123 to −88) at 140**, −141 at 200, −254 at 280. Stockfish's network tolerates a larger
+scale than ours do (ours lose badly above 100), i.e. our pruning margins can be tighter against its values. At the best
+setting we are about 105 behind with the same evaluator on both sides, and in our own search Stockfish's network beats
+BIGM by 43 (26 to 61) at scale 100: of the equal-node gap, roughly 105 is the search and 45 to 70 the network.
 
-**It is not depth.** Geometric-mean nodes to finish a depth on the twelve bench positions (`ext/ebf.py`): ours 9,119 /
-33,971 / 92,176 / 239,265 for depths 8 / 10 / 12 / 14, Stockfish 14.1 6,574 / 28,590 / 78,522 / 185,116.
+**Search changes measured against the standing search** (same network BIGM, 10,000 nodes a move, 4,000 games each,
+`lab_hist_test.log`; options of `calc_s19`, all off by default):
 
-**It is not a search setting.** Each against Stockfish 14.1 at 10,000 nodes, 1,000 games (`ext/sweep.sh`,
-`vault_sweep.log`); `LmrPrune`, `LmpDepth`, `NmpMargin` are new options of `calc_s19`, off by default:
-
-| Setting | Result |
+| Change | Result |
 |---|---|
-| as it is | −223 |
-| pruning rules count the reduced depth (`LmrPrune=1`) | −269 |
-| late-move pruning to depth 12 (`LmpDepth=12`) | −232 |
-| null move only well above beta at low depth (`NmpMargin=100`) | −231 |
-| deeper reductions (`LmrDiv=180`) | −230 |
-| deeper still (`LmrDiv=150,LmrBase=100`) | −237 |
-| one ply more at expected cut nodes (`CutLmr=1`) | −213 |
-| two plies more (`CutLmr=2`) | −237 |
-| `LmrPrune=1,LmrDiv=180,CutLmr=1` | −258 |
+| `HistV2=1`: continuation histories four and six plies back, the one-ply one counted twice in move ordering | +3 (−6 to +11) |
+| `HistV2=2`: a counter-move slot after the killers | +3 (−6 to +11) |
+| `HistV2=4`: a best move that raised alpha without cutting off is rewarded like a cutoff move | +7 (−1 to +16) |
+| `HistV2=8`: when every reply fails low, the move that led there is rewarded | 0 (−8 to +9) |
+| `HistV2=16`: when a node cuts off, the opponent's first-choice quiet move that led there is penalised | −14 (−22 to −5) |
+| **`HistV2=7`** (the first three together) | **+19 (10 to 27)** |
+| `HistV2=15` | +19 (10 to 27) |
+| on top of `HistV2=15`, `PruneV2=1`: skip late quiet moves with two negative continuation histories at reduced depth under 5 | −36 (−45 to −27) |
+| on top of `HistV2=15`, `PruneV2=2`: futility on the reduced depth with a history term | 0 (−9 to +8) |
+
+Every attempt to prune more has lost (also `LmrPrune` above); better move ordering is what has paid.
 
 Search statistics of our engine at 300,000 nodes per position (`-DSSTAT`): quiescence 28% of nodes; 60% of main-search
 nodes end by reverse futility; 82% of move-loop cutoffs come on the first move; reduced searches are re-searched 1.5% of
@@ -234,6 +235,11 @@ Tried on top of the mixed recipe and not adopted:
   (4,000 games each), but with BIGM at 10+0.1 against the standing options 141-693-166, −9 (−21 to +3): its cost in time
   outweighs it.
 - 85% engine-game positions instead of half: −9 against the reference, −227 against Stockfish (reference −218).
+
+**This network size is full again.** BIGM2 = BIGM continued for one pass over 3.56 billion positions it had not seen
+(four more second-stage files, the first-stage sample, and 1.02 billion Lichess positions) at a quarter of the learning
+rate: against BIGM −6 (−16 to +5, 2,000 games at 30,000 nodes); against Stockfish 14.1 −192 at 10,000 nodes and −183 at
+30,000 (BIGM −188 / −173 and −185). More data and more training no longer help at 768 wide with 16 buckets.
 
 Composition of the mix hardly matters at probe scale: 85% engine-game positions against the half-and-half reference
 −9 (−20 to +3); a third each of Lichess, second-stage and first-stage (Stockfish's own self-play, `ext/s1data.sh`)

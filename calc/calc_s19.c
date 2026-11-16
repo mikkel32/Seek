@@ -964,13 +964,18 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
-#define NPAR 54
-enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2 };
-static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2"};
+#define NPAR 55
+enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2 };
+static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2"};
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0};
+// PruneV2 (bit flags, 0 = off): 1 = a late quiet move whose two continuation histories are both negative is skipped when
+// its reduced depth is under 5; 2 = quiet futility counts the reduced depth and the move's history; 4 = a quiet table move
+// that cuts off straight from the table is rewarded in the histories; 8 = one ply less reduction when the parent node is
+// already past its 13th move (it is failing low, this node is likely to cut); 16 = a capture with a negative capture
+// history is skipped at reduced depth under 6 outside PV nodes.
 // HistV2 (bit flags, 0 = off): 1 = continuation histories four and six plies back as well, the one-ply one counted twice
 // in move ordering; 2 = a counter-move slot after the killers; 4 = the best move of a node that raised alpha without a
 // cutoff is rewarded like a cutoff move; 8 = when every move of a node fails low, the opponent's quiet move that led here
@@ -1337,7 +1342,14 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         tt_score = e->score;
         if (tt_score > MATE_IN) tt_score -= ply; else if (tt_score < -MATE_IN) tt_score += ply;
         if (!pv_node && !excl && tt_depth >= depth &&
-            (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && tt_score >= beta) || (tt_flag == TT_UPPER && tt_score <= alpha))) { ST(2); return tt_score; }
+            (tt_flag == TT_EXACT || (tt_flag == TT_LOWER && tt_score >= beta) || (tt_flag == TT_UPPER && tt_score <= alpha))) {
+            ST(2);
+            if ((par[PRUNE_V2] & 4) && ttm && tt_score >= beta && P.sq[FROM(ttm)] != EMPTY && P.sq[FROM(ttm)] / 6 == P.side && !is_capture(ttm) && !PROMO(ttm)) {
+                int bonus = par[HB_QUAD] * depth * depth + par[HB_LIN] * depth; if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
+                thr_stack[ply] = par[THR_HIST] ? attacks_by(P.side ^ 1) : 0; hist_update(ttm, ply, bonus);
+            }
+            return tt_score;
+        }
     }
     thr_stack[ply] = par[THR_HIST] ? attacks_by(P.side ^ 1) : 0;
 #ifdef CHECK_THR
@@ -1432,12 +1444,21 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
             if (quiet) {
                 int pd = depth;                                             // the depth the pruning rules reason about
                 if (par[LMR_PRUNE]) { pd = depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] - !improving; if (pd < 1) pd = 1; }
+                if (par[PRUNE_V2] & 3) {
+                    int rd = depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] - !improving; if (rd < 1) rd = 1;
+                    if ((par[PRUNE_V2] & 1) && rd < 5 && legal >= 1 && ply > 1 && move_stack[ply - 1] && move_stack[ply - 2] &&
+                        cmh[piece_stack[ply - 1]][TO(move_stack[ply - 1])][(int)P.sq[FROM(m)]][TO(m)] < 0 &&
+                        fuh[piece_stack[ply - 2]][TO(move_stack[ply - 2])][(int)P.sq[FROM(m)]][TO(m)] < 0) continue;
+                    if ((par[PRUNE_V2] & 2) && rd <= 7 && legal >= 1 && ev + (par[FUT_BASE] + par[FUT_MUL] * rd) * vm / 256 + hs / 64 <= alpha) continue;
+                }
                 // both conditions stay true for every later quiet move of this node, so those are not even generated
                 if (depth <= par[LMP_DEPTH] && legal >= (par[LMP_BASE] + depth * depth) / (2 - improving)) { mp.skip_quiets = 1; ST(11); continue; }   // late-move pruning
                 if (pd <= 7 && ev + (par[FUT_BASE] + par[FUT_MUL] * pd) * vm / 256 <= alpha) { mp.skip_quiets = 1; ST(12); continue; }   // futility
                 if (pd <= 3 && hs < -par[HIST_PRUNE] * pd) { ST(13); continue; }                              // moves that keep failing
                 if (pd <= 6 && see(m) < -par[SEE_Q] * pd) { ST(14); continue; }                            // moves into a losing exchange
             } else if (depth <= 6 && mp.bad_now && mp.see_now < -par[SEE_C] * depth) { ST(15); continue; }
+            else if ((par[PRUNE_V2] & 16) && !pv_node && legal >= 1 && is_capture(m) && FLAG(m) != F_EP && !PROMO(m) &&
+                     depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 6 && caph[(int)P.sq[FROM(m)]][TO(m)][P.sq[TO(m)] % 6] < 0) continue;
         }
         move_stack[ply] = m; piece_stack[ply] = P.sq[FROM(m)];
         if (!make(m)) continue;
@@ -1451,6 +1472,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 if (!improving) r++;
                 if (thr_node) r--;
                 if (cutnode) r += par[CUT_LMR];
+                if ((par[PRUNE_V2] & 8) && ply > 0 && mcount[ply - 1] > 13) r--;
                 if (par[TTCAP_LMR] && is_capture_tt) r++;
                 if (pv_node) r--;
                 if (chk || in_check()) r--;

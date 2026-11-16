@@ -45,3 +45,6 @@
 [10:09:47]   speed (calc/calc_s19c): depth 14: 3,245,272 positions in 1.29s = 2525k per second; signature 2a3ad09c85
 [10:13:44]   sharp15 against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 539, "d": 935, "l": 526, "score": 0.5032, "elo": 2.3, "lo": -8.9, "hi": 13.4, "avg_plies": 154.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
 [10:13:44] probes finished
+[11:17:39] kb32m (--h 768 --kb 32 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5432881116867065, mean error 0.05716078728437424; 1045s, 1053k pos/s
+[11:17:45]   engine against trainer: 1000 random positions, hidden 768, king buckets 32, product terms off: largest difference 33.46 centipawns, mean 3.877; evaluations range -2
+[11:17:47]   speed (calc/calc_s19c): depth 14: 3,327,650 positions in 1.84s = 1805k per second; signature 3d2aa3c44f
