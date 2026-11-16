@@ -1,0 +1,22 @@
+162 of 3093 one-good-move positions: sf_100000 finds the move, bigm_1000000 does not
+standing                       1000000 nodes: solves    0 =   0.0%   []
+standing, 3 million            3000000 nodes: solves   73 =  45.1%   []
+standing, 10 million          10000000 nodes: solves  102 =  63.0%   []
+no null move                   1000000 nodes: solves   69 =  42.6%   [Off=1]
+no reverse futility            1000000 nodes: solves   75 =  46.3%   [Off=2]
+no razoring                    1000000 nodes: solves   69 =  42.6%   [Off=4]
+no late-move reductions        1000000 nodes: solves   77 =  47.5%   [Off=8]
+no late-move pruning           1000000 nodes: solves   66 =  40.7%   [Off=16]
+no quiet futility              1000000 nodes: solves   79 =  48.8%   [Off=32]
+no losing-exchange pruning     1000000 nodes: solves   78 =  48.1%   [Off=64]
+no bad-history pruning         1000000 nodes: solves   43 =  26.5%   [Off=128]
+no singular tests              1000000 nodes: solves   58 =  35.8%   [Off=256]
+no depth cut without table move   1000000 nodes: solves   77 =  47.5%   [Off=512]
+no delta pruning               1000000 nodes: solves   62 =  38.3%   [Off=1024]
+no move pruning at all         1000000 nodes: solves   79 =  48.8%   [Off=240]
+no static pruning              1000000 nodes: solves   72 =  44.4%   [Off=6]
+check extension                1000000 nodes: solves   84 =  51.9%   [ChkExt=1]
+half the reductions            1000000 nodes: solves   79 =  48.8%   [LmrDiv=480,LmrBase=34]
+quiet checks kept              1000000 nodes: solves   67 =  41.4%   [SearchV3=1]
+[23:17:01] finished
+

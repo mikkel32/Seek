@@ -541,3 +541,32 @@ Where the nodes go (`-DSSTAT`, 1,000,000 nodes a position): quiescence 32%, main
 14%, three 7.5%, four 5%, everything deeper 9%. By what the search was doing: inside a reduced look 67%, inside a null-move
 try 17 to 20% (a try succeeds 45 to 49% of the time), re-searches after a reduced look liked the move 5.5%, singular tests
 4%, full-window re-searches 2 to 6%. No single bucket explains a factor of three.
+
+## Stockfish 14.1's known settings in our search, and which rule hides the moves we miss (16 November, night)
+
+Groups of our options set to Stockfish 14.1's values as far as they are known from memory, on the search-only yardstick
+(`ext/sf_bundle.sh`: our search on Stockfish's network, 100,000 nodes; the standing options are +2.77 behind Stockfish
+itself there; `zero/results/vault_sf_bundle.log`; standard error 0.33 to 0.40):
+
+| Group | Against the standing options |
+|---|---|
+| reductions: `LmrDiv=214,LmrBase=52,CutLmr=2,TtCapLmr=1,SearchV3=2,PruneV2=8` | −0.50 |
+| history bonuses: `HbQuad=6,HbLin=229,HbMax=4167` | −0.37 |
+| null move: `NmpBase=4,NmpDiv=3,NmpMargin=62` | −0.14 |
+| singular extensions: `SeMul=1,SeDouble=29,NegExt=1` | +0.08 |
+| late-move pruning at every depth: `LmpBase=3,LmpDepth=63` | +0.14 |
+| static margins: `Rfp=83,ProbCut=81` | +0.57 |
+| pruning on the reduced depth: `LmrPrune=1` | +0.64 |
+| all of them | +0.66 |
+
+Nothing is established and the whole set is worse: Stockfish's headline numbers in our frame do not make Stockfish's search.
+
+`ext/q_fail.py` with the diagnostic option `Off` (single rules switched off): the one-good-move positions Stockfish solves at
+100,000 nodes and we still miss at 1,000,000 are searched again with one rule off at a time (`vault_fail1.log`, BIGM, 162
+positions; `vault_fail2.log`, our search on Stockfish's network, 98 positions). With BIGM the standing search solves 45% of
+them at 3,000,000 nodes and 63% at 10,000,000; at the same 1,000,000 nodes, without null move 43%, without reverse futility
+46%, without reductions 48%, without late-move pruning 41%, without quiet futility 49%, without losing-exchange pruning
+48%, without bad-history pruning 27%, without singular tests 36%, with the check extension 52%. Any change, including
+clearly harmful ones, solves about half. The set was chosen by one configuration's failures, and a failure there is close
+to a coin toss between two moves: no rule is throwing these moves away. The same holds with Stockfish's network in our
+search (46 to 60% for every variant).
