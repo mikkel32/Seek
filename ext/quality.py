@@ -109,7 +109,7 @@ def w_collect(a):
 
 def collect(a):
     sys.path.insert(0, '.'); from match import openings
-    fens = openings(a.games // 2 + 1)[:a.games // 2]; jobs = [(2 * i + c, f, bool(c)) for i, f in enumerate(fens) for c in (0, 1)]
+    fens = openings(a.skip + a.games // 2 + 1)[a.skip:a.skip + a.games // 2]; jobs = [(2 * i + c, f, bool(c)) for i, f in enumerate(fens) for c in (0, 1)]
     parts = [jobs[w::a.workers] for w in range(a.workers)]
     with Pool(a.workers) as pool:
         res = pool.map(w_collect, [(a.us, a.us_opts, a.opp, a.nodes, a.per, p, 1000 + i) for i, p in enumerate(parts)])
@@ -142,6 +142,8 @@ def w_truth(a):
 def truth(a):
     pos = load('positions.jsonl'); have = {t['fen'] for t in load('truth.jsonl')}
     todo = [(i, p['fen']) for i, p in enumerate(pos) if p['fen'] not in have][:a.limit or None]; t0 = time.time()
+    if not todo:
+        print('truth: nothing left', flush=True); return
     chunks = [todo[k:k + 4] for k in range(0, len(todo), 4)]
     with Pool(a.workers) as pool, open(f'{D}/truth.jsonl', 'a') as f:
         for n, r in enumerate(pool.imap_unordered(w_truth, [(a.nodes, c) for c in chunks])):
@@ -194,7 +196,7 @@ def usable():
 
 
 def test(a):
-    tr = usable()[:a.limit or None]; t0 = time.time(); items = [(i, t['fen']) for i, t in enumerate(tr)]
+    tr = usable()[a.first:a.limit or None]; t0 = time.time(); items = [(i, t['fen']) for i, t in enumerate(tr)]
     chunks = [items[k:k + 8] for k in range(0, len(items), 8)]; moves = [None] * len(tr)
     with Pool(a.workers) as pool:
         for r in pool.imap_unordered(w_test, [(a.cmd, a.opts, a.nodes, c) for c in chunks]):
@@ -222,7 +224,7 @@ def cmp(a):
     ra, rb = (json.load(open(f'{D}/runs/{x}.json')) for x in (a.a, a.b)); trd = {t['fen']: t for t in usable()}
     dem = json.load(open(f'{D}/demand.json')) if os.path.exists(f'{D}/demand.json') else {}
     mb = dict(zip(rb['fens'], rb['moves'])); fens = [f for f in ra['fens'] if f in mb and f in trd]; tr = [trd[f] for f in fens]
-    la, crit = scores(tr, [dict(zip(ra['fens'], ra['moves']))[f] for f in fens], dem); lb, _ = scores(tr, [mb[f] for f in fens], dem)
+    ma = dict(zip(ra['fens'], ra['moves'])); la, crit = scores(tr, [ma[f] for f in fens], dem); lb, _ = scores(tr, [mb[f] for f in fens], dem)
     d = [x - y for x, y in zip(la, lb)]; n = len(d); m = sum(d) / n; sd = (sum((x - m) ** 2 for x in d) / (n - 1)) ** 0.5; se = sd / n ** 0.5
     diff = sum(x != y for x, y in zip(la, lb))
     print(f'{a.a} against {a.b}: {n} positions; mean loss {1000 * sum(la) / n:.2f} against {1000 * sum(lb) / n:.2f} thousandths; '
@@ -233,10 +235,10 @@ def cmp(a):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(); sub = ap.add_subparsers(dest='what')
     c = sub.add_parser('collect'); c.add_argument('--us'); c.add_argument('--us_opts', default='Hash=64'); c.add_argument('--opp', default=SF)
-    c.add_argument('--nodes', type=int, default=30000); c.add_argument('--games', type=int, default=1000); c.add_argument('--per', type=int, default=8); c.add_argument('--workers', type=int, default=22)
+    c.add_argument('--nodes', type=int, default=30000); c.add_argument('--games', type=int, default=1000); c.add_argument('--per', type=int, default=8); c.add_argument('--workers', type=int, default=22); c.add_argument('--skip', type=int, default=0)
     t = sub.add_parser('truth'); t.add_argument('--nodes', type=int, default=4000000); t.add_argument('--workers', type=int, default=22); t.add_argument('--limit', type=int, default=0)
     s = sub.add_parser('test'); s.add_argument('--name'); s.add_argument('--cmd'); s.add_argument('--opts', default='Hash=64'); s.add_argument('--nodes', type=int)
-    s.add_argument('--workers', type=int, default=22); s.add_argument('--limit', type=int, default=0)
+    s.add_argument('--workers', type=int, default=22); s.add_argument('--limit', type=int, default=0); s.add_argument('--first', type=int, default=0)   # positions [first, limit) of the usable list
     m = sub.add_parser('cmp'); m.add_argument('a'); m.add_argument('b')
     a = ap.parse_args(); os.makedirs(D, exist_ok=True)
     {'collect': collect, 'truth': truth, 'test': test, 'cmp': cmp}[a.what](a)

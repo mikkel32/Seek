@@ -976,18 +976,20 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
-#define NPAR 55
-enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2 };
-static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2"};
+#define NPAR 56
+enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3 };
+static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3"};
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0};
 // PruneV2 (bit flags, 0 = off): 1 = a late quiet move whose two continuation histories are both negative is skipped when
 // its reduced depth is under 5; 2 = quiet futility counts the reduced depth and the move's history; 4 = a quiet table move
 // that cuts off straight from the table is rewarded in the histories; 8 = one ply less reduction when the parent node is
 // already past its 13th move (it is failing low, this node is likely to cut); 16 = a capture with a negative capture
 // history is skipped at reduced depth under 6 outside PV nodes.
+// SearchV3 (bit flags, 0 = off): 1 = a quiet move that gives check is never dropped by the futility or the bad-history rule
+// (only by the losing-exchange rule, with the margin captures get); at a futile node the checking quiet moves are still tried.
 // HistV2 (bit flags, 0 = off): 1 = continuation histories four and six plies back as well, the one-ply one counted twice
 // in move ordering; 2 = a counter-move slot after the killers; 4 = the best move of a node that raised alpha without a
 // cutoff is rewarded like a cutoff move; 8 = when every move of a node fails low, the opponent's quiet move that led here
@@ -1190,19 +1192,51 @@ static void pol_hidden(float *hid) {
     }
     for (int k = 0; k < NPH; k++) { float t = PB1[k] + fdot(PW1 + (size_t)k * 2 * NH, h, 2 * NH); hid[k] = t > 0 ? t : 0; }
 }
+// does the quiet move m (no capture, no promotion) give check? Exact, a little slow; castling is not looked at.
+static int gives_check_quiet(Move m) {
+    if (FLAG(m) == F_CASTLE) return 0;
+    int us = P.side, f = FROM(m), t = TO(m), pt = P.sq[f] % 6, ks = lsb(P.bb[us ^ 1][KING]);
+    U64 occ = ((P.occ[0] | P.occ[1]) ^ BIT(f)) | BIT(t), kb = BIT(ks);
+    if (pt == PAWN ? (pawn_att[us][t] & kb) != 0 : pt == KNIGHT ? (knight_att[t] & kb) != 0 : pt == BISHOP ? (bishop_att(t, occ) & kb) != 0 :
+        pt == ROOK ? (rook_att(t, occ) & kb) != 0 : pt == QUEEN ? ((bishop_att(t, occ) | rook_att(t, occ)) & kb) != 0 : 0) return 1;
+    if (bishop_att(ks, occ) & (P.bb[us][BISHOP] | P.bb[us][QUEEN]) & ~BIT(f)) return 1;      // a line opened by leaving f
+    if (rook_att(ks, occ) & (P.bb[us][ROOK] | P.bb[us][QUEEN]) & ~BIT(f)) return 1;
+    return 0;
+}
+// once per node: the squares from which each piece type of the side to move checks, and its pieces standing between one of
+// its sliders and the enemy king (a few too many: every blocker on a line kind that has such a slider)
+static void check_info(U64 *cs, U64 *dc) {
+    int us = P.side, ks = lsb(P.bb[us ^ 1][KING]); U64 occ = P.occ[0] | P.occ[1];
+    U64 b = bishop_att(ks, occ), r = rook_att(ks, occ), bl = b & P.occ[us], rl = r & P.occ[us], d = 0;
+    cs[PAWN] = pawn_att[us ^ 1][ks]; cs[KNIGHT] = knight_att[ks]; cs[BISHOP] = b; cs[ROOK] = r; cs[QUEEN] = b | r; cs[KING] = 0;
+    if (bl && (bishop_att(ks, occ ^ bl) & ~b & (P.bb[us][BISHOP] | P.bb[us][QUEEN]))) d |= bl;
+    if (rl && (rook_att(ks, occ ^ rl) & ~r & (P.bb[us][ROOK] | P.bb[us][QUEEN]))) d |= rl;
+    *dc = d;
+}
 enum { ST_TT, ST_GENCAP, ST_CAP, ST_GENQUIET, ST_QUIET, ST_BAD, ST_DONE };
 typedef struct {
     Move list[256], bad[96], ttm; int sc[256], bsc[96], bsee[96];
-    int n, i, nbad, stage, ply, caps_only, skip_quiets;
+    int n, i, nbad, stage, ply, caps_only, skip_quiets;   // skip_quiets: 1 = no more quiet moves, 2 = only those that give check
+    int filt, ci_ok; U64 cs[6], dc;            // quiet list already cut down to checks; squares each piece type checks from, pieces that may uncover a check
     int pl[256], pol, pol_on, pol_best, pol_now;   // the read-out's score of each quiet move (x256), whether to use it at this node, the best and the current move's
     int hist, bad_now, see_now;                // about the move just returned: its history score (quiet moves), is it a losing capture, its exchange value
 } Picker;
 static inline void mp_init(Picker *p, Move ttm, int ply, int caps_only) {
     p->ttm = pseudo_legal(ttm) ? ttm : 0; p->stage = p->ttm ? ST_TT : ST_GENCAP; p->ply = ply; p->caps_only = caps_only;
-    p->n = p->i = p->nbad = p->skip_quiets = 0; p->pol = p->pol_on = 0;
+    p->n = p->i = p->nbad = p->skip_quiets = 0; p->pol = p->pol_on = 0; p->filt = p->ci_ok = 0;
 #ifdef CHECK_PL
     { Move l[256]; int n = gen(l, 0), in = 0; for (int k = 0; k < n; k++) in |= l[k] == ttm; if (ttm && in != (p->ttm != 0)) { printf("pseudo_legal disagrees with the generator: move %d\n", ttm); fflush(stdout); abort(); } }
 #endif
+}
+static inline int mp_check(Picker *p, Move m) {            // does this quiet move give check?
+    if (!p->ci_ok) { check_info(p->cs, &p->dc); p->ci_ok = 1; }
+    if (FLAG(m) == F_CASTLE) return 0;
+    return (p->cs[P.sq[FROM(m)] % 6] & BIT(TO(m))) != 0 || ((p->dc & BIT(FROM(m))) && gives_check_quiet(m));
+}
+static inline void mp_filter(Picker *p) {                  // keep only the checking moves of the quiet moves not yet returned
+    int k = p->i;
+    for (int j = p->i; j < p->n; j++) if (mp_check(p, p->list[j])) { p->list[k] = p->list[j]; p->sc[k] = p->sc[j]; if (p->pol_on) p->pl[k] = p->pl[j]; k++; }
+    p->n = k; p->filt = 1;
 }
 static Move mp_next(Picker *p) {
     for (;;) switch (p->stage) {
@@ -1236,8 +1270,9 @@ static Move mp_next(Picker *p) {
         p->stage = p->caps_only ? ST_DONE : ST_GENQUIET;
         break;
     case ST_GENQUIET:
-        if (p->skip_quiets) { p->stage = ST_BAD; p->i = 0; break; }
+        if (p->skip_quiets == 1) { p->stage = ST_BAD; p->i = 0; break; }
         p->n = gen(p->list, 2); p->i = 0;
+        if (p->skip_quiets == 2) mp_filter(p);
         if (p->pol) {                                   // which quiet moves would a search choose here? (only at nodes with depth left for it to matter)
             float hid[PHMAX], val[448]; unsigned char got[448]; memset(got, 0, sizeof got); pol_hidden(hid);
             int us = P.side; p->pol_best = -1000000; p->pol_on = 1;
@@ -1258,7 +1293,8 @@ static Move mp_next(Picker *p) {
         p->stage = ST_QUIET;
         /* fall through */
     case ST_QUIET:
-        while (!p->skip_quiets && p->i < p->n) {
+        if (p->skip_quiets == 2 && !p->filt) mp_filter(p);
+        while (p->skip_quiets != 1 && p->i < p->n) {
             int b = p->i;
             for (int j = b + 1; j < p->n; j++) if (p->sc[j] > p->sc[b]) b = j;
             Move m = p->list[b]; int v = p->sc[b]; p->list[b] = p->list[p->i]; p->sc[b] = p->sc[p->i];
@@ -1465,15 +1501,29 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 }
                 // both conditions stay true for every later quiet move of this node, so those are not even generated
                 if (depth <= par[LMP_DEPTH] && legal >= (par[LMP_BASE] + depth * depth) / (2 - improving)) { mp.skip_quiets = 1; ST(11); continue; }   // late-move pruning
-                if (pd <= 7 && ev + (par[FUT_BASE] + par[FUT_MUL] * pd) * vm / 256 <= alpha) { mp.skip_quiets = 1; ST(12); continue; }   // futility
+                int gc = 0;
+                if (par[SEARCH_V3] & 1) {                                   // quiet checks are judged like captures: only by the exchange
+                    if (mp.skip_quiets == 2) gc = 1;                        // (the picker now hands out checks only)
+                    else if ((pd <= 7 && ev + (par[FUT_BASE] + par[FUT_MUL] * pd) * vm / 256 <= alpha) || (pd <= 3 && hs < -par[HIST_PRUNE] * pd)) gc = mp_check(&mp, m);
+                    if (gc) { if (depth <= 6 && see(m) < -par[SEE_C] * depth) { ST(14); continue; } }
+                }
+                if (!gc) {
+                if (pd <= 7 && ev + (par[FUT_BASE] + par[FUT_MUL] * pd) * vm / 256 <= alpha) { mp.skip_quiets = (par[SEARCH_V3] & 1) ? 2 : 1; ST(12); continue; }   // futility
                 if (pd <= 3 && hs < -par[HIST_PRUNE] * pd) { ST(13); continue; }                              // moves that keep failing
                 if (pd <= 6 && see(m) < -par[SEE_Q] * pd) { ST(14); continue; }                            // moves into a losing exchange
+                }
             } else if (depth <= 6 && mp.bad_now && mp.see_now < -par[SEE_C] * depth) { ST(15); continue; }
             else if ((par[PRUNE_V2] & 16) && !pv_node && legal >= 1 && is_capture(m) && FLAG(m) != F_EP && !PROMO(m) &&
                      depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 6 && caph[(int)P.sq[FROM(m)]][TO(m)][P.sq[TO(m)] % 6] < 0) continue;
         }
         move_stack[ply] = m; piece_stack[ply] = P.sq[FROM(m)];
+#ifdef CHECK_GC
+        int gcq = (quiet && FLAG(m) != F_CASTLE) ? mp_check(&mp, m) : -1;
+#endif
         if (!make(m)) continue;
+#ifdef CHECK_GC
+        if (gcq >= 0 && gcq != in_check()) { printf("the check test disagrees with the board: move %d\n", m); fflush(stdout); abort(); }
+#endif
         legal++; ST(26); mcount[ply] = legal;
         int v, nd = depth - 1 + ext;
         if (legal == 1) { cutn[ply + 1] = pv_node ? 0 : !cutnode; v = -search(nd, -beta, -alpha, ply + 1, 1); }

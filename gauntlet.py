@@ -58,6 +58,9 @@ def parse_opts(s):
     return [tuple(kv.split('=', 1)) for kv in s.split(',') if kv]
 
 
+OPP_NODES = 0   # --opp_nodes: the opponent's own budget per move when it differs from ours (set before the workers fork)
+
+
 def one_game(us, opp, fen, us_white, base, inc, nodes):
     """-> (our score, plies, who lost on time or by an illegal move)"""
     us.new_game(); opp.new_game()
@@ -70,7 +73,7 @@ def one_game(us, opp, fen, us_white, base, inc, nodes):
         else:
             eng = us if (board.turn == chess.WHITE) == us_white else opp
             t0 = time.perf_counter()
-            mv = eng.go(fen, moves, clock[chess.WHITE], clock[chess.BLACK], inc, nodes)
+            mv = eng.go(fen, moves, clock[chess.WHITE], clock[chess.BLACK], inc, nodes if eng is us or not OPP_NODES else OPP_NODES)
             clock[board.turn] -= 0 if nodes else time.perf_counter() - t0
             try:
                 m = chess.Move.from_uci(mv); legal = m in board.legal_moves
@@ -126,9 +129,11 @@ if __name__ == '__main__':
     ap.add_argument('--tc', default='10+0.1'); ap.add_argument('--openings', type=int, default=100)
     ap.add_argument('--workers', type=int, default=8); ap.add_argument('--seed', type=int, default=7); ap.add_argument('--out', default='')
     ap.add_argument('--nodes', type=int, default=0)             # > 0: no clock, both engines search this many positions per move
+    ap.add_argument('--opp_nodes', type=int, default=0)         # with --nodes: the opponent searches this many instead
     ap.add_argument('--stop', default='')                       # "e0,e1": stop as soon as the games decide between a difference of e0 and of e1 Elo
                                                                 # (5% error each way); --openings is then the most that will be played
     a = ap.parse_args()
+    OPP_NODES = a.opp_nodes
     name, cmd, opts = (a.opp.split('|') + [''])[:3]
     base, inc = (float(x) for x in a.tc.split('+'))
     games = [(f, w) for f in openings(a.openings, a.seed) for w in (True, False)]
@@ -150,7 +155,7 @@ if __name__ == '__main__':
             res = [r for part in pool.map(play, [(a.us, a.us_opts, cmd, opts, base, inc, c, a.nodes) for c in chunks if c]) for r in part]
     w = sum(r[0] == 1.0 for r in res); d = sum(r[0] == 0.5 for r in res); l = sum(r[0] == 0.0 for r in res)
     e = elo_from(w, d, l)
-    out = dict(opponent=name, tc=f'{a.nodes} positions per move' if a.nodes else a.tc, **e, avg_plies=round(sum(r[1] for r in res) / len(res), 1),
+    out = dict(opponent=name, tc=(f'{a.nodes} positions per move' + (f', the opponent {a.opp_nodes}' if a.opp_nodes else '')) if a.nodes else a.tc, **e, avg_plies=round(sum(r[1] for r in res) / len(res), 1),
                our_time_losses=sum(r[2] == 'us_time' for r in res), their_time_losses=sum(r[2] == 'opp_time' for r in res),
                illegal=sum(bool(r[2]) and r[2].endswith('illegal') for r in res), minutes=round((time.time() - t0) / 60, 1))
     if verdict:
