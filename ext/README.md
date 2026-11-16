@@ -99,8 +99,9 @@ overshot to the next 2,048 and the first ladder run was discarded for that, `vau
 (2,000 games per cell in the first two rows of our columns, 1,000 at 10,000 and 30,000, 500 at 300,000 and in the last column.)
 
 With almost no search the two evaluators are level; the gap opens as the search deepens. Stockfish's network gains 363 Elo
-on its own hand-written evaluator between 300 and 30,000 nodes with the same search; ours gains 60 on it. What the deeper
-search rewards is in the evaluator.
+on its own hand-written evaluator between 300 and 30,000 nodes with the same search; ours gains 60 on it. Part of what the
+deeper search rewards is in the evaluator's training data: the engine-game probes below recover about 65 Elo of it at equal
+training. Where the rest sits is not yet located.
 
 **It is not depth.** Geometric-mean nodes to finish a depth on the twelve bench positions (`ext/ebf.py`): ours 9,119 /
 33,971 / 92,176 / 239,265 for depths 8 / 10 / 12 / 14, Stockfish 14.1 6,574 / 28,590 / 78,522 / 185,116.
