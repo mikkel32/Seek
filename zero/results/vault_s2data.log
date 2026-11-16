@@ -4,3 +4,17 @@
 [05:42:11] iteration 2: 9 GB, downloading in 10 pieces
 [05:45:49] downloaded 9003836115 of 9003836115 bytes; converting
 [05:51:40] iteration 2: 547101313 positions, shards s37 to s73; 21G free
+[06:31:21] iteration 3: 9 GB, downloading in 10 pieces
+[06:32:26] downloaded 9008455274 of 9008455274 bytes; converting
+[06:37:49] iteration 3: 547398490 positions, shards s74 to s110; 69G free
+[06:37:49] iteration 4: 8 GB, downloading in 10 pieces
+[06:38:36] downloaded 8996564888 of 8996564888 bytes; converting
+[06:41:44] iteration 4: 546642069 positions, shards s111 to s147; 56G free
+[06:41:45] iteration 5: 9 GB, downloading in 10 pieces
+[06:42:29] downloaded 9004029297 of 9004029297 bytes; converting
+[06:45:19] iteration 5: 547107370 positions, shards s148 to s184; 42G free
+[06:45:20] iteration 6: 9 GB, downloading in 10 pieces
+[06:46:04] downloaded 9008720554 of 9008720554 bytes; converting
+[06:53:04] iteration 6: 547402667 positions, shards s185 to s221; 29G free
+[06:53:05] iteration 7: 9 GB, downloading in 10 pieces
+[06:53:49] downloaded 9006738042 of 9006738042 bytes; converting

@@ -12,3 +12,12 @@
 [06:16:47] s2 (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1): held-out loss 0.5546880960464478, mean error 0.06561382859945297; 454s, 2273k pos/s
 [06:16:51]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 11.25 centipawns, mean 2.197; evaluations range -2
 [06:16:53]   speed (calc/calc_s19b): depth 14: 3,490,752 positions in 1.69s = 2063k per second; signature ff37a44978
+[06:22:10]   s2 against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 604, "d": 820, "l": 576, "score": 0.507, "elo": 4.9, "lo": -6.8, "hi": 16.6, "avg_plies": 158.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.3}
+[06:30:12] s2_results (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag ym): held-out loss 0.5607303977012634, mean error 0.07126042991876602; 482s, 2142k pos/s
+[06:30:16]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 11.95 centipawns, mean 2.230; evaluations range -3
+[06:30:18]   speed (calc/calc_s19b): depth 14: 2,748,541 positions in 1.64s = 1681k per second; signature 28a0a3cd2d
+[06:36:55]   s2_results against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 521, "d": 736, "l": 743, "score": 0.4445, "elo": -38.7, "lo": -50.9, "hi": -26.6, "avg_plies": 154.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.6}
+[06:46:18] mix (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1): held-out loss 0.5434591770172119, mean error 0.057201873511075974; 563s, 1963k pos/s
+[06:46:23]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 5.84 centipawns, mean 1.032; evaluations range -30
+[06:46:24]   speed (calc/calc_s19b): depth 14: 3,609,743 positions in 1.63s = 2217k per second; signature ed1188314b
+[06:53:21]   mix against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 751, "d": 821, "l": 428, "score": 0.5807, "elo": 56.6, "lo": 44.9, "hi": 68.4, "avg_plies": 153.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.9}

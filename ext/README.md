@@ -88,14 +88,19 @@ be stronger than the opponent measured here.
 **Equal nodes** (`ext/node_ladder.sh`, engine `calc/calc_s19.c`, which keeps a small node budget exactly; `calc_s18`
 overshot to the next 2,048 and the first ladder run was discarded for that, `vault_ladder_unequal.log`). BIGK, standard options:
 
-| Nodes per move, each side | Games | Against Stockfish 14.1 | Against its hand-written evaluator |
+| Nodes per move, each side | BIGK against Stockfish 14.1 | BIGK against its hand-written evaluator | Stockfish 14.1 against its own hand-written evaluator |
 |---|---|---|---|
-| 300 | 2,000 | +5 (−9 to +20) | +129 (114 to 144) |
-| 3,000 | 2,000 | −185 (−200 to −170) | +165 (150 to 181) |
-| 10,000 | 1,000 | −223 (−245 to −203) | |
-| 30,000 | 1,000 | −247 (−268 to −228) | +189 |
+| 300 | +5 (−9 to +20) | +129 (114 to 144) | +106 |
+| 3,000 | −185 (−200 to −170) | +165 (150 to 181) | +343 |
+| 10,000 | −223 (−245 to −203) | | |
+| 30,000 | −247 (−268 to −228) | +189 | +469 |
+| 300,000 | −218 (−242 to −195) | | |
 
-With almost no search the two evaluators are level; the gap opens as the search deepens.
+(2,000 games per cell in the first two rows of our columns, 1,000 at 10,000 and 30,000, 500 at 300,000 and in the last column.)
+
+With almost no search the two evaluators are level; the gap opens as the search deepens. Stockfish's network gains 363 Elo
+on its own hand-written evaluator between 300 and 30,000 nodes with the same search; ours gains 60 on it. What the deeper
+search rewards is in the evaluator.
 
 **It is not depth.** Geometric-mean nodes to finish a depth on the twelve bench positions (`ext/ebf.py`): ours 9,119 /
 33,971 / 92,176 / 239,265 for depths 8 / 10 / 12 / 14, Stockfish 14.1 6,574 / 28,590 / 78,522 / 185,116.
@@ -139,17 +144,32 @@ share 13% of their positions (`ext/overlap.py`). Their score unit was measured a
 play; this stays the outside-data line.
 
 Probes: the same 768-wide, 16-bucket network from scratch on 1.02 billion positions, one pass (`ext/probe_v.sh`,
-`vault_probe_v.log`), 2,000 games at 30,000 nodes against the Lichess-data reference and 1,000 games at 10,000 nodes against
-Stockfish 14.1 (`ext/vs_sf.sh`):
+`vault_probe_v.log`), 2,000 games at 30,000 nodes against the Lichess-data reference and 1,000 games against Stockfish 14.1
+at 10,000 nodes each (`ext/vs_sf.sh`, `vault_vs_sf.log`). The new files' labels were written on a scale about 1.6 times
+ours, so those networks are also played with the engine's new `EvalScale` option (the network's value in percent as the
+search sees it); the best setting tried is given.
 
-| Probe | Against the reference | Against Stockfish 14.1 at 10,000 nodes | Engine positions: names the better side |
-|---|---|---|---|
-| Lichess game positions (reference) | | −281 (−306 to −259) | 63.2% |
-| engine-game positions, score only | +5 (−7 to +17), 604-820-576 | −254 (−277 to −232) | 65.0% |
-| 1536 wide, Lichess | +38 (28 to 49); search 31% slower | | |
-| 1024 wide, Lichess | +12 (1 to 23) | | |
+| Probe | Against the reference, 30,000 nodes | Against Stockfish 14.1, 10,000 nodes | at 300 nodes | at 3,000 nodes |
+|---|---|---|---|---|
+| Lichess game positions (reference) | | −281 (−306 to −259) | −20 | −224 |
+| engine-game positions, score only | +5 (−7 to +17), 604-820-576 | −254; −243 with `EvalScale=60` | −56 | −218 |
+| engine-game positions, 0.75 score + 0.25 game result | −39 (−51 to −27) | −264; **−218 with `EvalScale=70`**; −231 with 50 | | |
+| half Lichess, half engine-game (score only), 1.09 billion | **+57 (45 to 68)** | −238 | | |
+| 1536 wide, Lichess | +38 (28 to 49); search 31% slower | | | |
+| 1024 wide, Lichess | +12 (1 to 23) | −240 | | |
+
+For scale: BIGK, the same design after four passes over 4.37 billion Lichess positions, scores −223 against Stockfish at
+10,000 nodes; with `EvalScale` 60 / 80 / 130 it scores −225 / −224 / −250 (its scale is right; a value that is too large
+costs far more than one that is too small: the engine-game probe at 130 scores −341).
+
+Two readings. The engine-game network is worse than the Lichess one with almost no search (−56 against −20 at 300 nodes)
+and better with more (−243 against −281 at 10,000): it gives up shallow tactical knowledge the search supplies anyway and
+gains what the search cannot supply. And a match between two of our own networks does not predict the match against
+Stockfish (the result-mixed probe loses to the reference by 39 and is 63 better against Stockfish): candidates are now
+judged against Stockfish at 10,000 nodes or more.
 
 Held-out loss of further one-pass variants on the match machine's card (`lab_probe.log`): plain 768 0.54447; 16 buckets
-0.54250; 16 buckets without the shared table 0.54335; 32 buckets 0.54253; 7 buckets 0.54263; half the learning rate 0.54290.
+0.54250; 16 buckets without the shared table 0.54335; 32 buckets 0.54253; 7 buckets 0.54263; half the learning rate 0.54290;
+twice the learning rate 0.54289.
 
 Logs: `zero/results/vault_*.log` (training machine), `zero/results/lab_*.log` (match machine).
