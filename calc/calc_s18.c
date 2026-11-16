@@ -446,10 +446,11 @@ static void set_piece_values(const int *v) { for (int i = 0; i < 5; i++) { mat_v
 static void quantize_net(void) {
     // The largest sum any position could produce, per hidden unit: its bias plus the 32 largest per-square maxima (a square
     // holds one piece, a board 32 pieces). The integer scale is the finest power of two at which that still fits 16 bits.
+    // (A view reads one king bucket's table at a time, so the bound is taken bucket by bucket.)
     float worst = 0;
-    for (int i = 0; i < NH; i++) {
+    for (int i = 0; i < NH; i++) for (int kb = 0; kb < NKB; kb++) {
         float m[64], sum = fabsf(NB[i]);
-        for (int sq = 0; sq < 64; sq++) { float x = 0; for (int r = 0; r < NKB * 12; r++) { float v = fabsf(NE[((size_t)r * 64 + sq) * NH + i]); if (v > x) x = v; } m[sq] = x; }
+        for (int sq = 0; sq < 64; sq++) { float x = 0; for (int r = kb * 12; r < kb * 12 + 12; r++) { float v = fabsf(NE[((size_t)r * 64 + sq) * NH + i]); if (v > x) x = v; } m[sq] = x; }
         for (int k = 0; k < 32; k++) { int b = k; for (int j = k + 1; j < 64; j++) if (m[j] > m[b]) b = j; float t = m[b]; m[b] = m[k]; m[k] = t; sum += t; }
         if (sum > worst) worst = sum;
     }
