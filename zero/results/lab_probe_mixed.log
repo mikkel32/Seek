@@ -15,3 +15,5 @@
 [09:16:41] mix3 (--kb 16; h:0-22,s:0-22,t:0-22): held-out loss 0.5441794991493225, mean error 0.05832795053720474; 1554s, 702k pos/s
 [09:16:41]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 9.99 centipawns, mean 1.890; evaluations range -2661 to 2566, the product terms supply 0 centipawns on average
 [09:27:28]   mix3 against the reference probe, 30,000 positions per move: {"opponent": "p_mixc", "tc": "30000 positions per move", "n": 2000, "w": 567, "d": 894, "l": 539, "score": 0.507, "elo": 4.9, "lo": -6.5, "hi": 16.2, "avg_plies": 152.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 10.5}
+[10:42:45] fetched: 23 first-stage shards, 34G in memory
+[12:10:35] fetched: 23 first-stage shards, 34G in memory

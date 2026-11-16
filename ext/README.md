@@ -163,9 +163,11 @@ BIGM by 43 (26 to 61) at scale 100: of the equal-node gap, roughly 105 is the se
 
 The history batch does not survive deeper searches: `HistV2=7` against the standing search is +19 at 10,000 nodes,
 −10 (−21 to +1, 2,000 games) at 30,000, −9 (−22 to +5, 1,000 games) at 100,000 and 144-661-195, −18 (−30 to −5), at 10+0.1;
-it has no cost in speed (487k against 486k nodes a second under match load). It is not adopted. The lesson is about the
-test: 10,000 nodes a move rewards what suits a shallow search, so the search options above are being re-run at 100,000
-nodes (`lab_deep_sweep.log`).
+it has no cost in speed (487k against 486k nodes a second under match load). It is not adopted. At 100,000 nodes the parts
+separately: `HistV2=1` +1 (−12 to +15), `HistV2=4` −15 (−29 to −2): rewarding best moves that did not cut off is what turns
+against a deep search. The lesson is about the
+test: 10,000 nodes a move rewards what suits a shallow search, so search changes have to be judged at 100,000 nodes or at the clock.
+The re-run of the earlier options at 100,000 nodes was stopped when the work turned to training.
 
 
 Search statistics of our engine at 300,000 nodes per position (`-DSSTAT`): quiescence 28% of nodes; 60% of main-search
@@ -234,6 +236,12 @@ positions (seven of the twelve files; the disk holds no more next to the Lichess
 Bigger networks on the mixed data, one pass over 1.09 billion positions, against the mixed reference probe at 30,000
 nodes (2,000 games, `vault_probe_v.log`): 32 king buckets −3 (−14 to +9); 1024 wide +14 (3 to 25), held-out loss 0.54287
 against 0.54329.
+
+32 king buckets together with 1024 wide: +12 (1 to 23), no better than 1024 wide alone. **BIGX**, the full-scale 1536-wide
+network (16 buckets, two passes over 1.8 billion Lichess, 6.02 billion second-stage and 0.35 billion first-stage positions),
+is the run that tests whether width pays where data no longer does. The trainer can also teach a network from another
+network's judgments (`--distill <weights> --dw <share>`; the teacher function reproduces the network's own forward pass
+exactly), so that a wide network can later teach a fast 768-wide one.
 
 Tried on top of the mixed recipe and not adopted:
 

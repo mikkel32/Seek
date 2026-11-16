@@ -47,6 +47,9 @@ ap.add_argument('--extrap', type=float, default=0.0)     # move every label this
 ap.add_argument('--sharp', type=float, default=1.0)      # train on labels made steeper: win chance -> sigmoid(sharp x its logit). 2 = the loss sees a 50-centipawn error near
                                                          # equality twice as large (Stockfish's own trainer uses a scale about 2.5 times steeper than these labels'). The
                                                          # exported network's values are sharp times larger: play it with EvalScale = 100 / sharp.
+ap.add_argument('--distill', default='')                 # a teacher network's weights (.ema.pt; king-bucketed with the shared table folded or not, any width,
+                                                         # the same bucket scheme as the student): its win chance for each training position joins the label
+ap.add_argument('--dw', type=float, default=0.7)         # the teacher's share of the training target (1 = the teacher alone)
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
 
@@ -332,6 +335,31 @@ class MatOpt:
 matopt = MatOpt(net.E, a.opt) if a.opt != 'adam' else None
 opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8, fused=DEV.type == 'cuda')
 fwd = torch.compile(net) if DENSE and DEV.type == 'cuda' and NKB == 1 else net        # the compiled model is the same network in fewer GPU kernels (bucketed inputs: batch-dependent shapes, not compiled)
+TEACH = None
+if a.distill:
+    _t = {k: v.to(DEV) for k, v in torch.load(a.distill, map_location='cpu').items()}
+    _TE = _t['E'][:-1]; _TN = _TE.shape[0] // 768; _TH = _TE.shape[1]
+    assert _TN == NKB and NKB in (7, 16, 32), 'the teacher must use the student\'s king buckets'
+    _TW = _TE.view(_TN, 768, _TH); _TW = (_TW + _t['Esh'][:768] if 'Esh' in _t else _TW).contiguous()
+    print(f'teacher {a.distill}: {_TH} wide, {_TN} king buckets, share of the target {a.dw}', flush=True)
+
+    @torch.no_grad()
+    def TEACH(idx):
+        """the teacher's value (a logit) for a batch of positions: the same arithmetic as Net.forward's king-bucketed dense form"""
+        B = idx.shape[0]; one = torch.ones(idx.shape, device=idx.device)
+        Mo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, idx, one)[:, :768]
+        nb = _t['wo'].shape[0]; bk = ((Mo.sum(1) - 2) // 4).clamp(0, nb - 1).long()
+        lin = _t['c'] + Mo @ _t['S'][:768]; ph = ((Mo @ PT_W[:768]) / 24).clamp(max=1.0)
+        heads = _t['cb'].expand(B, nb).clone()
+        for ix, w in ((idx, _t['wo']), (LUT[idx], _t['wp'])):
+            isk = (ix >= 320) & (ix < 384); ks = ((ix * isk).sum(1) - 320).clamp(0, 63)
+            mir = ((ks & 7) >= 4).long() * 7; kq = ks ^ mir; kb = KBT[(kq >> 3) * 4 + (kq & 7)]
+            f = torch.where(ix == 768, ix, (ix // 64) * 64 + ((ix % 64) ^ mir[:, None]))
+            order = torch.argsort(kb); cnt = torch.bincount(kb, minlength=_TN).tolist()
+            Ms = torch.zeros(B, 769, device=ix.device).scatter_add_(1, f[order], torch.ones(ix.shape, device=ix.device))[:, :768]
+            inv = torch.empty_like(order); inv[order] = torch.arange(B, device=ix.device)
+            heads = heads + torch.cat([((_t['b'] + sg @ _TW[k]).clamp(0, 1) ** 2) @ w.T for k, sg in enumerate(Ms.split(cnt)) if cnt[k]])[inv]
+        return ph * lin[:, 0] + (1 - ph) * lin[:, 1] + heads.gather(1, bk[:, None])[:, 0]
 REF = None
 if a.extrap != 0:                                                        # a frozen copy of the network as it starts
     REF = Net().to(DEV); REF.load_state_dict(net.state_dict())
@@ -340,6 +368,11 @@ if a.extrap != 0:                                                        # a fro
 if ema is not None:
     ema.load_state_dict(net.state_dict())
 VX = torch.from_numpy(np.load(f'data/ev_{a.val}_x.npy').astype(np.int64)).to(DEV); VY = torch.from_numpy(np.load(f'data/ev_{a.val}_y.npy').astype(np.float32)).to(DEV)
+
+
+if TEACH is not None and a.resume == a.distill:                # self-check: the teacher function must equal the student's own forward for the same weights
+    with torch.no_grad():
+        print(f'teacher function against the network itself on 2,000 positions: largest difference {float((TEACH(VX[:2000]) - net(VX[:2000])).abs().max()):.6f} (logit)', flush=True)
 
 
 @torch.no_grad()
@@ -429,6 +462,8 @@ while not done:
             else:
                 xb = mirrored(X[k].long()) if a.mirror > 0 else X[k].long()
                 yb = Y[k].float() / 255
+                if TEACH is not None:
+                    yb = (1 - a.dw) * yb + a.dw * torch.sigmoid(TEACH(xb))
                 if a.sharp != 1.0:
                     yb = torch.sigmoid(a.sharp * torch.logit(yb.clamp(1 / 510, 1 - 1 / 510)))
                 if REF is not None:
