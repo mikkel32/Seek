@@ -798,8 +798,71 @@ static float mlp_small(const short *ao, const short *ap, int bk) {
     (void)W; (void)F; (void)acc; (void)h2r; (void)nch; (void)ao; (void)ap; return 0;
 #endif
 }
+#ifdef SFNET
+// DIAGNOSTIC BUILD ONLY (-DSFNET, never shipped): the installed Stockfish 14.1's own network as this engine's evaluator, to
+// measure the two searches with the evaluator held equal. The weights are read from the file named in SFNET_FILE (the
+// network embedded in the installed binary, extracted by ext/sfnet_extract.py); this is our own re-implementation of the
+// arithmetic, checked against the engine's `eval` output on 2,000 positions (ext/sfnet_ref.py). Recomputed from scratch at
+// every call: slow, so it is only used at equal node budgets.
+static short *sf_W, sf_bias[1024]; static int *sf_PS; static int sf_b0[8][8], sf_b1[8][32], sf_b2[8]; static signed char sf_w0[8][8][2048], sf_w1[8][32][32], sf_w2[8][32];
+static int sf_ok = 0;
+static int sf_load(const char *path) {
+    FILE *f = fopen(path, "rb"); if (!f) return 0;
+    unsigned hdr[3]; if (fread(hdr, 4, 3, f) != 3 || hdr[0] != 0x7AF32F20u) { fclose(f); return 0; }
+    fseek(f, hdr[2] + 4, SEEK_CUR);
+    sf_W = (short *)big_alloc((size_t)22528 * 1024 * 2); sf_PS = (int *)big_alloc((size_t)22528 * 8 * 4);
+    int ok = fread(sf_bias, 2, 1024, f) == 1024 && fread(sf_W, 2, (size_t)22528 * 1024, f) == (size_t)22528 * 1024 && fread(sf_PS, 4, 22528 * 8, f) == 22528 * 8;
+    for (int k = 0; k < 8 && ok; k++) {
+        unsigned h; ok = fread(&h, 4, 1, f) == 1 && fread(sf_b0[k], 4, 8, f) == 8 && fread(sf_w0[k], 1, 8 * 2048, f) == 8 * 2048 &&
+             fread(sf_b1[k], 4, 32, f) == 32 && fread(sf_w1[k], 1, 32 * 32, f) == 32 * 32 && fread(&sf_b2[k], 4, 1, f) == 1 && fread(sf_w2[k], 1, 32, f) == 32;
+    }
+    fclose(f); return sf_ok = ok;
+}
+static int sf_raw(int adjusted) {                 // Stockfish's internal units, from the mover's point of view
+    static const int plane[6] = {0, 2, 4, 6, 8, 10};
+    int acc[2][1024] __attribute__((aligned(64))); int psq[2][8], np = 0;
+    for (int v = 0; v < 2; v++) {
+        int ksq = lsb(P.bb[v][KING]), flip = v == WHITE ? 0 : 56, mir = (((ksq ^ flip) & 7) < 4) ? 7 : 0, ko = ksq ^ flip ^ mir;
+        int kb = (7 - (ko >> 3)) * 4 + (7 - (ko & 7));
+        for (int j = 0; j < 1024; j++) acc[v][j] = sf_bias[j];
+        for (int k = 0; k < 8; k++) psq[v][k] = 0;
+        for (int c = 0; c < 2; c++) for (int pt = 0; pt < 6; pt++) {
+            U64 b = P.bb[c][pt];
+            while (b) {
+                int sq = lsb(b); b &= b - 1; if (v == 0) np++;
+                int idx = (sq ^ flip ^ mir) + (plane[pt] + ((c == v || pt == KING) ? 0 : 1)) * 64 + 704 * kb;
+                const short *w = sf_W + (size_t)idx * 1024; for (int j = 0; j < 1024; j++) acc[v][j] += w[j];
+                const int *q = sf_PS + (size_t)idx * 8; for (int k = 0; k < 8; k++) psq[v][k] += q[k];
+            }
+        }
+    }
+    int us = P.side, bk = (np - 1) / 4, x[2048];
+    for (int j = 0; j < 1024; j++) { int a = acc[us][j], b2 = acc[us ^ 1][j]; x[j] = a < 0 ? 0 : (a > 127 ? 127 : a); x[1024 + j] = b2 < 0 ? 0 : (b2 > 127 ? 127 : b2); }
+    int h0[8], h1[32];
+    for (int i = 0; i < 8; i++) { int t = sf_b0[bk][i]; const signed char *w = sf_w0[bk][i]; for (int j = 0; j < 2048; j++) t += w[j] * x[j]; t >>= 6; h0[i] = t < 0 ? 0 : (t > 127 ? 127 : t); }
+    for (int i = 0; i < 32; i++) { int t = sf_b1[bk][i]; for (int j = 0; j < 8; j++) t += sf_w1[bk][i][j] * h0[j]; t >>= 6; h1[i] = t < 0 ? 0 : (t > 127 ? 127 : t); }
+    int out = sf_b2[bk]; for (int j = 0; j < 32; j++) out += sf_w2[bk][j] * h1[j];
+    int ps = (psq[us][bk] - psq[us ^ 1][bk]) / 2;
+    if (adjusted) {
+        static const int mg[5] = {0, 781, 825, 1276, 2538}; int npm[2] = {0, 0};
+        for (int c = 0; c < 2; c++) for (int pt = 1; pt < 5; pt++) npm[c] += mg[pt] * popc(P.bb[c][pt]);
+        if (abs(npm[0] - npm[1]) <= 1276 - 825) return ((128 - 7) * ps + (128 + 7) * out) / 128 / 16;
+    }
+    return (ps + out) / 16;
+}
+static int sf_eval(void) {                        // as Stockfish's search sees it (material scaling, shuffling damp), in this engine's units
+    static const int mg[5] = {0, 781, 825, 1276, 2538}; int npm = 0;
+    for (int c = 0; c < 2; c++) for (int pt = 1; pt < 5; pt++) npm += mg[pt] * popc(P.bb[c][pt]);
+    int scale = 883 + 32 * popc(P.bb[0][PAWN] | P.bb[1][PAWN]) + 32 * npm / 1024;
+    int v = sf_raw(1) * scale / 1024; v = v * (100 - (P.half > 100 ? 100 : P.half)) / 100;
+    return v * 277 / 1000;                                         // 361 internal units = 100 of ours (the scale of the Lichess labels)
+}
+#endif
 static int evaluate(void) {
     int us = P.side;
+#ifdef SFNET
+    if (sf_ok) return sf_eval();
+#endif
     if (eval_mode == 1) {                // rules only: how many moves do I have, minus how many you would have
         Move l[256];
         int a = gen(l, 0); P.side ^= 1; int b = gen(l, 0); P.side ^= 1;
@@ -901,13 +964,17 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
-#define NPAR 53
-enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE };
-static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale"};
+#define NPAR 54
+enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2 };
+static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2"};
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0};
+// HistV2 (bit flags, 0 = off): 1 = continuation histories four and six plies back as well, the one-ply one counted twice
+// in move ordering; 2 = a counter-move slot after the killers; 4 = the best move of a node that raised alpha without a
+// cutoff is rewarded like a cutoff move; 8 = when every move of a node fails low, the opponent's quiet move that led here
+// is rewarded; 16 = when a node cuts off, the opponent's quiet move that led here is penalised if it was its node's first.
 // EvalScale: the network's value in percent as the search sees it (a network trained on labels of another scale can be
 // brought to the scale the search margins were tuned for without retraining).
 // LmrPrune 1: the low-depth pruning rules for quiet moves (futility, losing exchange, bad history) count the depth the move
@@ -987,6 +1054,9 @@ static short cmh[12][64][12][64];          // continuation history: [previous pi
 static Move excluded[MAXPLY + 4];          // move left out of a singularity test at this ply
 static int cutn[MAXPLY + 8];               // is the node at this ply expected to fail high (set by its parent)
 static short fuh[12][64][12][64];          // follow-up history: the same, keyed by our own previous move (two plies back)
+static short ch4[12][64][12][64], ch6[12][64][12][64];   // the same four and six plies back (option HistV2)
+static Move cmove[12][64];                 // the quiet move that last refuted [piece][target] (option HistV2)
+static int mcount[MAXPLY + 4];             // which move of its node (1 = first) is being searched at each ply
 static short caph[12][64][6];              // capture history: [piece][target][captured type]
 static int corrhist[2][16384];             // correction history: how wrong the static evaluation was for this pawn structure (x256)
 static int corr_np[2][2][16384];           // the same, keyed by where one side's pieces (not pawns) stand: [side to move][whose pieces]
@@ -1002,22 +1072,28 @@ static inline int eval_corr(void) {
     return v > 20000 ? 20000 : (v < -20000 ? -20000 : v);
 }
 static inline int hist_score(Move m, int ply) {
-    int h = HIST(m, ply);
-    if (ply > 0 && move_stack[ply - 1]) h += cmh[piece_stack[ply - 1]][TO(move_stack[ply - 1])][(int)P.sq[FROM(m)]][TO(m)];
-    if (ply > 1 && move_stack[ply - 2]) h += fuh[piece_stack[ply - 2]][TO(move_stack[ply - 2])][(int)P.sq[FROM(m)]][TO(m)];
+    int h = HIST(m, ply), pc = (int)P.sq[FROM(m)], to = TO(m), v2 = par[HIST_V2] & 1;
+    if (ply > 0 && move_stack[ply - 1]) h += cmh[piece_stack[ply - 1]][TO(move_stack[ply - 1])][pc][to] * (1 + v2);
+    if (ply > 1 && move_stack[ply - 2]) h += fuh[piece_stack[ply - 2]][TO(move_stack[ply - 2])][pc][to];
+    if (v2) {
+        if (ply > 3 && move_stack[ply - 4]) h += ch4[piece_stack[ply - 4]][TO(move_stack[ply - 4])][pc][to];
+        if (ply > 5 && move_stack[ply - 6]) h += ch6[piece_stack[ply - 6]][TO(move_stack[ply - 6])][pc][to];
+    }
     return h;
+}
+// the continuation histories of a move (piece pc to square to) made at stack index p
+static inline void cont_update(int p, int pc, int to, int bonus) {
+    if (p > 0 && move_stack[p - 1]) { short *c = &cmh[piece_stack[p - 1]][TO(move_stack[p - 1])][pc][to]; *c += bonus - *c * abs(bonus) / 16384; }
+    if (p > 1 && move_stack[p - 2]) { short *c = &fuh[piece_stack[p - 2]][TO(move_stack[p - 2])][pc][to]; *c += bonus - *c * abs(bonus) / 16384; }
+    if (par[HIST_V2] & 1) {
+        if (p > 3 && move_stack[p - 4]) { short *c = &ch4[piece_stack[p - 4]][TO(move_stack[p - 4])][pc][to]; *c += bonus - *c * abs(bonus) / 16384; }
+        if (p > 5 && move_stack[p - 6]) { short *c = &ch6[piece_stack[p - 6]][TO(move_stack[p - 6])][pc][to]; *c += bonus - *c * abs(bonus) / 16384; }
+    }
 }
 static inline void hist_update(Move m, int ply, int bonus) {
     int *h = &HIST(m, ply);
     *h += bonus - *h * abs(bonus) / 16384;
-    if (ply > 0 && move_stack[ply - 1]) {
-        short *c = &cmh[piece_stack[ply - 1]][TO(move_stack[ply - 1])][(int)P.sq[FROM(m)]][TO(m)];
-        *c += bonus - *c * abs(bonus) / 16384;
-    }
-    if (ply > 1 && move_stack[ply - 2]) {
-        short *c = &fuh[piece_stack[ply - 2]][TO(move_stack[ply - 2])][(int)P.sq[FROM(m)]][TO(m)];
-        *c += bonus - *c * abs(bonus) / 16384;
-    }
+    cont_update(ply, (int)P.sq[FROM(m)], TO(m), bonus);
 }
 
 static void score_moves(Move *list, int *sc, int n, Move ttm, int ply) {
@@ -1160,6 +1236,7 @@ static Move mp_next(Picker *p) {
         for (int k = 0; k < p->n; k++) {
             Move m = p->list[k];
             p->sc[k] = m == killers[p->ply][0] ? 900000000 : (m == killers[p->ply][1] ? 800000000 : hist_score(m, p->ply) + (p->pol_on ? p->pl[k] * par[POL_W] / 256 : 0));
+            if ((par[HIST_V2] & 2) && p->sc[k] < 800000000 && p->ply > 0 && move_stack[p->ply - 1] && m == cmove[piece_stack[p->ply - 1]][TO(move_stack[p->ply - 1])]) p->sc[k] = 700000000;
         }
         p->stage = ST_QUIET;
         /* fall through */
@@ -1171,7 +1248,7 @@ static Move mp_next(Picker *p) {
             if (p->pol_on) { p->pol_now = p->pl[b]; p->pl[b] = p->pl[p->i]; }
             p->i++;
             if (m == p->ttm) continue;
-            p->bad_now = 0; p->hist = v >= 800000000 ? hist_score(m, p->ply) : (p->pol_on ? hist_score(m, p->ply) : v);
+            p->bad_now = 0; p->hist = v >= 700000000 ? hist_score(m, p->ply) : (p->pol_on ? hist_score(m, p->ply) : v);
             return m;
         }
         p->stage = ST_BAD; p->i = 0;
@@ -1364,7 +1441,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         }
         move_stack[ply] = m; piece_stack[ply] = P.sq[FROM(m)];
         if (!make(m)) continue;
-        legal++; ST(26);
+        legal++; ST(26); mcount[ply] = legal;
         int v, nd = depth - 1 + ext;
         if (legal == 1) { cutn[ply + 1] = pv_node ? 0 : !cutnode; v = -search(nd, -beta, -alpha, ply + 1, 1); }
         else {
@@ -1406,7 +1483,14 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 alpha = v;
                 if (v >= beta) {
                     ST(8); if (legal == 1) ST(9); STA(10, legal); if (m == ttm) ST(27); if (quiet) ST(32);
+                    if (par[HIST_V2] & 16) {                                 // the opponent's first-choice quiet move that led here has just been refuted
+                        if (ply > 0 && move_stack[ply - 1] && mcount[ply - 1] == 1 && ust[hply - 1].cap == EMPTY && !PROMO(move_stack[ply - 1]) && FLAG(move_stack[ply - 1]) != F_EP) {
+                            int bonus = par[HB_QUAD] * (depth + 1) * (depth + 1) + par[HB_LIN] * (depth + 1); if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
+                            cont_update(ply - 1, piece_stack[ply - 1], TO(move_stack[ply - 1]), -bonus);
+                        }
+                    }
                     if (quiet) {
+                        if ((par[HIST_V2] & 2) && ply > 0 && move_stack[ply - 1]) cmove[piece_stack[ply - 1]][TO(move_stack[ply - 1])] = m;
                         if (killers[ply][0] != m) { killers[ply][1] = killers[ply][0]; killers[ply][0] = m; }
                         int bonus = par[HB_QUAD] * depth * depth + par[HB_LIN] * depth; if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
                         hist_update(m, ply, bonus);
@@ -1430,6 +1514,15 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
     if (!legal) return excl ? alpha : (chk ? -MATE + ply : 0);
     if (best < beta) { ST(22); STA(23, legal); }
     if (excl) return best;
+    if ((par[HIST_V2] & 4) && bestm && best > a0 && best < beta && !is_capture(bestm) && !PROMO(bestm)) {      // raised alpha without a cutoff: still the move to try first next time
+        int bonus = par[HB_QUAD] * depth * depth + par[HB_LIN] * depth; if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
+        hist_update(bestm, ply, bonus);
+        for (int q = 0; q < nq; q++) if (quiets[q] != bestm) hist_update(quiets[q], ply, -bonus);
+    }
+    if ((par[HIST_V2] & 8) && best <= a0 && depth >= 3 && ply > 0 && move_stack[ply - 1] && ust[hply - 1].cap == EMPTY && !PROMO(move_stack[ply - 1]) && FLAG(move_stack[ply - 1]) != F_EP) {
+        int bonus = par[HB_QUAD] * depth * depth + par[HB_LIN] * depth; if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
+        cont_update(ply - 1, piece_stack[ply - 1], TO(move_stack[ply - 1]), bonus * (1 + (pv_node || cutnode)));   // every reply failed: the move that led here was good
+    }
     if (!chk && best > -MATE_IN && best < MATE_IN && (!bestm || (!is_capture(bestm) && !PROMO(bestm))) &&
         !(best >= beta && best <= raw_ev) && !(best <= a0 && best >= raw_ev)) {       // learn how far off the static evaluation was
         int *c = &corrhist[P.side][P.pkey & 16383], w = depth + 1 > 16 ? 16 : depth + 1, d = (best - raw_ev) * 256;
@@ -1642,7 +1735,7 @@ static void selfplay(const char *path, int ngames, int nodes_per_move, U64 seed,
     clock_gettime(CLOCK_MONOTONIC, &t_start);
     for (int g = 0; g < ngames; g++) {
         set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        memset(tt, 0, (tt_mask + 1) * sizeof(TTE)); memset(history_t, 0, sizeof history_t); memset(cmh, 0, sizeof cmh);
+        memset(tt, 0, (tt_mask + 1) * sizeof(TTE)); memset(history_t, 0, sizeof history_t); memset(cmh, 0, sizeof cmh); memset(ch4, 0, sizeof ch4); memset(ch6, 0, sizeof ch6); memset(cmove, 0, sizeof cmove);
         memset(fuh, 0, sizeof fuh); memset(caph, 0, sizeof caph); memset(corrhist, 0, sizeof corrhist); memset(corr_mm, 0, sizeof corr_mm); memset(corr_np, 0, sizeof corr_np); memset(corr_cont, 0, sizeof corr_cont);
         Move ml[256]; int ok = 1, nrand = 8 + (int)(rnd64() % 2);
         for (int i = 0; i < nrand; i++) { int n = legal_list(ml); if (!n) { ok = 0; break; } make(ml[rnd64() % n]); }
@@ -1688,6 +1781,9 @@ static void selfplay(const char *path, int ngames, int nodes_per_move, U64 seed,
 
 int main(int argc, char **argv) {
     init_nnz(); init_tables(); init_pext(); init_zobrist(); tt_alloc(32);
+#ifdef SFNET
+    if (getenv("SFNET_FILE") && !sf_load(getenv("SFNET_FILE"))) { printf("cannot read the network in SFNET_FILE\n"); return 1; }
+#endif
     accs = (Acc *)big_alloc(sizeof(Acc) * 2048);
     init_lmr();
     set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -1715,7 +1811,7 @@ int main(int argc, char **argv) {
             for (int i = 0; i < NPAR; i++) if ((int)strlen(par_name[i]) == len && !strncmp(line + 15, par_name[i], len)) { par[i] = atoi(v + 7); if (par[i] < 1 && i != LMP_BASE && i < PROBCUT) par[i] = 1; }
             init_lmr();
         }
-        else if (!strcmp(line, "ucinewgame")) { memset(tt, 0, (tt_mask + 1) * sizeof(TTE)); memset(history_t, 0, sizeof history_t); memset(cmh, 0, sizeof cmh); memset(fuh, 0, sizeof fuh); memset(caph, 0, sizeof caph); memset(corrhist, 0, sizeof corrhist); memset(corr_mm, 0, sizeof corr_mm); memset(corr_np, 0, sizeof corr_np); memset(corr_cont, 0, sizeof corr_cont); }
+        else if (!strcmp(line, "ucinewgame")) { memset(tt, 0, (tt_mask + 1) * sizeof(TTE)); memset(history_t, 0, sizeof history_t); memset(cmh, 0, sizeof cmh); memset(ch4, 0, sizeof ch4); memset(ch6, 0, sizeof ch6); memset(cmove, 0, sizeof cmove); memset(fuh, 0, sizeof fuh); memset(caph, 0, sizeof caph); memset(corrhist, 0, sizeof corrhist); memset(corr_mm, 0, sizeof corr_mm); memset(corr_np, 0, sizeof corr_np); memset(corr_cont, 0, sizeof corr_cont); }
         else if (!strncmp(line, "position", 8)) {
             char *p = line + 9;
             if (!strncmp(p, "startpos", 8)) set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -1787,6 +1883,9 @@ int main(int argc, char **argv) {
             printf("pol end\n");
         }
         else if (!strcmp(line, "vol")) { evaluate(); printf("vol %d\n", have_vol ? eval_vol() : -1); }
+#ifdef SFNET
+        else if (!strcmp(line, "sfraw")) printf("sfraw %d\n", sf_ok ? sf_raw(0) : 0);
+#endif
         else if (!strncmp(line, "see ", 4)) { Move m = parse_move(line + 4); printf("see %d\n", m ? see(m) : -99999); }
         else if (!strcmp(line, "quit")) {
 #ifdef SSTAT

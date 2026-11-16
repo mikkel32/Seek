@@ -114,12 +114,35 @@ games at 300 and 3,000 nodes, 1,000 or 500 above):
 | 30,000 | | | −297 | −231 | −247 |
 | 100,000 / 300,000 | | | | −194 | −218 |
 
-Differences between evaluators grow with depth for every pair: the self-taught network is 131 behind BIGK at 300 nodes
-and 230 behind at 10,000; the mixed-data probe is 6 behind the Lichess probe at 300 nodes and 63 ahead at 10,000. At 300
-nodes the games are decided by shallow tactics, which hides how good an evaluator is; Stockfish's is the better one by an
-amount that only shows once the search is deep enough. (A network trained on its own search results, the self-taught
-one, scales worst: being consistent with one's own search is not what is missing.) Part of the difference is in the
-training data: the engine-game probes below recover about 65 Elo of it at equal training.
+What the level score at 300 nodes means was settled by letting each engine play itself with ten times fewer nodes
+(`ext/scaling.sh`, `gauntlet_odds.py`, 500 games each, `vault_scaling.log`):
+
+| Ten times the nodes, against itself | 300 → 3,000 | 3,000 → 30,000 |
+|---|---|---|
+| BIGM | +561 | +727 |
+| self-taught N384 | +616 | +651 |
+| Stockfish 14.1 | +1009 (497 wins, 3 draws, no loss) | +685 |
+| Stockfish 14.1, hand-written evaluator | +659 | +861 |
+
+Stockfish's network is unusually weak with almost no search; from 3,000 nodes on it scales no better than we do. So the
+gap is not a scaling defect of ours and the 300-node result is the outlier: from 3,000 nodes up we are a roughly constant
+180 to 250 behind with BIGK and 175 to 190 behind with BIGM.
+
+**Search or evaluator? The evaluator held equal.** The installed Stockfish's network (found inside its binary: 22,528
+inputs = 32 mirrored king buckets × 704, 1024 units a side, eight material buckets each with layers 2048 → 8 → 32 → 1;
+larger than ours, which has 16 buckets × 768 inputs and 768 units a side) was re-implemented in a diagnostic build of our
+engine (`-DSFNET`, never shipped, no weights in this repository; `ext/sfnet_extract.py`, `ext/sfnet_ref.py`,
+`ext/sfnet_check.py`: our arithmetic equals the engine's own `eval` output on 2,000 positions to the printed precision).
+Our search with Stockfish's network against Stockfish 14.1, 10,000 nodes each (`ext/sfnet_matches.sh`, `vault_sfnet.log`):
+
+| Match | Games | Result |
+|---|---|---|
+| our search + Stockfish's network against Stockfish 14.1 | 1,000 | 157-319-524, **−134 (−153 to −116)** |
+| our search + BIGM against Stockfish 14.1 (for comparison) | 4,000 | −173 (−183 to −164) |
+
+With the same evaluator on both sides we are 134 behind: about three quarters of the remaining equal-node gap is
+Stockfish's search, about a quarter its network. No single search setting moves anything (below), so the difference is in
+what the search does, not in how it is tuned.
 
 **It is not depth.** Geometric-mean nodes to finish a depth on the twelve bench positions (`ext/ebf.py`): ours 9,119 /
 33,971 / 92,176 / 239,265 for depths 8 / 10 / 12 / 14, Stockfish 14.1 6,574 / 28,590 / 78,522 / 185,116.

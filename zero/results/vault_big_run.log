@@ -8,3 +8,5 @@
 [09:33:44] BIGM against Stockfish 14.1, 10000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 119, "d": 268, "l": 613, "score": 0.253, "elo": -188.1, "lo": -208.6, "hi": -168.7, "avg_plies": 142.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
 [09:36:23] BIGM against Stockfish 14.1, 30000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 87, "d": 338, "l": 575, "score": 0.256, "elo": -185.3, "lo": -204.2, "hi": -167.4, "avg_plies": 145.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.6}
 [09:36:23] BIGM finished
+[10:10:03] options of the new network in its matches: Hash=64,PvPrune=1,ChkExt=0,SeDouble=20,CutIir=1
+[10:10:03] training BIGM2: 768 wide, 16 king buckets with a shared table, from scratch, 1 passes over h:0-59,s:259-406,t:0-22 --ytag yc --resume zero/w_BIGM.bin.ema.pt --lr 3e-4
