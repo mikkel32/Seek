@@ -10,7 +10,7 @@ Elo figures are followed by their 95% interval.
 |---|---|---|---|
 | Lichess evaluation database (deep Stockfish analysis of positions) | 257M | `e0–e11` | `ext/lichess_hf.sh`, `ext/lconv.c` |
 | Lichess game positions with the server's Stockfish analysis, 18 months (2023-12 to 2025-03) | 4,117M | `f0–f39`, `h0–h209` | `ext/fishnet.sh`, `ext/pq2csv.py`, `ext/lconv.c` |
-| the same, 10 more months (2023-02 to 2023-11) | about 2,500M (in conversion) | `i0–i139` | `ext/fishnet.sh` |
+| the same, 10 more months (2023-02 to 2023-11) | 2,683M (`i139` is held out and never trained on) | `i0–i139` | `ext/fishnet.sh`, `ext/more_months.sh` |
 | Stockfish's own first-stage training file | 1,230M | deleted | `ext/bullet2shards.py` |
 
 Kept positions: from move 9 on, side to move not in check, best or played move not a capture or promotion, no forced
@@ -56,6 +56,7 @@ training machine, 1,059k against 1,170k on the match machine). `ext/bigk.sh`, `z
 | 16 king buckets (BIGK) against plain (BIGW), both 768 wide on the 4.37 billion, 30,000 positions per move | 2,000 | 654-879-467, +33 (21 to 44) |
 | the same pair at the clock, 10+0.1 | 400 | 86-254-60, +23 (2 to 43) |
 | the same pair at the clock, 60+0.6 | 200 | 34-144-22, +21 (−5 to 46) |
+| the same design on all 7.06 billion positions, same number of training steps (BIGK2) against BIGK, 30,000 positions per move | 2,000 | 497-993-510, −2 (−13 to 9) |
 
 Held-out loss on one million Lichess game positions no network was trained on (`ival`):
 
@@ -67,6 +68,10 @@ Held-out loss on one million Lichess game positions no network was trained on (`
 | LFW (768 wide, 787M) | 0.54348 | 0.0587 |
 | BIGW (768 wide, 4.37 billion) | 0.54280 | 0.0578 |
 | BIGK (768 wide, 16 king buckets, 4.37 billion) | 0.54110 | 0.0552 |
+| BIGK2 (768 wide, 16 king buckets, 7.06 billion) | 0.54049 | 0.0541 |
+
+More positions do not help the bucketed design either: 60% more data lowers the held-out loss by 0.0006 and changes
+nothing in games. Three data steps have now given +3, +8 and −2 Elo; the network's size is the limit, not the data.
 
 The engine's integer copy of these networks (hidden layer in steps of 1/128) differs from the trained network by 1.9
 centipawns on average on real balanced positions (`ext/qsim.py`); finer integers would bring that to 1.0 and are not
