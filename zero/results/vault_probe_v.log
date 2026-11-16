@@ -1,0 +1,14 @@
+[05:29:53] kb16 (--h 768 --bs 32768 --lr 1.4e-3 --kb 16 --kf 1): held-out loss 0.5424913763999939, mean error 0.057391196489334106; 512s, 2019k pos/s
+[05:29:57]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 5.69 centipawns, mean 1.123; evaluations range -25
+[05:29:58]   speed (calc/calc_s18): depth 14: 3,338,526 positions in 1.38s = 2417k per second; signature 6e4eb39430
+[05:43:57] w1536 (--h 1536 --bs 32768 --lr 1.4e-3 --kb 16 --kf 1): held-out loss 0.5415601134300232, mean error 0.05581784248352051; 839s, 1229k pos/s
+[05:44:01]   engine against trainer: 1000 random positions, hidden 1536, king buckets 16, product terms off: largest difference 17.13 centipawns, mean 2.120; evaluations range -
+[05:44:03]   speed (calc/calc_s18x): depth 14: 3,097,309 positions in 1.85s = 1676k per second; signature 69037eeee7
+[05:50:45]   w1536 against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 618, "d": 984, "l": 398, "score": 0.555, "elo": 38.4, "lo": 27.6, "hi": 49.3, "avg_plies": 156.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.7}
+[06:01:19] w1024 (--h 1024 --bs 32768 --lr 1.4e-3 --kb 16 --kf 1): held-out loss 0.542093813419342, mean error 0.05669977143406868; 634s, 1632k pos/s
+[06:01:25]   engine against trainer: 1000 random positions, hidden 1024, king buckets 16, product terms off: largest difference 12.52 centipawns, mean 2.206; evaluations range -
+[06:01:28]   speed (calc/calc_s18): depth 14: 3,377,290 positions in 2.60s = 1301k per second; signature 3214d0d8ad
+[06:09:04]   w1024 against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 539, "d": 991, "l": 470, "score": 0.5172, "elo": 12.0, "lo": 1.2, "hi": 22.8, "avg_plies": 159.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.6}
+[06:16:47] s2 (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1): held-out loss 0.5546880960464478, mean error 0.06561382859945297; 454s, 2273k pos/s
+[06:16:51]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 11.25 centipawns, mean 2.197; evaluations range -2
+[06:16:53]   speed (calc/calc_s19b): depth 14: 3,490,752 positions in 1.69s = 2063k per second; signature ff37a44978

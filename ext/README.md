@@ -77,4 +77,79 @@ The engine's integer copy of these networks (hidden layer in steps of 1/128) dif
 centipawns on average on real balanced positions (`ext/qsim.py`); finer integers would bring that to 1.0 and are not
 worth the change.
 
+## Where the gap to Stockfish 14.1 is (16 November)
+
+**The reference opponent is a slow build.** `/usr/games/stockfish` is the distribution's Stockfish 14.1, compiled for SSE2
+only. On the same positions and the same node budget it needs 1.77 times as long as our engine on the match machine
+(194k against 351k nodes per second of wall time under match load, `ext/nodetime.py`, `zero/results/lab_nodetime.log`).
+Every equal-time result above therefore gives us almost twice Stockfish's nodes. A properly compiled Stockfish 14.1 would
+be stronger than the opponent measured here.
+
+**Equal nodes** (`ext/node_ladder.sh`, engine `calc/calc_s19.c`, which keeps a small node budget exactly; `calc_s18`
+overshot to the next 2,048 and the first ladder run was discarded for that, `vault_ladder_unequal.log`). BIGK, standard options:
+
+| Nodes per move, each side | Games | Against Stockfish 14.1 | Against its hand-written evaluator |
+|---|---|---|---|
+| 300 | 2,000 | +5 (−9 to +20) | +129 (114 to 144) |
+| 3,000 | 2,000 | −185 (−200 to −170) | +165 (150 to 181) |
+| 10,000 | 1,000 | −223 (−245 to −203) | |
+| 30,000 | 1,000 | −247 (−268 to −228) | +189 |
+
+With almost no search the two evaluators are level; the gap opens as the search deepens.
+
+**It is not depth.** Geometric-mean nodes to finish a depth on the twelve bench positions (`ext/ebf.py`): ours 9,119 /
+33,971 / 92,176 / 239,265 for depths 8 / 10 / 12 / 14, Stockfish 14.1 6,574 / 28,590 / 78,522 / 185,116.
+
+**It is not a search setting.** Each against Stockfish 14.1 at 10,000 nodes, 1,000 games (`ext/sweep.sh`,
+`vault_sweep.log`); `LmrPrune`, `LmpDepth`, `NmpMargin` are new options of `calc_s19`, off by default:
+
+| Setting | Result |
+|---|---|
+| as it is | −223 |
+| pruning rules count the reduced depth (`LmrPrune=1`) | −269 |
+| late-move pruning to depth 12 (`LmpDepth=12`) | −232 |
+| null move only well above beta at low depth (`NmpMargin=100`) | −231 |
+| deeper reductions (`LmrDiv=180`) | −230 |
+| deeper still (`LmrDiv=150,LmrBase=100`) | −237 |
+| one ply more at expected cut nodes (`CutLmr=1`) | −213 |
+| two plies more (`CutLmr=2`) | −237 |
+| `LmrPrune=1,LmrDiv=180,CutLmr=1` | −258 |
+
+Search statistics of our engine at 300,000 nodes per position (`-DSSTAT`): quiescence 28% of nodes; 60% of main-search
+nodes end by reverse futility; 82% of move-loop cutoffs come on the first move; reduced searches are re-searched 1.5% of
+the time; a null move succeeds in 41% of its tries.
+
+**Whose evaluator is closer to a deep search** (`ext/whose_eval.py`, `ext/whose_eval2.py`; every evaluator gets its own best scale):
+
+- Human-game positions (the held-out Lichess set, 60,000 positions, scale fitted per game phase): squared error of BIGK
+  against Stockfish 14.1's network 0.0107 / 0.0140 with 2–6 pieces, 0.0102 / 0.0120 with 7–12, 0.0087 / 0.0106 with
+  13–22, 0.0055 / 0.0075 with 23–32. Ours is the more accurate in every phase. (A first reading that showed a large
+  deficit in balanced endgames was an artefact of one scale for all phases: Stockfish compresses its endgame scores.)
+- Engine-game positions (18,554 quiet positions from our own engine's games at 30,000 nodes, each labelled by a 200,000-node
+  Stockfish 16 search, `ext/engine_positions.py`). On the 74% that are balanced, always answering 50% has a mean error of
+  0.0383. BIGK brings it to 0.0343 and names the better side in 62.9%; Stockfish 14.1's network 0.0315 and 65.6%;
+  Stockfish 16's 0.0264 and 68.3%. The positions were chosen by our own search, which biases this test against our
+  networks by an unknown amount.
+
+**Engine-game training data.** Stockfish's second-stage training files (Hugging Face `linrock/bullet-training-data`, `S2`:
+positions from Leela's self-play games with a search score and the game result, already quiet) are read by
+`ext/s2data.sh` and `ext/bullet2shards.py`: 547 million positions per file in about four minutes, twelve files, two files
+share 13% of their positions (`ext/overlap.py`). Their score unit was measured against our own evaluator (`ext/s2cal.py`):
+600 units make one logit of win chance on the Lichess labels' scale. These labels are neither self-taught nor Stockfish's
+play; this stays the outside-data line.
+
+Probes: the same 768-wide, 16-bucket network from scratch on 1.02 billion positions, one pass (`ext/probe_v.sh`,
+`vault_probe_v.log`), 2,000 games at 30,000 nodes against the Lichess-data reference and 1,000 games at 10,000 nodes against
+Stockfish 14.1 (`ext/vs_sf.sh`):
+
+| Probe | Against the reference | Against Stockfish 14.1 at 10,000 nodes | Engine positions: names the better side |
+|---|---|---|---|
+| Lichess game positions (reference) | | −281 (−306 to −259) | 63.2% |
+| engine-game positions, score only | +5 (−7 to +17), 604-820-576 | −254 (−277 to −232) | 65.0% |
+| 1536 wide, Lichess | +38 (28 to 49); search 31% slower | | |
+| 1024 wide, Lichess | +12 (1 to 23) | | |
+
+Held-out loss of further one-pass variants on the match machine's card (`lab_probe.log`): plain 768 0.54447; 16 buckets
+0.54250; 16 buckets without the shared table 0.54335; 32 buckets 0.54253; 7 buckets 0.54263; half the learning rate 0.54290.
+
 Logs: `zero/results/vault_*.log` (training machine), `zero/results/lab_*.log` (match machine).

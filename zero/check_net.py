@@ -17,6 +17,8 @@ NKB = (w['E'].shape[0] - 1) // 768
 KBT = [0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5] + [6] * 16
 if NKB == 16:
     KBT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13] + [14, 14, 15, 15] * 3
+if NKB == 32:
+    KBT = list(range(32))
 if 'Esh' in w:                               # shared table + per-bucket corrections: the engine's file holds their sum
     w['E'][:NKB * 768] += np.tile(w['Esh'][:768], (NKB, 1))
 KB11 = [0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8] + [9] * 16 + [10] * 32

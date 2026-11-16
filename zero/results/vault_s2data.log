@@ -1,0 +1,6 @@
+[05:37:13] iteration 1: 9 GB, downloading in 10 pieces
+[05:39:45] downloaded 9007693288 of 9007693288 bytes; converting
+[05:42:10] iteration 1: 547366365 positions, shards s0 to s36; 34G free
+[05:42:11] iteration 2: 9 GB, downloading in 10 pieces
+[05:45:49] downloaded 9003836115 of 9003836115 bytes; converting
+[05:51:40] iteration 2: 547101313 positions, shards s37 to s73; 21G free
