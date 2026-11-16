@@ -44,7 +44,7 @@ Our options: `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1`.
 | BIGW (4.37 billion, 768 wide) | −153 (−179 to −129), 400 games | −168 (−196 to −143), 300 games | +100 (74 to 127), 400 games | +51 (20 to 82), 200 games |
 | BIGK (4.37 billion, 768 wide, 16 king buckets; engine `calc_s18`) | −143 (−169 to −119), 400 games | −163 (−190 to −137), 300 games | | |
 | BIGK again with engine `calc_s19` | −137 (−161 to −115), 500 games | | | |
-| **BIGM** (4.37 billion Lichess + 3.83 billion engine-game positions, same network; engine `calc_s19`) | **−116 (−136 to −97), 500 games** | (playing) | | |
+| **BIGM** (4.37 billion Lichess + 3.83 billion engine-game positions, same network; engine `calc_s19`) | **−116 (−136 to −97), 500 games** | **−115 (−139 to −93), 300 games** | | |
 
 ## King-bucketed inputs
 
@@ -198,6 +198,19 @@ positions (seven of the twelve files; the disk holds no more next to the Lichess
 | BIGM against Stockfish 14.1, 10,000 nodes each | 1,000 | −188 (−209 to −169); BIGK −223, the one-pass mixed probe −218 |
 | BIGM against Stockfish 14.1, 30,000 nodes each | 1,000 | −185 (−204 to −167); BIGK −247, the one-pass mixed probe −231 |
 | standing against Stockfish 14.1, 10+0.1 | 500 | −116 (−136 to −97); BIGK −137 and −143 |
+| standing against Stockfish 14.1, 60+0.6 | 300 | −115 (−139 to −93); BIGK −163 |
+| BIGM against BIGK, 60+0.6 | 200 | 38-150-12, +45 (22 to 69) |
+| BIGM against Stockfish 14.1, 10,000 nodes each, again on the match machine | 4,000 | −173 (−183 to −164) |
+
+Tried on top of the mixed recipe and not adopted:
+
+- Steeper training labels (`--sharp`, the loss sees errors near equality larger; played with `EvalScale` = 100 / sharp):
+  sharp 2 against the reference probe +5 (−6 to +16), against Stockfish 14.1 at 10,000 nodes −210 and −209 (reference −218);
+  sharp 1.5 against the reference +2 (−9 to +13).
+- History tables indexed by whether the squares are attacked (`ThrHist=1`): −202 against a −218 baseline at equal nodes
+  (4,000 games each), but with BIGM at 10+0.1 against the standing options 141-693-166, −9 (−21 to +3): its cost in time
+  outweighs it.
+- 85% engine-game positions instead of half: −9 against the reference, −227 against Stockfish (reference −218).
 
 Composition of the mix hardly matters at probe scale: 85% engine-game positions against the half-and-half reference
 −9 (−20 to +3); a third each of Lichess, second-stage and first-stage (Stockfish's own self-play, `ext/s1data.sh`)

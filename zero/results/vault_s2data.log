@@ -20,3 +20,8 @@
 [06:53:49] downloaded 9006738042 of 9006738042 bytes; converting
 [06:56:07] iteration 7: 547261360 positions, shards s222 to s258; 16G free
 [08:21:14] first-stage file 1: 345000000 positions, shards t0 to t22; 7.0G free
+[09:48:46] room made: 70G free
+[09:51:30] iteration 8: 547459063 positions, shards s259 to s295, labels ready; 58G free
+[09:54:09] iteration 9: 547127322 positions, shards s296 to s332, labels ready; 45G free
+[09:56:48] iteration 10: 547045975 positions, shards s333 to s369, labels ready; 32G free
+[10:01:26] iteration 11: 547052625 positions, shards s370 to s406, labels ready; 19G free

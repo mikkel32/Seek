@@ -36,3 +36,12 @@
 [09:38:09]   speed (calc/calc_s19c): depth 14: 3,717,882 positions in 2.27s = 1635k per second; signature 996006f078
 [09:46:05]   s2x against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 535, "d": 880, "l": 585, "score": 0.4875, "elo": -8.7, "lo": -20.1, "hi": 2.7, "avg_plies": 157.2, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.9}
 [09:46:05] probes finished
+[09:57:23] sharp2 (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc --sharp 2): held-out loss 0.5450957417488098, mean error 0.05981701612472534; 496s, 2213k pos/s
+[09:57:27]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 8.40 centipawns, mean 1.505; evaluations range -55
+[09:57:28]   speed (calc/calc_s19c): depth 14: 3,099,112 positions in 1.11s = 2798k per second; signature 15428f720b
+[10:01:27]   sharp2 against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 538, "d": 953, "l": 509, "score": 0.5072, "elo": 5.0, "lo": -6.0, "hi": 16.1, "avg_plies": 151.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[10:09:42] sharp15 (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc --sharp 1.5): held-out loss 0.5438348650932312, mean error 0.05794277414679527; 495s, 2226k pos/s
+[10:09:46]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 21.38 centipawns, mean 2.554; evaluations range -3
+[10:09:47]   speed (calc/calc_s19c): depth 14: 3,245,272 positions in 1.29s = 2525k per second; signature 2a3ad09c85
+[10:13:44]   sharp15 against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 539, "d": 935, "l": 526, "score": 0.5032, "elo": 2.3, "lo": -8.9, "hi": 13.4, "avg_plies": 154.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[10:13:44] probes finished
