@@ -111,7 +111,7 @@ static void init_zobrist(void) {
 #endif
 // One accumulator per history ply. Updates are LAZY: make() only records what changed; the sums are built from the
 // nearest computed ancestor when (and only if) a position is actually evaluated.
-typedef struct { short a[2][HMAX] __attribute__((aligned(32))); float lin[2][2]; int pb, ok[2], nchg, ksq[2]; int chg[6][4]; } Acc;   // sums as 16-bit integers (see quantize_net); ok: one flag per view
+typedef struct { short a[2][HMAX] __attribute__((aligned(32))); float lin[2][2]; int pb, ok[2], need[2], nchg, ksq[2]; int chg[6][4]; } Acc;   // sums as 16-bit integers (see quantize_net); ok: one flag per view; need: this move took the view's king to another table
 static Acc *accs;
 static int NH = 0;                       // hidden width; 0 = linear piece-square evaluation only
 #define NBMAX 32
@@ -209,6 +209,9 @@ static inline int phase_bucket(void) { int b = (popc(P.occ[0] | P.occ[1]) - 2) /
 typedef struct { short a[HMAX] __attribute__((aligned(32))); U64 bb[2][6]; } KCache;
 static KCache *kcache;                   // [view * 32 + table]
 static int use_kc = 0;
+#ifdef KSTAT
+static U64 ks_ens, ks_build, ks_ref, ks_diff;            // evaluations, lazy view builds, view rebuilds from the cache, pieces added or removed there
+#endif
 static inline int kb_key(int v, int ksq) {              // which table of the input matrix the view reads: bucket and wing
     int kv = v == WHITE ? ksq : ksq ^ 56;
     if (NKB == 11) return KB11[kv];
@@ -230,23 +233,30 @@ static void acc_refresh_view(int v) {
         KCache *K = &kcache[v * 32 + kb_key(v, ksq)]; short *a = K->a; float l0 = 0, l1 = 0; int n = NH;
         for (int c = 0; c < 2; c++) for (int pt = 0; pt < 6; pt++) {
             U64 cur = P.bb[c][pt], old = K->bb[c][pt], add = cur & ~old, del = old & ~cur; K->bb[c][pt] = cur;
+#ifdef KSTAT
+            ks_diff += popc(add) + popc(del);
+#endif
             for (; add; add &= add - 1) { const short *e = NEq + (size_t)feat_fx(0, v, c, pt, lsb(add), ksq) * n; for (int i = 0; i < n; i++) a[i] += e[i]; }
             for (; del; del &= del - 1) { const short *e = NEq + (size_t)feat_fx(0, v, c, pt, lsb(del), ksq) * n; for (int i = 0; i < n; i++) a[i] -= e[i]; }
             for (; cur; cur &= cur - 1) { int ix = feat_ix(v, c, pt, lsb(cur)); l0 += NS[ix]; l1 += NS2[ix]; }
         }
         memcpy(A->a[v], a, sizeof(short) * n); A->lin[v][0] = l0; A->lin[v][1] = l1;
+#ifdef KSTAT
+        ks_ref++;
+#endif
         return;
     }
     memcpy(A->a[v], NBq, sizeof(short) * NH); A->lin[v][0] = A->lin[v][1] = 0;
     for (int c = 0; c < 2; c++) for (int pt = 0; pt < 6; pt++) { U64 b = P.bb[c][pt]; while (b) { int s = lsb(b); b &= b - 1; acc_apply(A, v, 1, c, pt, s, ksq); } }
 }
-static void acc_refresh(void) { if (have_net) { acc_refresh_view(WHITE); acc_refresh_view(BLACK); accs[hply].ok[0] = accs[hply].ok[1] = 1; } }
+static void acc_refresh(void) { if (have_net) { acc_refresh_view(WHITE); acc_refresh_view(BLACK); accs[hply].ok[0] = accs[hply].ok[1] = 1; accs[hply].need[0] = accs[hply].need[1] = 0; } }
 // board changes of the move being made
 static int chg_n, chg[6][4];
 static inline void putA(int c, int pt, int s) { put(c, pt, s); chg[chg_n][0] = 1; chg[chg_n][1] = c; chg[chg_n][2] = pt; chg[chg_n][3] = s; chg_n++; }
 static inline void remA(int c, int pt, int s) { rem(c, pt, s); chg[chg_n][0] = -1; chg[chg_n][1] = c; chg[chg_n][2] = pt; chg[chg_n][3] = s; chg_n++; }
 // make() calls this: remember the change, compute nothing. A move that takes a king to another table of the input matrix
-// rebuilds that one view right away (that needs the board as it is now); the other view stays lazy.
+// only marks that view; the view is rebuilt from the board when (and where) a position below is actually evaluated, so
+// king moves that turn out illegal or are cut off by the hash table cost nothing.
 static inline void acc_record(int king_moved) {
     if (!have_net) return;
     Acc *A = &accs[hply]; const Acc *S = &accs[hply - 1];
@@ -254,8 +264,9 @@ static inline void acc_record(int king_moved) {
     A->ok[0] = A->ok[1] = 0; A->nchg = chg_n; A->pb = S->pb;
     A->ksq[0] = lsb(P.bb[0][KING]); A->ksq[1] = lsb(P.bb[1][KING]);
     for (int i = 0; i < chg_n; i++) { A->chg[i][0] = chg[i][0]; A->chg[i][1] = chg[i][1]; A->chg[i][2] = chg[i][2]; A->chg[i][3] = chg[i][3]; }
+    A->need[0] = A->need[1] = 0;
     if (king_moved && use_kc)
-        for (int v = 0; v < 2; v++) if (A->ksq[v] != S->ksq[v] && kb_key(v, A->ksq[v]) != kb_key(v, S->ksq[v])) { acc_refresh_view(v); A->pb = S->pb; A->ok[v] = 1; }
+        for (int v = 0; v < 2; v++) A->need[v] = A->ksq[v] != S->ksq[v] && kb_key(v, A->ksq[v]) != kb_key(v, S->ksq[v]);
 }
 // build one view of accs[j] from the computed accs[j-1] in ONE pass over the data (no copy first)
 static void acc_build(int j, int v) {
@@ -296,10 +307,18 @@ static void acc_check(void) {            // the lazily built sums against a rebu
 #endif
 static inline void acc_ensure(void) {
     for (int v = 0; v < 2; v++) {
-        int j = hply;
-        while (!accs[j].ok[v]) j--;
-        for (j++; j <= hply; j++) acc_build(j, v);
+        int j = hply, rebuild = 0;
+        while (!accs[j].ok[v]) { if (accs[j].need[v]) { rebuild = 1; break; } j--; }
+        if (rebuild) { int pb = accs[hply].pb; acc_refresh_view(v); accs[hply].pb = pb; accs[hply].ok[v] = 1; continue; }   // the king changed table on the way here: from the board, via the bucket cache
+        for (j++; j <= hply; j++) { acc_build(j, v);
+#ifdef KSTAT
+            ks_build++;
+#endif
+        }
     }
+#ifdef KSTAT
+    ks_ens++;
+#endif
 #ifdef ACC_CHECK
     acc_check();
 #endif
@@ -1745,7 +1764,12 @@ int main(int argc, char **argv) {
         }
         else if (!strcmp(line, "vol")) { evaluate(); printf("vol %d\n", have_vol ? eval_vol() : -1); }
         else if (!strncmp(line, "see ", 4)) { Move m = parse_move(line + 4); printf("see %d\n", m ? see(m) : -99999); }
-        else if (!strcmp(line, "quit")) break;
+        else if (!strcmp(line, "quit")) {
+#ifdef KSTAT
+            printf("info string evaluations %llu, lazy view builds %llu, view rebuilds from the bucket cache %llu, pieces added or removed there %llu\n", ks_ens, ks_build, ks_ref, ks_diff);
+#endif
+            break;
+        }
         fflush(stdout);
     }
     return 0;
