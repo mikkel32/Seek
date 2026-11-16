@@ -196,7 +196,10 @@ def usable():
 
 
 def test(a):
-    tr = usable()[a.first:a.limit or None]; t0 = time.time(); items = [(i, t['fen']) for i, t in enumerate(tr)]
+    tr = usable()[a.first:a.limit or None]; uni = 0
+    if a.subset:                                             # only the positions where configurations have been seen to differ
+        sub = json.load(open(f'{D}/{a.subset}.json')); keep = set(sub['fens']); uni = sub['universe']; tr = [t for t in tr if t['fen'] in keep]
+    t0 = time.time(); items = [(i, t['fen']) for i, t in enumerate(tr)]
     chunks = [items[k:k + 8] for k in range(0, len(items), 8)]; moves = [None] * len(tr)
     with Pool(a.workers) as pool:
         for r in pool.imap_unordered(w_test, [(a.cmd, a.opts, a.nodes, c) for c in chunks]):
@@ -213,7 +216,7 @@ def test(a):
                     dem[fen + ' ' + mv] = cp
         json.dump(dem, open(f'{D}/demand.json', 'w'))
     os.makedirs(f'{D}/runs', exist_ok=True)
-    json.dump({'cmd': a.cmd, 'opts': a.opts, 'nodes': a.nodes, 'fens': [t['fen'] for t in tr], 'moves': moves}, open(f'{D}/runs/{a.name}.json', 'w'))
+    json.dump({'cmd': a.cmd, 'opts': a.opts, 'nodes': a.nodes, 'fens': [t['fen'] for t in tr], 'moves': moves, 'universe': uni}, open(f'{D}/runs/{a.name}.json', 'w'))
     loss, crit = scores(tr, moves, dem); n = len(loss); nc = sum(crit)
     print(f'{a.name}: {n} positions at {a.nodes} nodes ({t1 - t0:.0f}s, {len(need)} moves sent to Stockfish, {time.time() - t1:.0f}s): '
           f'mean loss {1000 * sum(loss) / n:.2f} thousandths of a point per move; {100 * sum(l >= 0.05 for l in loss) / n:.2f}% of moves lose 0.05 or more; '
@@ -227,9 +230,23 @@ def cmp(a):
     ma = dict(zip(ra['fens'], ra['moves'])); la, crit = scores(tr, [ma[f] for f in fens], dem); lb, _ = scores(tr, [mb[f] for f in fens], dem)
     d = [x - y for x, y in zip(la, lb)]; n = len(d); m = sum(d) / n; sd = (sum((x - m) ** 2 for x in d) / (n - 1)) ** 0.5; se = sd / n ** 0.5
     diff = sum(x != y for x, y in zip(la, lb))
+    uni = min(ra.get('universe') or 0, rb.get('universe') or 0)
+    if uni and uni > n:                                      # tested on a subset: the other positions of the universe count as no difference
+        m *= n / uni; se *= n / uni
     print(f'{a.a} against {a.b}: {n} positions; mean loss {1000 * sum(la) / n:.2f} against {1000 * sum(lb) / n:.2f} thousandths; '
           f'difference {1000 * m:+.2f} (standard error {1000 * se:.2f}, {m / se if se else 0:+.1f} of them; negative = the first gives away less); '
-          f'{diff} positions scored differently', flush=True)
+          f'{diff} positions scored differently' + (f'; scaled to the {uni} positions the subset was drawn from' if uni and uni > n else ''), flush=True)
+
+
+def subset(a):
+    """the positions where the named runs do not all choose the same move (the others tell configurations apart very rarely)"""
+    runs = [json.load(open(f'{D}/runs/{x}.json')) for x in a.runs.split(',')]; common = set(runs[0]['fens'])
+    for r in runs[1:]:
+        common &= set(r['fens'])
+    maps = [dict(zip(r['fens'], r['moves'])) for r in runs]
+    fens = [f for f in runs[0]['fens'] if f in common and len({m[f] for m in maps}) > 1]
+    json.dump({'fens': fens, 'universe': len(common), 'runs': a.runs}, open(f'{D}/{a.out}.json', 'w'))
+    print(f'{len(fens)} of {len(common)} positions have more than one move among {len(runs)} runs -> {D}/{a.out}.json', flush=True)
 
 
 if __name__ == '__main__':
@@ -238,7 +255,8 @@ if __name__ == '__main__':
     c.add_argument('--nodes', type=int, default=30000); c.add_argument('--games', type=int, default=1000); c.add_argument('--per', type=int, default=8); c.add_argument('--workers', type=int, default=22); c.add_argument('--skip', type=int, default=0)
     t = sub.add_parser('truth'); t.add_argument('--nodes', type=int, default=4000000); t.add_argument('--workers', type=int, default=22); t.add_argument('--limit', type=int, default=0)
     s = sub.add_parser('test'); s.add_argument('--name'); s.add_argument('--cmd'); s.add_argument('--opts', default='Hash=64'); s.add_argument('--nodes', type=int)
-    s.add_argument('--workers', type=int, default=22); s.add_argument('--limit', type=int, default=0); s.add_argument('--first', type=int, default=0)   # positions [first, limit) of the usable list
+    s.add_argument('--workers', type=int, default=22); s.add_argument('--limit', type=int, default=0); s.add_argument('--first', type=int, default=0); s.add_argument('--subset', default='')   # positions [first, limit) of the usable list
     m = sub.add_parser('cmp'); m.add_argument('a'); m.add_argument('b')
+    u = sub.add_parser('subset'); u.add_argument('--runs'); u.add_argument('--out', default='contested')
     a = ap.parse_args(); os.makedirs(D, exist_ok=True)
-    {'collect': collect, 'truth': truth, 'test': test, 'cmp': cmp}[a.what](a)
+    {'collect': collect, 'truth': truth, 'test': test, 'cmp': cmp, 'subset': subset}[a.what](a)

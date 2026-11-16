@@ -990,6 +990,12 @@ static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 1
 // history is skipped at reduced depth under 6 outside PV nodes.
 // SearchV3 (bit flags, 0 = off): 1 = a quiet move that gives check is never dropped by the futility or the bad-history rule
 // (only by the losing-exchange rule, with the margin captures get); at a futile node the checking quiet moves are still tried.
+// 2 = a position that is or has been on a main line (remembered in the hash table) has its late moves reduced one ply less;
+// 4 = a late capture is skipped outside PV nodes when even winning the piece leaves the static evaluation well under alpha
+// at its reduced depth; 8 = quiescence: standing well under alpha, a capture that wins nothing in the exchange is skipped;
+// 16 = a node where nothing raised alpha keeps the hash table's move for this position if there is one (32: and stores no
+// move otherwise); 64 = a result much deeper than the new one (4 plies or more) for the same position is kept unless the
+// new one is exact; a new cutoff move is still written.
 // HistV2 (bit flags, 0 = off): 1 = continuation histories four and six plies back as well, the one-ply one counted twice
 // in move ordering; 2 = a counter-move slot after the killers; 4 = the best move of a node that raised alpha without a
 // cutoff is rewarded like a cutoff move; 8 = when every move of a node fails low, the opponent's quiet move that led here
@@ -1020,10 +1026,10 @@ static inline TTE *tt_find(U64 key) {
     TTE *b = &tt[key & tt_mask & ~1ULL];
     if (b[0].key == key) return b;
     if (b[1].key == key) return b + 1;
-    int v0 = b[0].depth - 8 * ((tt_age - (b[0].flag >> 2)) & 63), v1 = b[1].depth - 8 * ((tt_age - (b[1].flag >> 2)) & 63);
+    int v0 = b[0].depth - 8 * ((tt_age - (b[0].flag >> 3)) & 31), v1 = b[1].depth - 8 * ((tt_age - (b[1].flag >> 3)) & 31);
     return v1 < v0 ? b + 1 : b;
 }
-#define TTF(fl) ((unsigned char)((fl) | (tt_age << 2)))
+#define TTF(fl) ((unsigned char)((fl) | (tt_age << 3)))     // bits 0-1: the bound; bit 2: the position has been on a main line; then the age
 // self-play harvest: interior positions whose value the search settled exactly (mover-relative features + score)
 typedef struct { short idx[32]; short score; signed char result, pad; } Rec;     // 68 bytes, mover's view
 static Rec harvest[256]; static int n_harvest, harvest_on;
@@ -1348,6 +1354,7 @@ static int qsearch(int alpha, int beta, int ply) {
         if (!chk) {
             int victim = FLAG(m) == F_EP ? PAWN : (P.sq[TO(m)] == EMPTY ? NO_PT : P.sq[TO(m)] % 6);
             if (!PROMO(m) && stand + mat_val[victim] + par[DELTA_Q] <= alpha) continue;   // delta pruning
+            if ((par[SEARCH_V3] & 8) && !PROMO(m) && victim != NO_PT && stand + 120 <= alpha && see_val[victim] <= see_val[P.sq[FROM(m)] % 6] && see(m) <= 0) continue;
         }
         move_stack[ply] = m; piece_stack[ply] = P.sq[FROM(m)];
         if (!make(m)) continue;
@@ -1362,8 +1369,9 @@ static int qsearch(int alpha, int beta, int ply) {
     if (s > MATE_IN) s += ply; else if (s < -MATE_IN) s -= ply;
     e = tt_find(P.key);
     if (e->key != P.key || e->depth == 0) {                             // never overwrite a real search result with a quiescence one
+        int pvb = e->key == P.key ? (e->flag & 4) : 0;
         e->key = P.key; e->move = bestm; e->score = (short)s; e->depth = 0;
-        e->flag = TTF(best >= beta ? TT_LOWER : (best > a0 ? TT_EXACT : TT_UPPER));
+        e->flag = TTF(best >= beta ? TT_LOWER : (best > a0 ? TT_EXACT : TT_UPPER)) | pvb;
     }
     return best;
 }
@@ -1384,9 +1392,9 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
 
     TTE *e = tt_find(P.key);
     Move ttm = 0, excl = excluded[ply];
-    int tt_score = 0, tt_depth = -1, tt_flag = TT_NONE, cutnode = cutn[ply];
+    int tt_score = 0, tt_depth = -1, tt_flag = TT_NONE, cutnode = cutn[ply], ttpv = pv_node;
     if (e->key == P.key) {
-        ttm = e->move; tt_depth = e->depth; tt_flag = e->flag & 3;
+        ttm = e->move; tt_depth = e->depth; tt_flag = e->flag & 3; ttpv |= (e->flag >> 2) & 1;
         tt_score = e->score;
         if (tt_score > MATE_IN) tt_score -= ply; else if (tt_score < -MATE_IN) tt_score += ply;
         if (!pv_node && !excl && tt_depth >= depth &&
@@ -1459,7 +1467,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 if (stop_flag) return 0;
                 if (v >= probbeta) {
                     e = tt_find(P.key);
-                    if (e->key != P.key || e->depth < depth - 3) { e->key = P.key; e->move = m; e->score = (short)v; e->depth = (unsigned char)(depth - 3); e->flag = TTF(TT_LOWER); }
+                    if (e->key != P.key || e->depth < depth - 3) { e->key = P.key; e->move = m; e->score = (short)v; e->depth = (unsigned char)(depth - 3); e->flag = TTF(TT_LOWER) | (ttpv << 2); }
                     ST(7); return v;
                 }
             }
@@ -1513,6 +1521,8 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 if (pd <= 6 && see(m) < -par[SEE_Q] * pd) { ST(14); continue; }                            // moves into a losing exchange
                 }
             } else if (depth <= 6 && mp.bad_now && mp.see_now < -par[SEE_C] * depth) { ST(15); continue; }
+            else if ((par[SEARCH_V3] & 4) && !pv_node && legal >= 1 && P.sq[TO(m)] != EMPTY && !PROMO(m) && depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 7 &&
+                     ev + mat_val[P.sq[TO(m)] % 6] + 120 + 150 * (depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 0 ? 0 : depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1]) <= alpha) continue;
             else if ((par[PRUNE_V2] & 16) && !pv_node && legal >= 1 && is_capture(m) && FLAG(m) != F_EP && !PROMO(m) &&
                      depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 6 && caph[(int)P.sq[FROM(m)]][TO(m)][P.sq[TO(m)] % 6] < 0) continue;
         }
@@ -1534,6 +1544,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 if (!improving) r++;
                 if (thr_node) r--;
                 if (cutnode) r += par[CUT_LMR];
+                if ((par[SEARCH_V3] & 2) && ttpv) r--;
                 if ((par[PRUNE_V2] & 8) && ply > 0 && mcount[ply - 1] > 13) r--;
                 if (par[TTCAP_LMR] && is_capture_tt) r++;
                 if (pv_node) r--;
@@ -1567,6 +1578,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                 alpha = v;
                 if (v >= beta) {
                     ST(8); if (legal == 1) ST(9); STA(10, legal); if (m == ttm) ST(27); if (quiet) ST(32);
+                    if (ttm) { ST(33); if (legal == 1) ST(34); } else { ST(35); if (legal == 1) ST(36); if (!quiet) ST(37); else if (m == killers[ply][0] || m == killers[ply][1]) ST(38); STA(39, legal); }
                     if (par[HIST_V2] & 16) {                                 // the opponent's first-choice quiet move that led here has just been refuted
                         if (ply > 0 && move_stack[ply - 1] && mcount[ply - 1] == 1 && ust[hply - 1].cap == EMPTY && !PROMO(move_stack[ply - 1]) && FLAG(move_stack[ply - 1]) != F_EP) {
                             int bonus = par[HB_QUAD] * (depth + 1) * (depth + 1) + par[HB_LIN] * (depth + 1); if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
@@ -1632,8 +1644,13 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
     int s = best;
     if (s > MATE_IN) s += ply; else if (s < -MATE_IN) s -= ply;
     e = tt_find(P.key);
-    e->key = P.key; e->move = bestm; e->score = (short)s; e->depth = (unsigned char)depth;
-    e->flag = TTF(best >= beta ? TT_LOWER : (best > a0 ? TT_EXACT : TT_UPPER));
+    Move sm = bestm;
+    if ((par[SEARCH_V3] & 48) && best <= a0) { Move old = e->key == P.key ? e->move : 0; sm = old ? old : ((par[SEARCH_V3] & 32) ? 0 : bestm); }
+    if ((par[SEARCH_V3] & 64) && e->key == P.key && e->depth > depth + 3 && !(best > a0 && best < beta)) { if (best >= beta && bestm) e->move = bestm; e->flag |= ttpv << 2; }
+    else {
+    e->key = P.key; e->move = sm; e->score = (short)s; e->depth = (unsigned char)depth;
+    e->flag = TTF(best >= beta ? TT_LOWER : (best > a0 ? TT_EXACT : TT_UPPER)) | (ttpv << 2);
+    }
     if (harvest_on && best > a0 && best < beta && depth >= 4 && ply >= 2 && !chk && bestm && !is_capture(bestm) && !PROMO(bestm) &&
         best > -2000 && best < 2000) {
         Rec *r = &harvest[n_harvest < 256 ? n_harvest : (int)(rnd64() % 256)]; fill_rec(r, best); r->pad = (signed char)-(depth > 100 ? 100 : depth);
@@ -1664,7 +1681,7 @@ static Move search_root(int max_depth) {
     for (int i = 0; i < 2; i++) for (int t = 0; t < 4; t++) for (int a = 0; a < 64; a++) for (int b = 0; b < 64; b++) history_t[i][t][a][b] /= 2;
     thr_stack[0] = 0;
     int last = 0, stable = 0;
-    tt_age = (tt_age + 1) & 63;
+    tt_age = (tt_age + 1) & 31;
     memset(root_move_nodes, 0, sizeof root_move_nodes);
     for (root_depth = 1; root_depth <= max_depth; root_depth++) {
         int alpha = -INF, beta = INF, iter_best = -INF; Move iter_move = 0;
@@ -1988,6 +2005,8 @@ int main(int argc, char **argv) {
                      100.0 * t[2] / t[1], 100.0 * t[3] / t[1], 100.0 * t[4] / t[1], 100.0 * t[6] / t[1], 100.0 * t[5] / t[1], 100.0 * t[6] / (t[5] ? t[5] : 1), 100.0 * t[7] / t[1], 100 * cut / t[1], 100.0 * t[22] / t[1]);
               printf("info string move-loop cutoffs: on the first move %.1f%%, by the table move %.1f%%, by a quiet move %.1f%%, mean move number %.2f; nodes with a table move %.1f%% of those reaching the loop; no-cutoff nodes searched %.1f moves on average\n",
                      100.0 * t[9] / cut, 100.0 * t[27] / cut, 100.0 * t[32] / cut, t[10] / cut, 100.0 * t[28] / (double)(t[8] + t[22]), (double)t[23] / (t[22] ? t[22] : 1));
+              printf("info string cutoffs at nodes with a table move %.1f%% of all (on the first move %.1f%%); without one: on the first move %.1f%%, by a capture %.1f%%, by a killer %.1f%%, mean move number %.2f\n",
+                     100.0 * t[33] / cut, 100.0 * t[34] / (t[33] ? t[33] : 1), 100.0 * t[36] / (t[35] ? t[35] : 1), 100.0 * t[37] / (t[35] ? t[35] : 1), 100.0 * t[38] / (t[35] ? t[35] : 1), (double)t[39] / (t[35] ? t[35] : 1));
               printf("info string moves searched %.0f; skipped: late-move %llu, futility %llu, history %llu, losing quiet %llu, losing capture %llu (events; the first two end all quiets of the node)\n", (double)t[26], t[11], t[12], t[13], t[14], t[15]);
               printf("info string reduced searches %.1f%% of moves searched, mean reduction %.2f, re-searched %.1f%% of them; full-window re-searches %llu; singular tests %llu (extended %.0f%%, multi-cut %.0f%%); table-move-less depth cuts %llu\n",
                      100.0 * t[16] / t[26], (double)t[31] / (t[16] ? t[16] : 1), 100.0 * t[17] / (t[16] ? t[16] : 1), t[18], t[19], 100.0 * t[20] / (t[19] ? t[19] : 1), 100.0 * t[21] / (t[19] ? t[19] : 1), t[29]); }
