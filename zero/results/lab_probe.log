@@ -1,8 +1,7 @@
-[03:47:16] plain768 (--h 768 --bs 32768 --lr 1.4e-3): held-out loss 0.5444662570953369, mean error 0.06034407019615173; 410s, 2671k pos/s
-[04:14:32] kb16 (--h 768 --kb 16 --kf 1 --bs 32768 --lr 1.4e-3): held-out loss 0.5425024032592773, mean error 0.057392969727516174; 1636s, 634k pos/s
-[04:43:45] kb16_no_shared (--h 768 --kb 16 --bs 32768 --lr 1.4e-3): held-out loss 0.5433456301689148, mean error 0.05886751413345337; 1753s, 590k pos/s
-[05:29:31] kb32 (--h 768 --kb 32 --kf 1 --bs 32768 --lr 1.4e-3): held-out loss 0.5425270199775696, mean error 0.05748821794986725; 2746s, 376k pos/s
-[05:47:19] kb7 (--h 768 --kb 7 --kf 1 --bs 32768 --lr 1.4e-3): held-out loss 0.5426339507102966, mean error 0.057547491043806076; 1067s, 973k pos/s
-[06:18:29] kb16_lr0.7 (--h 768 --kb 16 --kf 1 --bs 32768 --lr 0.7e-3): held-out loss 0.5429025888442993, mean error 0.058115504682064056; 1870s, 553k pos/s
-[06:48:52] kb16_lr2.8 (--h 768 --kb 16 --kf 1 --bs 32768 --lr 2.8e-3): held-out loss 0.5428908467292786, mean error 0.05801472067832947; 1823s, 567k pos/s
-[07:16:15] kb16_bs16k (--h 768 --kb 16 --kf 1 --bs 16384 --lr 1e-3): held-out loss 0.5424497723579407, mean error 0.05737054720520973; 1643s, 629k pos/s
+[07:41:34] fetched: 34 engine-game shards, 26G in memory
+[08:02:05] products (--prod 1): held-out loss 0.5432080626487732, mean error 0.0570487342774868; 1231s, 900k pos/s
+[08:02:05]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms on: largest difference 11.95 centipawns, mean 2.039; evaluations range -1993 to 1957, the product terms supply 220 centipawns on avera
+[08:02:21]   speed, p_mixc: depth 13: 2,021,622 positions in 2.37s = 853k per second; signature e4d884a660
+[08:02:23]   speed, p_products: depth 13: 2,364,477 positions in 3.23s = 732k per second; signature a58ec8ce1b
+[08:11:46]   products against the reference probe, 30,000 positions per move: {"opponent": "p_mixc", "tc": "30000 positions per move", "n": 2000, "w": 551, "d": 935, "l": 514, "score": 0.5092, "elo": 6.4, "lo": -4.7, "hi": 17.6, "avg_plies": 153.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 9.3}
+[08:15:44]   products against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 2000, "w": 214, "d": 479, "l": 1307, "score": 0.2268, "elo": -213.1, "lo": -228.2, "hi": -198.7, "avg_plies": 136.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}

@@ -98,10 +98,26 @@ overshot to the next 2,048 and the first ladder run was discarded for that, `vau
 
 (2,000 games per cell in the first two rows of our columns, 1,000 at 10,000 and 30,000, 500 at 300,000 and in the last column.)
 
-With almost no search the two evaluators are level; the gap opens as the search deepens. Stockfish's network gains 363 Elo
-on its own hand-written evaluator between 300 and 30,000 nodes with the same search; ours gains 60 on it. Part of what the
-deeper search rewards is in the evaluator's training data: the engine-game probes below recover about 65 Elo of it at equal
-training. Where the rest sits is not yet located.
+With almost no search the two engines are level; the gap opens as the search deepens. Stockfish's network gains 363 Elo
+on its own hand-written evaluator between 300 and 30,000 nodes with the same search; ours gains 60 on it.
+
+The level score at 300 nodes is not evaluator parity. The same ladder for our other networks (`vault_vs_sf.log`; 2,000
+games at 300 and 3,000 nodes, 1,000 or 500 above):
+
+| Nodes per move, each side | self-taught N384 | LFf (Lichess, 384 wide) | Lichess probe | mixed-data probe | BIGK |
+|---|---|---|---|---|---|
+| 300 | −126 | −92 | −20 | −26 | +5 |
+| 3,000 | −342 | −288 | −224 | −190 | −185 |
+| 10,000 | −453 | −343 | −281 | −218 | −223 |
+| 30,000 | | | −297 | −231 | −247 |
+| 100,000 / 300,000 | | | | −194 | −218 |
+
+Differences between evaluators grow with depth for every pair: the self-taught network is 131 behind BIGK at 300 nodes
+and 230 behind at 10,000; the mixed-data probe is 6 behind the Lichess probe at 300 nodes and 63 ahead at 10,000. At 300
+nodes the games are decided by shallow tactics, which hides how good an evaluator is; Stockfish's is the better one by an
+amount that only shows once the search is deep enough. (A network trained on its own search results, the self-taught
+one, scales worst: being consistent with one's own search is not what is missing.) Part of the difference is in the
+training data: the engine-game probes below recover about 65 Elo of it at equal training.
 
 **It is not depth.** Geometric-mean nodes to finish a depth on the twelve bench positions (`ext/ebf.py`): ours 9,119 /
 33,971 / 92,176 / 239,265 for depths 8 / 10 / 12 / 14, Stockfish 14.1 6,574 / 28,590 / 78,522 / 185,116.
