@@ -365,3 +365,129 @@ Held-out loss of further one-pass variants on the match machine's card (`lab_pro
 twice the learning rate 0.54289.
 
 Logs: `zero/results/vault_*.log` (training machine), `zero/results/lab_*.log` (match machine).
+
+## Search quality at a fixed node budget (16 November, evening)
+
+From here on the work runs on one rented machine (the training machine: 24 threads, one card). The match machine was
+stopped; its scripts are in `ext/lab/`, its last logs in `zero/results/lab_*.log`.
+
+**Depth at equal nodes** (`ext/depth_at_nodes.py`, 12 positions, mean depth of the last finished iteration):
+
+| Nodes per move | Our depth | Stockfish 14.1's depth |
+|---|---|---|
+| 3,000 | 6.5 | 7.7 |
+| 30,000 | 9.7 | 10.8 |
+| 300,000 | 14.5 | 16.1 |
+| 3,000,000 | 20.8 | 24.1 |
+
+Every search setting we have was tuned and judged at 2,500 to 30,000 nodes a move. The options meant to deepen the search
+(`CutLmr`, `ProbCut`, `NmpDiv`, `TtCapLmr`, `LmrPrune`) change the depth at 3,000,000 nodes by at most 0.7 plies together.
+Games cannot judge a deep search at a useful rate: at 1,000,000 nodes a move the machine plays about 660 games an hour.
+
+**The test** (`ext/quality.py`). Positions from games between BIGM and Stockfish 14.1 at 30,000 nodes (8 per game, 1,600
+games, 12,775 distinct positions); Stockfish 14.1 analyses each with 4,000,000 nodes and two lines (positions already
+decided by more than 6 pawns after a quick look are set aside: 8,964 remain). A configuration then chooses a move in every
+position with a fixed node budget and a fresh hash table; the move is scored against Stockfish's analysis (a move outside
+its two lines by a Stockfish search of that move alone at half the budget, cached). Loss of a move = expected score of
+Stockfish's best move minus that of the move chosen, from 1 / (1 + exp(−centipawns / 200)). The unit below is a thousandth
+of a point per move. Our engine is deterministic at a node budget, so two configurations differ only where they choose
+differently and the comparison is paired.
+
+First measurements (`zero/results/vault_quality.log`; BIGM and BIGX with the standing options, Stockfish 14.1 as installed):
+
+| Nodes per move | BIGM: loss, one-good-move positions solved | Stockfish 14.1 | BIGX |
+|---|---|---|---|
+| 30,000 | 19.76, 76.3% | 14.99, 79.7% | 18.64, 76.4% |
+| 100,000 | 13.96, 81.8% | 9.57, 86.4% | |
+| 300,000 | 10.04, 86.1% | 6.31, 91.3% | 9.69, 86.2% |
+| 1,000,000 | 7.78, 88.9% | 3.79, 95.4% | |
+
+Stockfish is judged by its own deeper search here, which flatters it more the closer its budget comes to the judge's
+(its loss must reach zero at 4,000,000 nodes; ours cannot, because our evaluator disagrees with the judge's in some
+positions at any depth). Comparisons between our own configurations do not have that problem.
+
+Paired differences (negative = the first gives away less; standard error in brackets):
+
+| Comparison | Difference | What games say |
+|---|---|---|
+| BIGM 100,000 against 30,000 nodes | −5.80 (0.49) | |
+| BIGM 300,000 against 100,000 | −3.92 (0.35) | |
+| BIGM 1,000,000 against 300,000 | −2.26 (0.25) | |
+| Stockfish against BIGM, 30,000 each | −4.77 (0.56) | −185 for us (−204 to −167), 1,000 games |
+| Stockfish against BIGM, 100,000 each | −4.39 (0.40) | −194 for us (−211 to −178), 1,000 games |
+| Stockfish 30,000 against BIGM 100,000 | +1.03 (0.46) | +21 for us (6 to 37), 1,000 games |
+| Stockfish 100,000 against BIGM 300,000 | −0.47 (0.34) | −33 for us (−47 to −18), 800 games |
+| BIGX against BIGM, 30,000 each | −1.12 (0.56) | +44 (33 to 56), 2,000 games |
+| BIGX against BIGM, 300,000 each | −0.36 (0.29) | |
+| `HistV2=7` against the standing search, 30,000 | −0.15 (0.58) | −10 (−21 to +1), 2,000 games |
+| `HistV2=7` against the standing search, 300,000 | +0.49 (0.31) | −9 (−22 to +5) at 100,000 nodes, −18 (−30 to −5) at 10+0.1 |
+| `EvalScale=140` against 100, 100,000 | +0.73 (0.40) | worse in every match played |
+
+The signs agree with the games everywhere (`zero/results/vault_calib.log`; `gauntlet.py --opp_nodes` gives the opponent its
+own budget). Over the four Stockfish rows one unit is worth about 40 Elo, and the node-tripling row gives the same (206 Elo
+for 5.80 units), so a comparison on these 8,964 positions has a standard error of
+about 20 Elo at 30,000 nodes (half a minute of searching plus about a minute of Stockfish checks), 15 at 100,000, 11 at
+300,000 (a minute and a half plus under a minute) and 9 at 1,000,000 (four and a half minutes plus under a minute). Games
+between two of our own configurations reach the same standard errors on this machine in under a minute, three minutes,
+about twenty minutes and well over an hour and a half: the test buys nothing at 30,000 nodes, little at 100,000, a
+factor of about nine at 300,000 and about twenty at 1,000,000. It is the instrument for deep searches, where games had
+stopped being one. Its precision grows with the number of positions; a second collection is being analysed (`ext/q_fill.sh`).
+
+The two unequal matches say something by themselves: with three times Stockfish's nodes we are 21 ahead at 100,000 against
+30,000 and 33 behind at 300,000 against 100,000. Stockfish's search is worth about 2.7 times our nodes at 30,000 and more
+than three times at 100,000: its lead, counted in nodes, grows with depth.
+
+**The search alone** (`zero/results/vault_sfnet_quality.log`). The diagnostic build that runs our search on Stockfish 14.1's
+own network (`-DSFNET`, `EvalScale=140`) takes the evaluator out of the comparison: it is the judge's on both sides.
+
+| Nodes per move | Our search, Stockfish's network | Stockfish 14.1 | Difference | Stockfish's search is worth |
+|---|---|---|---|---|
+| 30,000 | 18.57 | 14.99 | +3.58 (0.54) | 2.0 times our nodes |
+| 100,000 | 12.35 | 9.57 | +2.77 (0.38) | 2.8 times |
+| 300,000 | 9.33 | 6.31 | +3.01 (0.30) | 3.1 times |
+| 1,000,000 | 6.07 | 3.79 | +2.27 (0.21) | |
+
+(Last column: where Stockfish's loss falls on our own curve between two budgets. Directly: Stockfish at 100,000 nodes
+against our search at 300,000 is +0.24 (0.34), at 300,000 against our 1,000,000 +0.25 (0.24): level.) With the same
+evaluator our search needs about three times Stockfish's nodes from 100,000 nodes up, twice at 30,000. That factor of
+three, about 3 units or 120 Elo at equal nodes, is what the search work is after; this table is its yardstick.
+
+Which best moves we miss (`ext/q_classes.py`, the 3,093 one-good-move positions, share solved at 300,000 nodes, BIGM
+against Stockfish): quiet moves 81.6% against 87.1% (1,454 positions), safe captures 93.1 / 96.9 (999), king moves
+83.2 / 90.6 (256), quiet checks 88.3 / 93.8 (128), captures that give up material at first sight 82.7 / 91.8 (98), quiet
+moves that offer a piece 73.7 / 84.2 (38). The deficit has the same proportion in every class: no single pruning rule is
+throwing a kind of move away.
+
+**Reducing or pruning more does not help at depth** (`zero/results/vault_screen300k.log`; each option against the standing
+options at 300,000 nodes, same unit, positive = worse, standard error 0.27 to 0.31): `CutLmr=1` +0.31, `CutLmr=2` +0.34,
+`LmrBase=108` +0.45, `LmrBase=148` +0.19, `LmrDiv=200` +0.14, `LmrDiv=170` +0.43, `NmpBase=4` +0.21, `NmpDiv=3` +0.16, both
++0.05, `CutLmr=1,LmrBase=108` +0.72, `CutLmr=2,LmrBase=108,NmpBase=4` +0.15, `SearchV3=48` +0.13, `SearchV3=16` −0.10,
+`SearchV3=64` −0.17, `SearchV3=1` +0.51. Twelve ways of looking less at late moves, all on the worse side of zero: the
+standing amounts are not too timid for a deep search. With `LmrBase=148` the search reaches 19.0 instead of 17.9 plies at
+1,000,000 nodes (21.2 with every such option together, Stockfish's depth) and chooses no better. Stockfish's factor of
+three is not in how much is reduced but in which moves are. (The scan was stopped there; the processor went to the
+generation loop.)
+
+## BIGS: the 768-wide student of two teachers (16 November)
+
+`ext/after_bigx.sh`: the BIGM recipe from scratch on the same 8.2 billion positions, the target half the label and half
+the mean of two teachers' win chances (BIGX and Stockfish 14.1's network, `--distill ...+sf:... --dw 0.5`). Same size and
+speed as BIGM (1,270k against 1,299k positions a second on the bench).
+
+| Match (`zero/results/vault_big_run.log`) | Result |
+|---|---|
+| BIGS against BIGM, 30,000 nodes, 2,000 games | 602-886-512, **+16 (4 to 27)** |
+| BIGS against Stockfish 14.1, 10,000 nodes each, 1,000 games | −179 (−199 to −160); BIGM −173 |
+| BIGS against Stockfish 14.1, 30,000 nodes each, 1,000 games | −162 (−179 to −145); BIGM −185 on the same machine the same evening |
+
+BIGS is the 768-wide network the generation loop below starts from. Not yet played at the clock.
+
+## Generations on this line (from 16 November, evening)
+
+The self-taught line improved for nine generations of "play yourself, learn from it, beat your predecessor" and then
+stopped (main README). The same loop now runs on the outside-data line. The player is the strongest network at equal
+nodes (BIGX, 1536 wide), playing itself at 5,000 nodes a move (`ext/gen_farm.py`: positions that were played with the
+loop's lambda-return labels, and positions from inside the search trees with their search score). A child is its parent's
+weights trained further with the parent's own recipe on that data mixed with a slice of all the earlier data
+(`ext/gen_round.sh`), and is then played against its parent at 30,000 nodes (2,000 games) and against Stockfish 14.1 at
+10,000. Every round has a control: the same further training without the self-play data.

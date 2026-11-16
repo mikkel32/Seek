@@ -30,3 +30,12 @@
 [15:41:22] BIGX against Stockfish 14.1, 10000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 138, "d": 329, "l": 533, "score": 0.3025, "elo": -145.1, "lo": -163.8, "hi": -127.2, "avg_plies": 144.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 1.1}
 [15:44:15] BIGX against Stockfish 14.1, 30000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 94, "d": 384, "l": 522, "score": 0.286, "elo": -158.9, "lo": -176.7, "hi": -141.9, "avg_plies": 141.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.9}
 [15:44:15] BIGX finished
+[20:26:24] network BIGS trained in 17462s: done: steps 499047, val (log-loss, MAE) raw (0.5442281365394592, 0.05857808515429497) averaged (0.5440014004707336, 0.058247584849596024), 17454s -> z
+[20:26:32] engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 18.46 centipawns, mean 3.081; evaluations range -1
+[20:26:39] speed, BIGM: depth 14: 3,190,837 positions in 2.46s = 1299k per second; signature d40b5b0644
+[20:26:42] speed, BIGS: depth 14: 3,977,973 positions in 3.13s = 1270k per second; signature dbb831599e
+[20:33:53] BIGS against BIGM, 30,000 positions per move: {"opponent": "BIGM", "tc": "30000 positions per move", "n": 2000, "w": 602, "d": 886, "l": 512, "score": 0.5225, "elo": 15.6, "lo": 4.3, "hi": 27.0, "avg_plies": 151.2, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.2}
+[20:35:33] BIGS against Stockfish 14.1, 10000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 115, "d": 296, "l": 589, "score": 0.263, "elo": -179.0, "lo": -198.8, "hi": -160.2, "avg_plies": 137.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 1.7}
+[20:40:33] BIGS against Stockfish 14.1, 30000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 84, "d": 398, "l": 518, "score": 0.283, "elo": -161.5, "lo": -178.9, "hi": -144.8, "avg_plies": 142.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.0}
+[20:40:33] BIGS finished
+

@@ -1,0 +1,19 @@
+[20:00:20] screen at 300000 positions per move
+CutLmr=1: +0.31 (standard error 0.29, +1.1 of them); 1627 positions scored differently
+CutLmr=2: +0.34 (standard error 0.31, +1.1 of them); 1626 positions scored differently
+LmrBase=108: +0.45 (standard error 0.29, +1.5 of them); 1684 positions scored differently
+LmrBase=148: +0.19 (standard error 0.28, +0.7 of them); 1680 positions scored differently
+LmrDiv=200: +0.14 (standard error 0.30, +0.5 of them); 1670 positions scored differently
+LmrDiv=170: +0.43 (standard error 0.29, +1.5 of them); 1652 positions scored differently
+NmpBase=4: +0.21 (standard error 0.28, +0.8 of them); 1589 positions scored differently
+NmpDiv=3: +0.16 (standard error 0.28, +0.6 of them); 1605 positions scored differently
+NmpBase=4,NmpDiv=3: +0.05 (standard error 0.27, +0.2 of them); 1556 positions scored differently
+CutLmr=1,LmrBase=108: +0.72 (standard error 0.30, +2.4 of them); 1673 positions scored differently
+CutLmr=2,LmrBase=108,NmpBase=4: +0.15 (standard error 0.31, +0.5 of them); 1703 positions scored differently
+SearchV3=48: +0.13 (standard error 0.28, +0.5 of them); 1640 positions scored differently
+[20:25:40] finished
+[20:25:40] screen at 300000 positions per move
+SearchV3=16: -0.10 (standard error 0.28, -0.4 of them); 1634 positions scored differently
+SearchV3=64: -0.17 (standard error 0.28, -0.6 of them); 1522 positions scored differently
+SearchV3=1: +0.51 (standard error 0.27, +1.9 of them); 1488 positions scored differently
+
