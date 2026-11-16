@@ -50,6 +50,9 @@ ap.add_argument('--sharp', type=float, default=1.0)      # train on labels made 
 ap.add_argument('--distill', default='')                 # a teacher network's weights (.ema.pt; king-bucketed with the shared table folded or not, any width,
                                                          # the same bucket scheme as the student): its win chance for each training position joins the label
 ap.add_argument('--dw', type=float, default=0.7)         # the teacher's share of the training target (1 = the teacher alone)
+                                                         # --distill sf:<file>: the teacher is Stockfish 14.1's own network (ext/sfteach.py, the file from
+                                                         # ext/sfnet_extract.py); its value is brought to the labels' scale with --tscale
+ap.add_argument('--tscale', type=float, default=0.277)   # our units per Stockfish internal unit (361 of its units = 100 of ours)
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
 
@@ -336,7 +339,13 @@ matopt = MatOpt(net.E, a.opt) if a.opt != 'adam' else None
 opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8, fused=DEV.type == 'cuda')
 fwd = torch.compile(net) if DENSE and DEV.type == 'cuda' and NKB == 1 else net        # the compiled model is the same network in fewer GPU kernels (bucketed inputs: batch-dependent shapes, not compiled)
 TEACH = None
-if a.distill:
+if a.distill.startswith('sf:'):
+    import sys; sys.path.insert(0, 'ext'); import sfteach
+    _sf = sfteach.load(a.distill[3:], DEV); print(f'teacher: Stockfish 14.1 network from {a.distill[3:]}, share of the target {a.dw}, scale {a.tscale}', flush=True)
+
+    def TEACH(idx):
+        return _sf(idx)[1] * (a.tscale / 271.58)
+elif a.distill:
     _t = {k: v.to(DEV) for k, v in torch.load(a.distill, map_location='cpu').items()}
     _TE = _t['E'][:-1]; _TN = _TE.shape[0] // 768; _TH = _TE.shape[1]
     assert _TN == NKB and NKB in (7, 16, 32), 'the teacher must use the student\'s king buckets'

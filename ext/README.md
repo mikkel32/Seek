@@ -252,6 +252,16 @@ in speed; under our match conditions it gives back more than it gains. The insta
 node on the quiet machine as well (1.55 against 2.96 million nodes a second), so that handicap is its build and its larger
 network, not the load.
 
+At 60+0.6 the 1536-wide probe against the reference probe: 32-230-38, −7 (−26 to +12), 300 games.
+
+**Teachers.** A 768-wide student trained on BIGM's judgments alone instead of the labels (`--distill zero/w_BIGM.bin.ema.pt
+--dw 1.0`, the same billion positions): against the label-trained reference probe +12 (1 to 23) at 30,000 nodes, against
+Stockfish 14.1 at 10,000 nodes −204 (−219 to −190) where the reference scores −218. A teacher's judgment is the better
+target at equal training. `ext/sfteach.py` is the installed Stockfish's network in matrix form for the graphics card (equal
+to the verified `-DSFNET` engine build on 2,000 positions, to the unit), usable as a teacher with `--distill sf:<file>`:
+its value as Stockfish's search sees it, brought to the labels' scale. Networks taught this way are Stockfish's judgments
+once more (this line always was Stockfish-taught).
+
 32 king buckets together with 1024 wide: +12 (1 to 23), no better than 1024 wide alone. **BIGX**, the full-scale 1536-wide
 network (16 buckets, two passes over 1.8 billion Lichess, 6.02 billion second-stage and 0.35 billion first-stage positions),
 is the run that tests whether width pays where data no longer does. The trainer can also teach a network from another
