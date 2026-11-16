@@ -16,7 +16,7 @@ ap.add_argument('--threads', type=int, default=4); ap.add_argument('--chunk', ty
 ap.add_argument('--resume', default=''); ap.add_argument('--seed', type=int, default=0)
 ap.add_argument('--buckets', type=int, default=1)       # output weights per piece-count bucket
 ap.add_argument('--ema', type=float, default=0.0)        # weight averaging decay (0 = off); the averaged weights are exported
-ap.add_argument('--kb', type=int, default=1)             # 7 or 16 = king-bucketed, mirrored hidden-layer inputs; 11 = king-bucketed, not mirrored; 1 = plain
+ap.add_argument('--kb', type=int, default=1)             # 7, 16 or 32 = king-bucketed, mirrored hidden-layer inputs; 11 = king-bucketed, not mirrored; 1 = plain
 ap.add_argument('--kf', type=int, default=0)             # with --kb: 1 = every bucket's table is a shared table plus the bucket's own correction (summed in the exported file):
                                                          # what all king positions have in common is learned from every position, rare buckets inherit it
 ap.add_argument('--warm', default='')                    # start from a plain (kb=1) network's weights
@@ -61,6 +61,8 @@ KBT = torch.tensor([0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5] + [6] * 16)
 KB11 = torch.tensor([0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8] + [9] * 16 + [10] * 32)
 if NKB == 16:                                            # 16 mirrored buckets: every king square of the first two ranks its own, then half-ranks
     KBT = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13] + [14, 14, 15, 15] * 3)
+if NKB == 32:                                            # every mirrored king square its own bucket
+    KBT = torch.arange(32)
 
 
 def kfeat(idx):

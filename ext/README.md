@@ -43,11 +43,30 @@ Our options: `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1`.
 | LFf (787M, 384 wide) | −215 (−257 to −178), 200 games | −191 (−233 to −153), 150 games | +56 (19 to 94) | +56 (20 to 94) |
 | BIGW (4.37 billion, 768 wide) | −153 (−179 to −129), 400 games | −168 (−196 to −143), 300 games | +100 (74 to 127), 400 games | +51 (20 to 82), 200 games |
 
-## King-bucketed inputs (in training)
+## King-bucketed inputs
 
 `calc/train_nnue.py --kb 16 --kf 1`, engine `calc/calc_s18.c`. Each view's input table is chosen by where its own king
 stands (16 buckets, mirrored left-right), and every bucket's table is a shared table plus its own correction: sixteen
-times the first-layer weights at the same cost per position. `ext/bigk.sh` trains it on the 4.37 billion positions and
-plays it against the plain 768-wide network.
+times the first-layer weights at nearly the same cost per position (2,503k positions per second against 2,567k on the
+training machine, 1,059k against 1,170k on the match machine). `ext/bigk.sh`, `zero/results/vault_bigk.log`.
+
+| Test | Games | Result |
+|---|---|---|
+| 16 king buckets (BIGK) against plain (BIGW), both 768 wide on the 4.37 billion, 30,000 positions per move | 2,000 | 654-879-467, +33 (21 to 44) |
+
+Held-out loss on one million Lichess game positions no network was trained on (`ival`):
+
+| Network | Loss | Mean error in win chance |
+|---|---|---|
+| LE (384 wide, 257M) | 0.54949 | 0.0691 |
+| LFf (384 wide, 787M) | 0.54509 | 0.0614 |
+| BIG (384 wide, 4.37 billion) | 0.54455 | 0.0605 |
+| LFW (768 wide, 787M) | 0.54348 | 0.0587 |
+| BIGW (768 wide, 4.37 billion) | 0.54280 | 0.0578 |
+| BIGK (768 wide, 16 king buckets, 4.37 billion) | 0.54110 | 0.0552 |
+
+The engine's integer copy of these networks (hidden layer in steps of 1/128) differs from the trained network by 1.9
+centipawns on average on real balanced positions (`ext/qsim.py`); finer integers would bring that to 1.0 and are not
+worth the change.
 
 Logs: `zero/results/vault_*.log` (training machine), `zero/results/lab_*.log` (match machine).

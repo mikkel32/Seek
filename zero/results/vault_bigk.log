@@ -1,0 +1,9 @@
+[00:39:34] training BIGK: 768 wide, 16 king buckets with a shared table, from scratch, 4 passes over the 4.37 billion positions
+[02:55:47] network BIGK trained in 8173s: done: steps 534054, val (log-loss, MAE) raw (0.5390303134918213, 0.15250487625598907) averaged (0.538959801197052, 0.15248310565948486), 8169s -> zero
+[02:55:50] engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 48.77 centipawns, mean 3.906; evaluations range -2
+[02:55:57] speed, BIGW: depth 14: 3,058,337 positions in 1.19s = 2567k per second; signature 1e469e8fd6
+[02:55:58] speed, BIGK: depth 14: 3,992,331 positions in 1.60s = 2503k per second; signature e8aaccc6d4
+[02:59:38] BIGK (768 wide, 16 king buckets) against BIGW (768 wide, plain), same 4.37 billion positions, 30,000 positions per move: {"opponent": "BIGW", "tc": "30000 positions per move", "n": 2000, "w": 654, "d": 879, "l": 467, "score": 0.5467, "elo": 32.6, "lo": 21.2, "hi": 44.0, "avg_plies": 159.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.7}
+[02:59:38] BIGK finished
+[02:59:50] training BIGK2: 768 wide, 16 king buckets with a shared table, from scratch, 2.48 passes over the 7 billion positions 
+
