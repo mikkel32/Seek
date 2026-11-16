@@ -26,10 +26,10 @@ mate (47% of the game positions). A position is 24 bytes and a 1-byte label (win
 | cheap layered read-out on the same 787M | +8 (−3 to 19) | | |
 | 768 wide instead of 384 on the same 787M (LFW against LFf) | +55 (44 to 67) | +25 (4 to 47) | +37 (13 to 61) |
 | all 4.37 billion positions, 384 wide (BIG against LFf) | +3 (−8 to 15) | | |
-| all 4.37 billion positions, 768 wide (BIGW against LFW) | +8 (−3 to 20) | +17 (−4 to 39) | running |
+| all 4.37 billion positions, 768 wide (BIGW against LFW) | +8 (−3 to 20) | +17 (−4 to 39) | −14 (−40 to 12) |
 | 768 wide instead of 384 on the 4.37 billion (BIGW against BIG) | +61 (50 to 73) | | |
 
-The plain design is full: 5.5 times the data adds 3 Elo at 384 wide and 8 at 768 wide. Capacity is the limit, and width
+The plain design is full: 5.5 times the data adds 3 Elo at 384 wide and 8 at 768 wide (at the clock +17 and −14, both inside the noise). Capacity is the limit, and width
 buys it at a price in speed (1,462k positions per second at 384 wide, 1,180k at 768).
 
 ## Standing against Stockfish 14.1 (one thread each, 64 MB hash)
@@ -41,7 +41,7 @@ Our options: `PvPrune=1 ChkExt=0 SeDouble=20 CutIir=1`.
 | self-taught (N384) | −402 | | | |
 | LE (257M, 384 wide) | −246 (−295 to −205), 200 games | | 0 (−38 to 38) | −21 (−62 to 20) |
 | LFf (787M, 384 wide) | −215 (−257 to −178), 200 games | −191 (−233 to −153), 150 games | +56 (19 to 94) | +56 (20 to 94) |
-| BIGW (4.37 billion, 768 wide) | −153 (−179 to −129), 400 games | running | +100 (74 to 127), 400 games | running |
+| BIGW (4.37 billion, 768 wide) | −153 (−179 to −129), 400 games | −168 (−196 to −143), 300 games | +100 (74 to 127), 400 games | +51 (20 to 82), 200 games |
 
 ## King-bucketed inputs (in training)
 
