@@ -1,0 +1,11 @@
+[16:40:40] w_BIGX, rows requested ahead: 0 lines; alone 743k and 760k per second; 76 copies at once: 22233k per second in total
+[16:41:15] w_BIGX, rows requested ahead: 4 lines; alone 742k and 716k per second; 76 copies at once: 22079k per second in total
+[16:41:50] w_BIGX, rows requested ahead: 12 lines; alone 731k and 730k per second; 76 copies at once: 21379k per second in total
+[16:42:26] w_BIGX, rows requested ahead: 24 lines; alone 705k and 700k per second; 76 copies at once: 20603k per second in total
+[16:43:06] w_BIGX, rows requested ahead: 48 lines; alone 659k and 636k per second; 76 copies at once: 19010k per second in total
+[16:43:26] w_BIGM, rows requested ahead: 0 lines; alone 1054k and 1077k per second; 76 copies at once: 40796k per second in total
+[16:43:46] w_BIGM, rows requested ahead: 4 lines; alone 1034k and 1036k per second; 76 copies at once: 39481k per second in total
+[16:44:08] w_BIGM, rows requested ahead: 12 lines; alone 1004k and 989k per second; 76 copies at once: 38392k per second in total
+[16:44:30] w_BIGM, rows requested ahead: 24 lines; alone 963k and 937k per second; 76 copies at once: 36492k per second in total
+[16:44:52] w_BIGM, rows requested ahead: 48 lines; alone 954k and 955k per second; 76 copies at once: 36644k per second in total
+[16:44:52] finished

@@ -858,6 +858,9 @@ static int sf_eval(void) {                        // as Stockfish's search sees 
     return v * 277 / 1000;                                         // 361 internal units = 100 of ours (the scale of the Lichess labels)
 }
 #endif
+#ifdef TSTAT                              // where the evaluator's time goes (printed at quit): -DTSTAT, test builds only
+static unsigned long long ts_acc, ts_out, ts_n, ts_start, ts_nodes, ts_go;
+#endif
 static int evaluate(void) {
     int us = P.side;
 #ifdef SFNET
@@ -873,7 +876,13 @@ static int evaluate(void) {
         for (int pt = 0; pt < 5; pt++) v += mat_val[pt] * (popc(P.bb[us][pt]) - popc(P.bb[us ^ 1][pt]));
         return v;
     }
+#ifdef TSTAT
+    unsigned long long ts0 = __rdtsc();
+#endif
     acc_ensure();
+#ifdef TSTAT
+    unsigned long long ts1 = __rdtsc(); ts_acc += ts1 - ts0; ts_n++;
+#endif
     const Acc *A = &accs[hply];
     const short *ao = A->a[us], *ap = A->a[us ^ 1];
     int n = NH;
@@ -913,6 +922,9 @@ static int evaluate(void) {
     float out = lin + NCB[bk] + (float)q * (1.0f / 33554432.0f);
     if (have_mlp) out += small ? mlp_small(ao, ap, bk) : mlp_out(T, bk);
     int v = (int)(out * 271.58f);        // logit of win probability -> centipawns
+#ifdef TSTAT
+    ts_out += __rdtsc() - ts1;
+#endif
     return v > 20000 ? 20000 : (v < -20000 ? -20000 : v);
 }
 
@@ -1889,7 +1901,13 @@ int main(int argc, char **argv) {
             }
             if (depth > 64) depth = 64;
             nodes = 0; stop_flag = 0; clock_gettime(CLOCK_MONOTONIC, &t_start);
+#ifdef TSTAT
+            ts_start = __rdtsc();
+#endif
             Move m = search_root(depth);
+#ifdef TSTAT
+            ts_go += __rdtsc() - ts_start; ts_nodes += nodes;
+#endif
             if (print_root) {
                 printf("info string rootscores");
                 for (int i = 0; i < n_root; i++) { char ms[8]; move_str(root_moves[i], ms); printf(" %s %d", ms, root_scores[i]); }
@@ -1910,6 +1928,9 @@ int main(int argc, char **argv) {
 #endif
         else if (!strncmp(line, "see ", 4)) { Move m = parse_move(line + 4); printf("see %d\n", m ? see(m) : -99999); }
         else if (!strcmp(line, "quit")) {
+#ifdef TSTAT
+            { unsigned long long tot = ts_go ? ts_go : 1; printf("info string evaluations %llu; cycles per evaluation: sums %.0f, read-out %.0f; share of all cycles: sums %.1f%%, read-out %.1f%%; cycles per position searched %.0f\n", ts_n, (double)ts_acc / (ts_n ? ts_n : 1), (double)ts_out / (ts_n ? ts_n : 1), 100.0 * ts_acc / tot, 100.0 * ts_out / tot, (double)ts_go / (ts_nodes ? ts_nodes : 1)); }
+#endif
 #ifdef SSTAT
             { U64 *t = st_; double all = (double)(t[0] + t[1]), cut = (double)t[8];
               printf("info string nodes %.0f: quiescence %.1f%% (stand-pat cut %.1f%% of them, table cut %.1f%%), main %.1f%% (PV %.2f%% of main)\n", all, 100 * t[0] / all, 100.0 * t[24] / t[0], 100.0 * t[25] / t[0], 100 * t[1] / all, 100.0 * t[30] / t[1]);

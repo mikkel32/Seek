@@ -272,11 +272,48 @@ engine build on 2,000 positions, to the unit); `--distill sf:<file>` takes its v
 brought to the labels' scale. Several teachers joined by `+` are averaged (mean of their win chances). Networks taught
 this way are Stockfish's judgments once more (this line always was Stockfish-taught).
 
-32 king buckets together with 1024 wide: +12 (1 to 23), no better than 1024 wide alone. **BIGX**, the full-scale 1536-wide
-network (16 buckets, two passes over 1.8 billion Lichess, 6.02 billion second-stage and 0.35 billion first-stage positions),
-is the run that tests whether width pays where data no longer does. The trainer can also teach a network from another
-network's judgments (`--distill <weights> --dw <share>`; the teacher function reproduces the network's own forward pass
-exactly), so that a wide network can later teach a fast 768-wide one.
+A teacher added to a finished network gives little: BIGM continued for one pass over the same 1.09 billion positions
+with the half-Stockfish target at a quarter of the learning rate (`ext/lab_probe3.sh`) scores +7 (−4 to +18) against BIGM
+at 30,000 nodes and −173 (−187 to −159) against Stockfish 14.1 at 10,000 (BIGM: −173). **BIGS** is the from-scratch test:
+768 wide, two passes over the full mix, half labels and half the mean judgment of BIGX and Stockfish's network
+(`ext/after_bigx.sh`).
+
+32 king buckets together with 1024 wide: +12 (1 to 23), no better than 1024 wide alone.
+
+**BIGX, the full-scale 1536-wide network** (16 buckets, 18.9 million weights, two passes over 1.8 billion Lichess, 6.02
+billion second-stage and 0.35 billion first-stage positions; `vault_big_run.log`, `lab_bigx_clock.log`):
+
+| Match | Games | BIGX | BIGM for comparison |
+|---|---|---|---|
+| against BIGM, 30,000 nodes a move | 2,000 | **+44 (33 to 56)** | |
+| against Stockfish 14.1, 10,000 nodes each | 1,000 | −145 (−164 to −127) | −173 (4,000 games) |
+| against Stockfish 14.1, 30,000 nodes each | 1,000 | −159 (−177 to −142) | −185 |
+| against BIGM, 10+0.1, 76 boards at once | 500 | −14 (−33 to +5) | |
+| against BIGM, 10+0.1, 44 boards at once (one per physical core) | 500 | −1 (−20 to +17) | |
+| against BIGM, 60+0.6, 76 boards | 200 | +10 (−10 to +31) | |
+| against Stockfish 14.1, 10+0.1, 76 boards | 500 | −134 (−157 to −113) | −116 (−136 to −97) |
+| against Stockfish 14.1, 10+0.1, 44 boards | 500 | −134 (−156 to −113) | −115 (−135 to −96) |
+| against Stockfish 14.1, 60+0.6, 76 boards | 300 | −127 (−150 to −105) | −115 (−139 to −93) |
+
+In our own search BIGX is worth what Stockfish 14.1's network is (that network: +43 over BIGM; BIGX: +44), and at the clock
+the gain is spent on speed: level with BIGM head-to-head, no better against Stockfish. The standing does not depend on the
+load of the match machine (BIGM −116 with 76 boards at once, −115 with 44).
+
+**Where the evaluator's time goes** (`ext/evalcost.py`, a `-DTSTAT` build that counts processor cycles; match machine,
+nothing else running, bench positions at depth 14; `lab_evalcost.log`):
+
+| | cycles per position searched | bringing the sums up to date | read-out | evaluator's share |
+|---|---|---|---|---|
+| BIGM (768 wide) | 1,811 | 511 per evaluation, 26% | 367, 19% | 45% |
+| BIGX (1536 wide) | 2,537 | 909, 33% | 700, 25% | 58% |
+| layered read-out probe (768 wide, 2×64 → 16 → 32 → 1 on top) | 2,546 | 587, 21% | 863, 31% | 52% |
+
+BIGX costs 40% more cycles per position (29% fewer positions a second alone; under 76 copies at once 292k against 537k,
+45% fewer). Both parts are arithmetic on data already in the near caches, not waiting for memory: asking for the input
+matrix rows of a move as soon as it is made (4 to 48 cache lines per row) made both networks slower, alone and under
+load (`lab_pf_bench.log`: BIGX 22.2 million a second in total over 76 copies without, 22.1 to 19.0 with; BIGM 40.8 against
+39.5 to 36.5), and 512-bit instead of 256-bit vectors for the compiler's loops changed nothing on the training machine.
+The option was removed again.
 
 Tried on top of the mixed recipe and not adopted:
 
