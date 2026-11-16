@@ -16,7 +16,9 @@ ap.add_argument('--threads', type=int, default=4); ap.add_argument('--chunk', ty
 ap.add_argument('--resume', default=''); ap.add_argument('--seed', type=int, default=0)
 ap.add_argument('--buckets', type=int, default=1)       # output weights per piece-count bucket
 ap.add_argument('--ema', type=float, default=0.0)        # weight averaging decay (0 = off); the averaged weights are exported
-ap.add_argument('--kb', type=int, default=1)             # 7 = king-bucketed, mirrored hidden-layer inputs; 1 = plain
+ap.add_argument('--kb', type=int, default=1)             # 7 or 16 = king-bucketed, mirrored hidden-layer inputs; 11 = king-bucketed, not mirrored; 1 = plain
+ap.add_argument('--kf', type=int, default=0)             # with --kb: 1 = every bucket's table is a shared table plus the bucket's own correction (summed in the exported file):
+                                                         # what all king positions have in common is learned from every position, rare buckets inherit it
 ap.add_argument('--warm', default='')                    # start from a plain (kb=1) network's weights
 ap.add_argument('--val', default='val')                  # validation data tag
 ap.add_argument('--device', default='cpu')               # cpu | cuda | auto
@@ -57,6 +59,8 @@ NKB = a.kb
 HEAD = [int(x) for x in a.head.split(',')] if a.head else None; HK = a.hk or a.h
 KBT = torch.tensor([0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5] + [6] * 16)
 KB11 = torch.tensor([0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8] + [9] * 16 + [10] * 32)
+if NKB == 16:                                            # 16 mirrored buckets: every king square of the first two ranks its own, then half-ranks
+    KBT = torch.tensor([0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13] + [14, 14, 15, 15] * 3)
 
 
 def kfeat(idx):
@@ -82,6 +86,9 @@ class Net(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.E = torch.nn.Parameter(torch.randn(NKB * 768 + 1, H) * 0.05)
+        if a.kf:                                                # shared table (its last row is padding and stays zero); the buckets' corrections start at zero
+            self.E = torch.nn.Parameter(torch.zeros(NKB * 768 + 1, H))
+            self.Esh = torch.nn.Parameter(torch.cat([torch.randn(768, H) * 0.05, torch.zeros(1, H)]))
         self.b = torch.nn.Parameter(torch.full((H,), 0.1))
         self.wo = torch.nn.Parameter(torch.randn(NEX, H) * (1.0 / math.sqrt(H)))
         self.wp = torch.nn.Parameter(torch.randn(NEX, H) * (1.0 / math.sqrt(H)))
@@ -107,6 +114,28 @@ class Net(torch.nn.Module):
         v = (torch.bmm(self.L2[bk], u[:, :, None]).squeeze(2) + self.b2[bk]).clamp(0, 1)
         return (v * self.L3[bk]).sum(1)
 
+    def bucketed(self, ix, w=None):
+        """one view's hidden-layer sums with king-bucketed inputs, as matrix products: the batch is sorted by the view's king
+        bucket and each bucket's rows meet that bucket's table. The same arithmetic as the plain form (every row meets one
+        768-row table), where lookup-and-sum would scatter gradients into the table one piece at a time.
+        With w (output weights, (NEX, H)): the view's share of every piece-count read-out instead, (B, NEX) -- the squared
+        clipped units are read in sorted order and only those few numbers are put back in batch order."""
+        B = ix.shape[0]; isk = (ix >= 320) & (ix < 384); ks = ((ix * isk).sum(1) - 320).clamp(0, 63)
+        if NKB == 11:
+            kb = KB11[ks]; f = ix
+        else:
+            mir = ((ks & 7) >= 4).long() * 7; kq = ks ^ mir; kb = KBT[(kq >> 3) * 4 + (kq & 7)]
+            f = torch.where(ix == 768, ix, (ix // 64) * 64 + ((ix % 64) ^ mir[:, None]))
+        order = torch.argsort(kb); cnt = torch.bincount(kb, minlength=NKB).tolist()
+        Ms = torch.zeros(B, 769, device=ix.device).scatter_add_(1, f[order], torch.ones(ix.shape, device=ix.device))[:, :768]
+        W = self.E[:NKB * 768].view(NKB, 768, H)
+        W = (W + self.Esh[:768] if a.kf else W).unbind(0)
+        inv = torch.empty_like(order); inv[order] = torch.arange(B, device=ix.device)
+        if w is not None and B >= 24576:                        # large batches: the whole read-out bucket by bucket, nothing of hidden-layer size is joined
+            return torch.cat([((self.b + sg @ W[k]).clamp(0, 1) ** 2) @ w.T for k, sg in enumerate(Ms.split(cnt)) if cnt[k]])[inv]
+        h = self.b + torch.cat([sg @ W[k] for k, sg in enumerate(Ms.split(cnt)) if cnt[k]])
+        return h[inv] if w is None else ((h.clamp(0, 1) ** 2) @ w.T)[inv]
+
     def forward(self, idx, feats=False):
         if DENSE:
             # The same network written as matrix products with a (batch, 768) piece-count matrix. On a GPU the lookup-and-sum
@@ -115,12 +144,19 @@ class Net(torch.nn.Module):
             Mo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, idx, one)[:, :768]
             Mp = torch.zeros(B, 769, device=idx.device).scatter_add_(1, LUT[idx], one)[:, :768]
             bk = ((Mo.sum(1) - 2) // 4).clamp(0, a.buckets - 1).long() if a.buckets > 1 else torch.zeros(B, dtype=torch.long, device=idx.device)
-            if a.hm:                                                        # the hidden layer sees the mirrored inputs; the linear shortcut and the bucket do not
-                Eo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(idx), one)[:, :768]; Ep = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(LUT[idx]), one)[:, :768]
-            else:
-                Eo, Ep = Mo, Mp
-            co = (self.b + Eo @ self.E[:768]).clamp(0, 1); cp = (self.b + Ep @ self.E[:768]).clamp(0, 1); xo = co ** 2; xp = cp ** 2
             lin = self.c + Mo @ self.S[:768]; ph = ((Mo @ PT_W[:768]) / 24).clamp(max=1.0)
+            if NKB > 1 and not (a.prod or HEAD or feats):                   # king buckets, direct read-out only: nothing of hidden-layer size leaves sorted order
+                heads = self.bucketed(idx, self.wo) + self.bucketed(LUT[idx], self.wp) + self.cb
+                return ph * lin[:, 0] + (1 - ph) * lin[:, 1] + (heads * F.one_hot(bk, NEX).to(heads.dtype)).sum(1)
+            if NKB > 1:                                                     # king buckets: each view's rows grouped by its bucket, one matrix product per bucket
+                co = self.bucketed(idx).clamp(0, 1); cp = self.bucketed(LUT[idx]).clamp(0, 1)
+            else:
+                if a.hm:                                                    # the hidden layer sees the mirrored inputs; the linear shortcut and the bucket do not
+                    Eo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(idx), one)[:, :768]; Ep = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(LUT[idx]), one)[:, :768]
+                else:
+                    Eo, Ep = Mo, Mp
+                co = (self.b + Eo @ self.E[:768]).clamp(0, 1); cp = (self.b + Ep @ self.E[:768]).clamp(0, 1)
+            xo = co ** 2; xp = cp ** 2
             heads = xo @ self.wo.T + xp @ self.wp.T + self.cb                       # every piece-count head at once; the position's own is picked below
             if a.prod:
                 h = H // 2; heads = heads + (co[:, :h] * co[:, h:]) @ self.qo.T + (cp[:, :h] * cp[:, h:]) @ self.qp.T + (co * cp) @ self.qx.T
@@ -142,6 +178,9 @@ class Net(torch.nn.Module):
                 io, ip = hmir(io), hmir(ip)
         ao = self.b + F.embedding_bag(io, self.E, mode='sum', padding_idx=NKB * 768)
         ap_ = self.b + F.embedding_bag(ip, self.E, mode='sum', padding_idx=NKB * 768)
+        if a.kf:
+            sh = lambda t: torch.where(t == NKB * 768, torch.full_like(t, 768), t % 768)
+            ao = ao + F.embedding_bag(sh(io), self.Esh, mode='sum', padding_idx=768); ap_ = ap_ + F.embedding_bag(sh(ip), self.Esh, mode='sum', padding_idx=768)
         lin = self.c + F.embedding_bag(idx, self.S, mode='sum', padding_idx=768)
         ph = (PT_W[idx].sum(1) / 24).clamp(max=1.0)
         xo = ao.clamp(0, 1) ** 2; xp = ap_.clamp(0, 1) ** 2
@@ -168,7 +207,7 @@ class Net(torch.nn.Module):
                 f.write(struct.pack('<iiiiii', 0x4F555235, H, NEX, NKB, M, G))
             else:
                 f.write(struct.pack('<iiii', 0x4F555236 if a.prod else 0x4F555233, H, a.buckets, NKB) if NKB > 1 or a.prod else struct.pack('<iii', 0x4F555232, H, a.buckets))
-            for t in (self.E[:NKB * 768], self.b):
+            for t in (self.E[:NKB * 768] + self.Esh[:768].repeat(NKB, 1) if a.kf else self.E[:NKB * 768], self.b):
                 f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
             for k in range(NEX):
                 f.write(self.wo[k].detach().cpu().numpy().astype('<f4').tobytes()); f.write(self.wp[k].detach().cpu().numpy().astype('<f4').tobytes())
@@ -237,7 +276,7 @@ steps_total = int(a.epochs * total / a.bs)
 net.to(DEV)
 if ema is not None:
     ema.to(DEV)
-DENSE = (a.dense == 1 or (a.dense < 0 and DEV.type == 'cuda')) and NKB == 1 and not a.phase and M == 1
+DENSE = (a.dense == 1 or (a.dense < 0 and DEV.type == 'cuda')) and not a.phase and M == 1
 if DEV.type == 'cuda':
     torch.backends.cuda.matmul.allow_tf32 = True
 LUT, PT_W, KBT, KB11 = LUT.to(DEV), PT_W.to(DEV), KBT.to(DEV), KB11.to(DEV)
@@ -287,7 +326,7 @@ class MatOpt:
 
 matopt = MatOpt(net.E, a.opt) if a.opt != 'adam' else None
 opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8, fused=DEV.type == 'cuda')
-fwd = torch.compile(net) if DENSE and DEV.type == 'cuda' else net        # the compiled model is the same network in fewer GPU kernels
+fwd = torch.compile(net) if DENSE and DEV.type == 'cuda' and NKB == 1 else net        # the compiled model is the same network in fewer GPU kernels (bucketed inputs: batch-dependent shapes, not compiled)
 REF = None
 if a.extrap != 0:                                                        # a frozen copy of the network as it starts
     REF = Net().to(DEV); REF.load_state_dict(net.state_dict())

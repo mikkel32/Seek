@@ -1,6 +1,7 @@
 """The engine's evaluation against an independent re-computation from the trainer's weights, on random positions.
 
-A new term in the evaluator has to be written twice (trainer, engine); this says whether the two agree. Plain inputs only.
+A new term in the evaluator has to be written twice (trainer, engine); this says whether the two agree. Plain, mirrored and
+king-bucketed inputs (the bucket scheme is read off the size of the input table).
 
   python3 zero/check_net.py <engine binary> <network .bin> <the same network's .ema.pt> [positions=300] [mirror]
 """
@@ -12,6 +13,24 @@ w = {k: v.numpy().astype(np.float64) for k, v in torch.load(net_pt, map_location
 H = w['b'].shape[0]; prod = 'qo' in w; nb = w['wo'].shape[0]; mlp = 'L1' in w; HP = []
 PARTS = []                                   # how much of each evaluation the product terms supply (a check that agrees only because they are tiny proves nothing)
 PT_W = np.repeat(np.array([0, 1, 1, 2, 4, 0] * 2, float), 64)
+NKB = (w['E'].shape[0] - 1) // 768
+KBT = [0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5] + [6] * 16
+if NKB == 16:
+    KBT = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13] + [14, 14, 15, 15] * 3
+if 'Esh' in w:                               # shared table + per-bucket corrections: the engine's file holds their sum
+    w['E'][:NKB * 768] += np.tile(w['Esh'][:768], (NKB, 1))
+KB11 = [0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8] + [9] * 16 + [10] * 32
+
+
+def kbf(f):
+    """a view's plain feature indices -> rows of the king-bucketed input table (the view's own king is piece code 5)"""
+    if NKB == 1:
+        return f
+    ks = int(f[(f >= 320) & (f < 384)][0]) - 320
+    if NKB == 11:
+        return KB11[ks] * 768 + f
+    mir = 7 if (ks & 7) >= 4 else 0; kq = ks ^ mir
+    return KBT[(kq >> 3) * 4 + (kq & 7)] * 768 + (f // 64) * 64 + ((f % 64) ^ mir)
 
 
 def feats(b):
@@ -26,7 +45,7 @@ def feats(b):
 def ev(b):
     o, p = feats(b)
     hm = lambda f: f ^ 7 if MIR and (int(f[(f >= 320) & (f < 384)][0]) & 7) < 4 else f      # mirrored inputs: the view's own king on files a-d flips the files
-    co = (w['b'] + w['E'][hm(o)].sum(0)).clip(0, 1); cp = (w['b'] + w['E'][hm(p)].sum(0)).clip(0, 1)
+    co = (w['b'] + w['E'][kbf(hm(o))].sum(0)).clip(0, 1); cp = (w['b'] + w['E'][kbf(hm(p))].sum(0)).clip(0, 1)
     bk = min(nb - 1, (len(o) - 2) // 4)
     lin = w['c'] + w['S'][o].sum(0); ph = min(1.0, PT_W[o].sum() / 24)
     out = ph * lin[0] + (1 - ph) * lin[1] + w['cb'][bk] + (co ** 2) @ w['wo'][bk] + (cp ** 2) @ w['wp'][bk]
@@ -55,7 +74,7 @@ got = [int(l.split()[1]) for l in subprocess.run([binary, net_bin], input=text, 
 want = np.array([ev(b) for b in boards]); got = np.array(got, float)
 assert len(got) == n, f'the engine answered {len(got)} of {n}'
 d = np.abs(got - np.clip(want, -20000, 20000))
-print(f'{n} random positions, hidden {H}, product terms {"on" if prod else "off"}: largest difference {d.max():.2f} centipawns, mean {d.mean():.3f}; '
+print(f'{n} random positions, hidden {H}, king buckets {NKB}, product terms {"on" if prod else "off"}: largest difference {d.max():.2f} centipawns, mean {d.mean():.3f}; '
       f'evaluations range {got.min():.0f} to {got.max():.0f}, the product terms supply {np.mean(PARTS):.0f} centipawns on average'
       + (f', the layered read-out {np.mean(HP):.0f}' if mlp else ''))
 sys.exit(0 if d.max() <= 1.5 else 1)
