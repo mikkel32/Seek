@@ -976,18 +976,21 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
-#define NPAR 59
-enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3, SEL, SEL_A, SEL_B };
-static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3", "Sel", "SelA", "SelB"};
+#define NPAR 60
+enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3, SEL, SEL_A, SEL_B, OFF };
+static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3", "Sel", "SelA", "SelB", "Off"};
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0, 0, 250, 100};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0, 0, 250, 100, 0};
 // PruneV2 (bit flags, 0 = off): 1 = a late quiet move whose two continuation histories are both negative is skipped when
 // its reduced depth is under 5; 2 = quiet futility counts the reduced depth and the move's history; 4 = a quiet table move
 // that cuts off straight from the table is rewarded in the histories; 8 = one ply less reduction when the parent node is
 // already past its 13th move (it is failing low, this node is likely to cut); 16 = a capture with a negative capture
 // history is skipped at reduced depth under 6 outside PV nodes.
+// Off (bit flags, for diagnosis only): 1 = no null move, 2 = no reverse futility, 4 = no razoring, 8 = no late-move reductions,
+// 16 = no late-move pruning, 32 = no futility pruning of quiet moves, 64 = no losing-exchange pruning, 128 = no bad-history
+// pruning, 256 = no singular tests, 512 = no depth cut without a table move, 1024 = no delta pruning in quiescence.
 // SearchV3 (bit flags, 0 = off): 1 = a quiet move that gives check is never dropped by the futility or the bad-history rule
 // (only by the losing-exchange rule, with the margin captures get); at a futile node the checking quiet moves are still tried.
 // 2 = a position that is or has been on a main line (remembered in the hash table) has its late moves reduced one ply less;
@@ -1411,7 +1414,7 @@ static int qsearch(int alpha, int beta, int ply) {
     while ((m = mp_next(&mp))) {
         if (!chk) {
             int victim = FLAG(m) == F_EP ? PAWN : (P.sq[TO(m)] == EMPTY ? NO_PT : P.sq[TO(m)] % 6);
-            if (!PROMO(m) && stand + mat_val[victim] + par[DELTA_Q] <= alpha) continue;   // delta pruning
+            if (!(par[OFF] & 1024) && !PROMO(m) && stand + mat_val[victim] + par[DELTA_Q] <= alpha) continue;   // delta pruning
             if ((par[SEARCH_V3] & 8) && !PROMO(m) && victim != NO_PT && stand + 120 <= alpha && see_val[victim] <= see_val[P.sq[FROM(m)] % 6] && see(m) <= 0) continue;
         }
         move_stack[ply] = m; piece_stack[ply] = P.sq[FROM(m)];
@@ -1486,13 +1489,13 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         vcls = vol * 10 <= par[VOL_REF] * 6 ? -1 : (vol * 10 >= par[VOL_REF] * 15 ? 1 : 0);
     }
     if (!pv_node && !chk && !excl && beta > -MATE_IN && beta < MATE_IN) {
-        if (depth <= 3 && ev + par[RAZOR] * depth * vm / 256 < alpha) {                     // razoring: hopeless at low depth -> resolve captures and leave
+        if (!(par[OFF] & 4) && depth <= 3 && ev + par[RAZOR] * depth * vm / 256 < alpha) {                     // razoring: hopeless at low depth -> resolve captures and leave
             int v = qsearch(alpha, beta, ply);
             if (v <= alpha) { ST(4); return v; }
         }
-        if (depth <= 8 && ev - par[RFP] * (depth - improving) * vm / 256 >= beta &&
+        if (!(par[OFF] & 2) && depth <= 8 && ev - par[RFP] * (depth - improving) * vm / 256 >= beta &&
             (!par[THR_RFP] || ev - par[RFP] * (depth - improving) * vm / 256 - par[THR_RFP] >= beta || !cheap_threat())) { ST(3); return ev; }   // reverse futility (a wider margin when a cheaper piece attacks one of ours)
-        if (allow_null && depth >= 3 && ev >= beta && !(par[NMP_TT] && tt_flag == TT_UPPER && tt_score < beta) &&
+        if (!(par[OFF] & 1) && allow_null && depth >= 3 && ev >= beta && !(par[NMP_TT] && tt_flag == TT_UPPER && tt_score < beta) &&
             (!par[NMP_MARGIN] || raw_ev >= beta + par[NMP_MARGIN] - par[NMP_MARGIN] * depth / 10) &&
             (P.bb[P.side][KNIGHT] | P.bb[P.side][BISHOP] | P.bb[P.side][ROOK] | P.bb[P.side][QUEEN])) {
             int R = par[NMP_BASE] + depth / par[NMP_DIV] + ((ev - beta) / par[NMP_EV] > 3 ? 3 : (ev - beta) / par[NMP_EV]);
@@ -1506,7 +1509,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         }
     }
     if (ttm) ST(28);
-    if (depth >= 4 && !ttm && !excl) { depth--; ST(29); }                              // internal iterative reduction
+    if (!(par[OFF] & 512) && depth >= 4 && !ttm && !excl) { depth--; ST(29); }                              // internal iterative reduction
     if (par[CUT_IIR] && cutnode && depth >= 8 && !ttm && !excl) depth--;
     // probcut: a capture that wins enough material and still beats beta by a margin at reduced depth is very likely a cutoff
     if (par[PROBCUT] && !pv_node && !chk && !excl && depth >= 5 && beta > -MATE_IN && beta < MATE_IN) {
@@ -1554,7 +1557,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         }
 #endif
         // singular extension: if every other move falls clearly short of the table move, search the table move deeper
-        if (m == ttm && !excl && depth >= par[SE_DEPTH] && tt_depth >= depth - 3 && (tt_flag == TT_LOWER || tt_flag == TT_EXACT) &&
+        if (!(par[OFF] & 256) && m == ttm && !excl && depth >= par[SE_DEPTH] && tt_depth >= depth - 3 && (tt_flag == TT_LOWER || tt_flag == TT_EXACT) &&
             tt_score > -MATE_IN && tt_score < MATE_IN && ply + depth < MAXPLY - 8) {
             int sbeta = tt_score - par[SE_MUL] * depth; ST(19);
             excluded[ply] = m;
@@ -1577,7 +1580,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                     if ((par[PRUNE_V2] & 2) && rd <= 7 && legal >= 1 && ev + (par[FUT_BASE] + par[FUT_MUL] * rd) * vm / 256 + hs / 64 <= alpha) continue;
                 }
                 // both conditions stay true for every later quiet move of this node, so those are not even generated
-                if (depth <= par[LMP_DEPTH] && legal >= (par[LMP_BASE] + depth * depth) / (2 - improving)) { mp.skip_quiets = 1; ST(11); continue; }   // late-move pruning
+                if (!(par[OFF] & 16) && depth <= par[LMP_DEPTH] && legal >= (par[LMP_BASE] + depth * depth) / (2 - improving)) { mp.skip_quiets = 1; ST(11); continue; }   // late-move pruning
                 int gc = 0;
                 if (par[SEARCH_V3] & 1) {                                   // quiet checks are judged like captures: only by the exchange
                     if (mp.skip_quiets == 2) gc = 1;                        // (the picker now hands out checks only)
@@ -1585,11 +1588,11 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                     if (gc) { if (depth <= 6 && see(m) < -par[SEE_C] * depth) { ST(14); continue; } }
                 }
                 if (!gc) {
-                if (pd <= 7 && ev + (par[FUT_BASE] + par[FUT_MUL] * pd) * vm / 256 <= alpha) { mp.skip_quiets = (par[SEARCH_V3] & 1) ? 2 : 1; ST(12); continue; }   // futility
-                if (pd <= 3 && hs < -par[HIST_PRUNE] * pd) { ST(13); continue; }                              // moves that keep failing
-                if (pd <= 6 && see(m) < -par[SEE_Q] * pd) { ST(14); continue; }                            // moves into a losing exchange
+                if (!(par[OFF] & 32) && pd <= 7 && ev + (par[FUT_BASE] + par[FUT_MUL] * pd) * vm / 256 <= alpha) { mp.skip_quiets = (par[SEARCH_V3] & 1) ? 2 : 1; ST(12); continue; }   // futility
+                if (!(par[OFF] & 128) && pd <= 3 && hs < -par[HIST_PRUNE] * pd) { ST(13); continue; }                              // moves that keep failing
+                if (!(par[OFF] & 64) && pd <= 6 && see(m) < -par[SEE_Q] * pd) { ST(14); continue; }                            // moves into a losing exchange
                 }
-            } else if (depth <= 6 && mp.bad_now && mp.see_now < -par[SEE_C] * depth) { ST(15); continue; }
+            } else if (!(par[OFF] & 64) && depth <= 6 && mp.bad_now && mp.see_now < -par[SEE_C] * depth) { ST(15); continue; }
             else if ((par[SEARCH_V3] & 4) && !pv_node && legal >= 1 && P.sq[TO(m)] != EMPTY && !PROMO(m) && depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 7 &&
                      ev + mat_val[P.sq[TO(m)] % 6] + 120 + 150 * (depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1] < 0 ? 0 : depth - lmr[depth > 63 ? 63 : depth][legal + 1 > 63 ? 63 : legal + 1]) <= alpha) continue;
             else if ((par[PRUNE_V2] & 16) && !pv_node && legal >= 1 && is_capture(m) && FLAG(m) != F_EP && !PROMO(m) &&
@@ -1645,7 +1648,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         if (legal == 1) { cutn[ply + 1] = pv_node ? 0 : !cutnode; v = -search(nd, -beta, -alpha, ply + 1, 1); }
         else {
             int r = 0;
-            if (depth >= 3 && (quiet || par[CAP_LMR]) && legal > 1 + 2 * pv_node) {
+            if (!(par[OFF] & 8) && depth >= 3 && (quiet || par[CAP_LMR]) && legal > 1 + 2 * pv_node) {
                 r = lmr[depth > 63 ? 63 : depth][legal > 63 ? 63 : legal];
                 if (!improving) r++;
                 if (thr_node) r--;
