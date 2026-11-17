@@ -53,6 +53,14 @@ ap.add_argument('--distill', default='')                 # a teacher network's w
 ap.add_argument('--dw', type=float, default=0.7)         # the teacher's share of the training target (1 = the teacher alone)
                                                          # --distill sf:<file>: the teacher is Stockfish 14.1's own network (ext/sfteach.py, the file from
                                                          # ext/sfnet_extract.py); its value is brought to the labels' scale with --tscale
+ap.add_argument('--pow', type=float, default=0.0)        # > 0: the loss is |win chance - target| to this power (2 = squared error; 0 = the usual log-loss)
+ap.add_argument('--wclip', type=float, default=0.0)      # > 0: input weights (shared table and bucket corrections each) are kept within +- this after every step
+ap.add_argument('--obk', type=int, default=0)            # how the read-out bucket is chosen: 0 piece count (--buckets 8); 1 piece count x any queen on the board (--buckets 16);
+                                                         # 2 piece count x my queen x their queen (--buckets 32)
+ap.add_argument('--am', default='')                      # attack-map inputs computed from the rules, "a piece of this kind attacks this square" (sliders stop at the
+                                                         # first piece): all = 12 kinds, class = pawn / knight+bishop / rook / queen / king per side, colour = one map
+                                                         # per side, slide, nonslide, pawn. Not king-bucketed; added into the same hidden layer.
+ap.add_argument('--amk', type=int, default=0)            # the attack maps feed only the first amk hidden units of each side (0 = all; the engine pays per unit fed)
 ap.add_argument('--tscale', type=float, default=0.277)   # our units per Stockfish internal unit (361 of its units = 100 of ours)
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
@@ -61,6 +69,48 @@ torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.Rand
 i = np.arange(768); pc, sq = i // 64, i % 64
 LUT = torch.from_numpy(np.concatenate([((pc + 6) % 12) * 64 + (sq ^ 56), [768]]).astype(np.int64))
 PT_W = torch.cat([torch.tensor([0, 1, 1, 2, 4, 0] * 2, dtype=torch.float32).repeat_interleave(64), torch.zeros(1)])
+# who attacks whom, from the rules, in the mover's view (codes 0-5 the mover's P N B R Q K, its pawns move up the board; 6-11 the opponent's)
+_ATT = np.zeros((13, 64, 64), bool); _BETW = np.zeros((64, 64, 64), bool)
+for _a in range(64):
+    _ar, _af = divmod(_a, 8)
+    for _b in range(64):
+        if _a == _b:
+            continue
+        _br, _bf = divmod(_b, 8); _dr, _df = _br - _ar, _bf - _af; _diag = abs(_dr) == abs(_df); _line = _dr == 0 or _df == 0
+        _ATT[0, _a, _b] = _dr == 1 and abs(_df) == 1; _ATT[6, _a, _b] = _dr == -1 and abs(_df) == 1
+        for _c in (1, 7): _ATT[_c, _a, _b] = (abs(_dr), abs(_df)) in ((1, 2), (2, 1))
+        for _c in (2, 8): _ATT[_c, _a, _b] = _diag
+        for _c in (3, 9): _ATT[_c, _a, _b] = _line
+        for _c in (4, 10): _ATT[_c, _a, _b] = _diag or _line
+        for _c in (5, 11): _ATT[_c, _a, _b] = max(abs(_dr), abs(_df)) == 1
+        if _diag or _line:
+            _sr, _sf = (_dr > 0) - (_dr < 0), (_df > 0) - (_df < 0); _r, _f = _ar + _sr, _af + _sf
+            while (_r, _f) != (_br, _bf):
+                _BETW[_a, _b, _r * 8 + _f] = True; _r += _sr; _f += _sf
+ATT_T = torch.from_numpy(_ATT.reshape(-1))
+BETW64 = torch.from_numpy((_BETW.reshape(4096, 64).astype(np.uint64) << np.arange(64, dtype=np.uint64)).sum(1).astype(np.uint64).view(np.int64))   # squares between two squares, as 64 bits
+AM_G = {'all': [[k] for k in range(6)], 'pawn': [[0]], 'nonslide': [[0], [1], [5]], 'slide': [[2], [3], [4]], 'colour': [[0, 1, 2, 3, 4, 5]], 'class': [[0], [1, 2], [3], [4], [5]]}
+
+
+@torch.no_grad()
+def attack_map(idx):
+    """(B,768): input code*64+s is on when some piece of that kind attacks square s (sliders stop at the first piece in the way)"""
+    valid = idx < 768; code = torch.where(valid, idx // 64, torch.full_like(idx, 12)); sq = torch.where(valid, idx % 64, torch.zeros_like(idx))
+    occ = torch.where(valid, torch.ones_like(sq) << sq, torch.zeros_like(sq)).sum(1)
+    S64 = torch.arange(64, device=idx.device); base = sq[:, :, None] * 64 + S64
+    hit = ATT_T[code[:, :, None] * 4096 + base] & ((BETW64[base] & occ[:, None, None]) == 0) & valid[:, :, None]
+    f = torch.where(hit, code[:, :, None] * 64 + S64, torch.full_like(base, 768)).view(idx.shape[0], -1)
+    return torch.zeros(idx.shape[0], 769, device=idx.device).scatter_(1, f, 1.0)[:, :768]
+
+
+def am_groups(Am, spec):
+    """merge the 12 attack maps into groups of kinds (the same grouping for the mover and for the opponent): (B,768) -> (B, groups*2*64)"""
+    if spec == 'all':
+        return Am
+    A = Am.view(-1, 12, 64)
+    return torch.cat([A[:, [k + o for k in g]].amax(1) for o in (0, 6) for g in AM_G[spec]], 1)
+
+
 H = a.h
 DEV = torch.device('cuda' if a.device == 'cuda' or (a.device == 'auto' and torch.cuda.is_available()) else 'cpu')
 M = a.experts; G = min(a.gate, a.h); NEX = a.buckets * M       # NEX output experts in total
@@ -114,6 +164,8 @@ class Net(torch.nn.Module):
             h1, h2 = HEAD; P_ = torch.nn.Parameter
             self.L1 = P_(torch.randn(NEX * h1, 2 * HK) / math.sqrt(2 * HK)); self.b1 = P_(torch.zeros(NEX * h1))
             self.L2 = P_(torch.randn(NEX, h2, h1) / math.sqrt(h1)); self.b2 = P_(torch.zeros(NEX, h2)); self.L3 = P_(torch.zeros(NEX, h2))
+        if a.am:                                                    # attack-map inputs: start at zero
+            self.Eam = torch.nn.Parameter(torch.zeros(len(AM_G[a.am]) * 128, a.amk or H))
         self.S = torch.nn.Parameter(torch.zeros(769, 2))            # [:,0] middlegame, [:,1] endgame
         self.c = torch.nn.Parameter(torch.zeros(2))
         if a.aux > 0:                                               # foresight heads: 3 later scores, plies left, 10 + 10 material changes, from, to, volatility
@@ -156,12 +208,19 @@ class Net(torch.nn.Module):
             Mo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, idx, one)[:, :768]
             Mp = torch.zeros(B, 769, device=idx.device).scatter_add_(1, LUT[idx], one)[:, :768]
             bk = ((Mo.sum(1) - 2) // 4).clamp(0, a.buckets - 1).long() if a.buckets > 1 else torch.zeros(B, dtype=torch.long, device=idx.device)
+            if a.obk:                                                       # the queens join the key: own queen is piece code 4, the opponent's 10
+                pcb = ((Mo.sum(1) - 2) // 4).clamp(0, 7).long(); mq = (Mo[:, 256:320].sum(1) > 0).long(); oq = (Mo[:, 640:704].sum(1) > 0).long()
+                bk = pcb * 2 + ((mq + oq) > 0).long() if a.obk == 1 else pcb * 4 + mq * 2 + oq
             lin = self.c + Mo @ self.S[:768]; ph = ((Mo @ PT_W[:768]) / 24).clamp(max=1.0)
-            if NKB > 1 and not (a.prod or HEAD or feats):                   # king buckets, direct read-out only: nothing of hidden-layer size leaves sorted order
+            if NKB > 1 and not (a.prod or HEAD or feats or a.am):           # king buckets, direct read-out only: nothing of hidden-layer size leaves sorted order
                 heads = self.bucketed(idx, self.wo) + self.bucketed(LUT[idx], self.wp) + self.cb
                 return ph * lin[:, 0] + (1 - ph) * lin[:, 1] + (heads * F.one_hot(bk, NEX).to(heads.dtype)).sum(1)
             if NKB > 1:                                                     # king buckets: each view's rows grouped by its bucket, one matrix product per bucket
-                co = self.bucketed(idx).clamp(0, 1); cp = self.bucketed(LUT[idx]).clamp(0, 1)
+                ho = self.bucketed(idx); hp = self.bucketed(LUT[idx])
+                if a.am:                                                    # the same attack maps seen from each side
+                    Am = attack_map(idx); pad = (0, H - (a.amk or H))
+                    ho = ho + F.pad(am_groups(Am, a.am) @ self.Eam, pad); hp = hp + F.pad(am_groups(Am[:, LUT[:768]], a.am) @ self.Eam, pad)
+                co = ho.clamp(0, 1); cp = hp.clamp(0, 1)
             else:
                 if a.hm:                                                    # the hidden layer sees the mirrored inputs; the linear shortcut and the bucket do not
                     Eo = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(idx), one)[:, :768]; Ep = torch.zeros(B, 769, device=idx.device).scatter_add_(1, hmir(LUT[idx]), one)[:, :768]
@@ -291,7 +350,7 @@ if ema is not None:
 DENSE = (a.dense == 1 or (a.dense < 0 and DEV.type == 'cuda')) and not a.phase and M == 1
 if DEV.type == 'cuda':
     torch.backends.cuda.matmul.allow_tf32 = True
-LUT, PT_W, KBT, KB11 = LUT.to(DEV), PT_W.to(DEV), KBT.to(DEV), KB11.to(DEV)
+LUT, PT_W, KBT, KB11 = LUT.to(DEV), PT_W.to(DEV), KBT.to(DEV), KB11.to(DEV); ATT_T, BETW64 = ATT_T.to(DEV), BETW64.to(DEV)
 
 
 def newton_schulz(G, steps=5):
@@ -492,11 +551,16 @@ while not done:
                 if REF is not None:
                     with torch.no_grad():
                         ly = torch.logit(yb.clamp(1 / 510, 1 - 1 / 510)); yb = torch.sigmoid(ly + a.extrap * (ly - REF(xb)))
-                loss = F.binary_cross_entropy_with_logits(fwd(xb), yb); run_main = loss.detach()
+                loss = (torch.sigmoid(fwd(xb)) - yb).abs().pow(a.pow).mean() if a.pow > 0 else F.binary_cross_entropy_with_logits(fwd(xb), yb); run_main = loss.detach()
             opt.zero_grad(set_to_none=True)
             if matopt is not None:
                 net.E.grad = None
             loss.backward(); opt.step()
+            if a.wclip > 0:
+                with torch.no_grad():
+                    net.E.clamp_(-a.wclip, a.wclip)
+                    if a.kf:
+                        net.Esh.clamp_(-a.wclip, a.wclip)
             if matopt is not None:
                 matopt.step(a.mlr * lr / a.lr)                                 # same warm-up and cosine schedule as the rest
             if ema is not None:

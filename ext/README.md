@@ -570,3 +570,31 @@ them at 3,000,000 nodes and 63% at 10,000,000; at the same 1,000,000 nodes, with
 clearly harmful ones, solves about half. The set was chosen by one configuration's failures, and a failure there is close
 to a coin toss between two moves: no rule is throwing these moves away. The same holds with Stockfish's network in our
 search (46 to 60% for every variant).
+
+## Inside the network, and the shelved architecture study taken up again (17 November)
+
+`ext/brain_scan.py` on BIGS, 400,000 held-out positions (`zero/results/vault_brain_scan_BIGS.log`): a position has 10.5% of
+the hidden units active and 0.8% saturated; no unit is dead, 303 of 768 are active in under 5% of positions; the top 256
+units carry 69% of the hidden part's variance, and averaging out the weakest 20% raises the held-out loss from 0.5438 to
+0.5452 (nothing to prune for free). The engine's integer scale is set by a worst-case bound of 244 per unit (bias plus the
+32 largest per-square maxima), which gives each unit's working range 128 steps; the largest sum any unit reaches on real
+positions is 53. The engine differs from the trainer by 3.1 centipawns on average (18 at most) for BIGS.
+
+`ext/brain_err.py`: on 15,553 positions with Stockfish's 4,000,000-node analysis as the reference, squared error in expected
+score (thousandths): BIGM 24.0, BIGS 22.7, BIGX 22.2, Stockfish 14.1's own network 18.6 (it is judged by its own search).
+Stockfish's network is ahead by a similar ratio (0.73 to 0.85) in every category tried: quiet and tactical positions,
+attacked kings, passed pawns, material imbalances, piece counts (`zero/results/vault_brain_err.log`). No blind spot.
+
+A meaningless change shows how the hash table differs from Stockfish's, not the search (`zero/results/vault_stab.log`,
+300,000 nodes): another table size changes our move in 19% of the positions and Stockfish's in 1.1%; with two entries a
+slot ours changes in 1.3%, and plays +0.72 (0.28) worse on the quality test; a 512 MB table plays the same as 64 MB. A 1%
+change of the node budget changes 0.1% of our moves and 0.4% of Stockfish's.
+
+What is and is not up to date. The 40-variant study of 15 November (`zero/results/architecture_probe.md`: attack-map
+inputs, threat inputs, layered read-outs, the two-speed design) ran on 59 million self-play positions with 384-wide plain
+networks and was shelved "for the point where the data is several times larger". The data is now 8.2 billion positions
+and the plain design is measured as full. Re-tested on the current family so far: product terms (+6) and the layered
+read-out on 64 units a side (+12). Never run: the queen-aware read-out heads (`--obk`), the loss exponent (`--pow`), weight
+clipping (`--wclip`), the expert router and attack maps at this scale. `ext/vault_probe.sh` runs them on the current recipe
+(768 wide, 16 king buckets, half labels and half the two teachers, 1.09 billion positions); `calc/train_nnue.py --am`
+adds attack-map inputs to the main trainer (not yet in the engine).

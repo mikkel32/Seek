@@ -1,0 +1,26 @@
+bigm_h32_300000: 8964 positions at 300000 nodes (104s, 45 moves sent to Stockfish, 8s): mean loss 10.12 thousandths of a point per move; 6.18% of moves lose 0.05 or more; one-good-move positions solved 85.5% of 3093
+bigm_h32_300000 against bigm_300000: 8964 positions; mean loss 10.12 against 10.04 thousandths; difference +0.07 (standard error 0.24, +0.3 of them; negative = the first gives away less); 1237 positions scored differently
+sf_h32_300000: 8964 positions at 300000 nodes (167s, 4 moves sent to Stockfish, 5s): mean loss 6.24 thousandths of a point per move; 3.45% of moves lose 0.05 or more; one-good-move positions solved 91.3% of 3093
+sf_h32_300000 against sf_300000: 8964 positions; mean loss 6.24 against 6.31 thousandths; difference -0.07 (standard error 0.06, -1.3 of them; negative = the first gives away less); 73 positions scored differently
+bigm_h32_300000 and bigm_300000: a different move in 1700 of 8964 positions = 19.0%
+sf_h32_300000 and sf_300000: a different move in 101 of 8964 positions = 1.1%
+bigm_100000 and bigm_300000: a different move in 1810 of 8964 positions = 20.2%
+sf_100000 and sf_300000: a different move in 1995 of 8964 positions = 22.3%
+bigm_300000 and bigm_1000000: a different move in 1477 of 8964 positions = 16.5%
+sf_300000 and sf_1000000: a different move in 1718 of 8964 positions = 19.2%
+[23:46:02] finished
+bigm_tb_300000: 8964 positions at 300000 nodes (115s, 37 moves sent to Stockfish, 7s): mean loss 10.77 thousandths of a point per move; 6.64% of moves lose 0.05 or more; one-good-move positions solved 85.3% of 3093
+bigm_tb_300000 against bigm_300000: 8964 positions; mean loss 10.77 against 10.04 thousandths; difference +0.72 (standard error 0.28, +2.6 of them; negative = the first gives away less); 1255 positions scored differently
+bigm_tb_h32_300000: 8964 positions at 300000 nodes (105s, 2 moves sent to Stockfish, 3s): mean loss 10.76 thousandths of a point per move; 6.58% of moves lose 0.05 or more; one-good-move positions solved 85.1% of 3093
+bigm_tb_h32_300000 against bigm_tb_300000: 8964 positions; mean loss 10.76 against 10.77 thousandths; difference -0.00 (standard error 0.07, -0.1 of them; negative = the first gives away less); 116 positions scored differently
+bigm_h512_300000: 8964 positions at 300000 nodes (283s, 13 moves sent to Stockfish, 6s): mean loss 10.11 thousandths of a point per move; 6.14% of moves lose 0.05 or more; one-good-move positions solved 86.1% of 3093
+bigm_h512_300000 against bigm_300000: 8964 positions; mean loss 10.11 against 10.04 thousandths; difference +0.07 (standard error 0.25, +0.3 of them; negative = the first gives away less); 1217 positions scored differently
+bigm_303000: 8964 positions at 303000 nodes (116s, 1 moves sent to Stockfish, 2s): mean loss 10.02 thousandths of a point per move; 6.31% of moves lose 0.05 or more; one-good-move positions solved 86.1% of 3093
+sf_303000: 8964 positions at 303000 nodes (183s, 0 moves sent to Stockfish, 0s): mean loss 6.29 thousandths of a point per move; 3.44% of moves lose 0.05 or more; one-good-move positions solved 91.3% of 3093
+bigm_tb_300000 and bigm_300000: a different move in 1721 of 8964 positions = 19.2%
+bigm_tb_h32_300000 and bigm_tb_300000: a different move in 170 of 8964 positions = 1.9%
+bigm_h512_300000 and bigm_300000: a different move in 1660 of 8964 positions = 18.5%
+bigm_303000 and bigm_300000: a different move in 9 of 8964 positions = 0.1%
+sf_303000 and sf_300000: a different move in 39 of 8964 positions = 0.4%
+[00:01:12] finished 2
+

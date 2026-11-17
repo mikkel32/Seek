@@ -475,6 +475,7 @@ static void quantize_net(void) {
         if (sum > worst) worst = sum;
     }
     q_bits = 10; while (q_bits > 4 && worst * (float)(1 << q_bits) > 32000.0f) q_bits--;
+    if (getenv("QBITS")) q_bits = atoi(getenv("QBITS"));       // experiment: a finer scale than the worst-case bound allows (sums wrap consistently; only the final value must fit)
     float qa = (float)(1 << q_bits); size_t ne = (size_t)NKB * 768 * NH;
     free(NEq); NEq = (short *)big_alloc(ne * 2);
     for (size_t k = 0; k < ne; k++) NEq[k] = (short)lrintf(NE[k] * qa);
@@ -893,7 +894,12 @@ static int evaluate(void) {
         lin = ph * lin + (1.0f - ph) * (NC2 + A->lin[us][1]);
     }
     int bk = 0;
-    if (NBK > 1) { bk = (popc(P.occ[0] | P.occ[1]) - 2) / 4; if (bk > NBK - 1) bk = NBK - 1; }
+    if (NBK > 1) {                       // read-out bucket: piece count; with 16 buckets also whether a queen is on the board, with 32 whose
+        bk = (popc(P.occ[0] | P.occ[1]) - 2) / 4; if (bk > 7) bk = 7;
+        if (NBK == 16) bk = bk * 2 + ((P.bb[0][QUEEN] | P.bb[1][QUEEN]) != 0);
+        else if (NBK == 32) bk = bk * 4 + 2 * (P.bb[P.side][QUEEN] != 0) + (P.bb[P.side ^ 1][QUEEN] != 0);
+        else if (bk > NBK - 1) bk = NBK - 1;
+    }
     if (NM > 1) {                        // learned router: the piece-count group has NM specialists; run the one the router scores highest
         float x[128]; int best = 0; float bg = -1e30f;
         const float qi = 1.0f / (float)(1 << q_bits);
@@ -933,7 +939,12 @@ static int evaluate(void) {
 // reliable and wide ones where it is not.
 static int eval_vol(void) {
     const Acc *A = &accs[hply]; int us = P.side, bk = 0;
-    if (NBK > 1) { bk = (popc(P.occ[0] | P.occ[1]) - 2) / 4; if (bk > NBK - 1) bk = NBK - 1; }
+    if (NBK > 1) {                       // read-out bucket: piece count; with 16 buckets also whether a queen is on the board, with 32 whose
+        bk = (popc(P.occ[0] | P.occ[1]) - 2) / 4; if (bk > 7) bk = 7;
+        if (NBK == 16) bk = bk * 2 + ((P.bb[0][QUEEN] | P.bb[1][QUEEN]) != 0);
+        else if (NBK == 32) bk = bk * 4 + 2 * (P.bb[P.side][QUEEN] != 0) + (P.bb[P.side ^ 1][QUEEN] != 0);
+        else if (bk > NBK - 1) bk = NBK - 1;
+    }
     float u = NV[bk][2 * NH] + (float)(qdot(A->a[us], A->a[us], NVOq[bk], NH) + qdot(A->a[us ^ 1], A->a[us ^ 1], NVPq[bk], NH)) * (1.0f / 33554432.0f);
     int v = (int)(u * 271.58f);
     return v < 10 ? 10 : (v > 600 ? 600 : v);
@@ -1012,6 +1023,7 @@ static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 1
 static U64 nodes, node_limit, check_mask = 2047;
 #ifdef SSTAT                               // where the search spends its nodes (printed at quit); no effect on the search
 static U64 st_[40];
+static U64 st_e[2][6];        // evaluations by how far outside the window they fall (0 inside, then by 50, 100, 150, 200, 300+), quiescence and main
 static U64 st_d[24], st_dm[24], st_dq[24], st_p[8]; static int st_mode;   // st_p: nodes by what the search was doing (0 first look, 1 inside a null-move try, 2 a singular test, 3 a re-search after a reduced look liked the move, 4 a full-window re-search, 5 a reduced look)
 #define STM(m, code) { int o_ = st_mode; st_mode = (m); code; st_mode = o_; }
 #else
@@ -1404,6 +1416,9 @@ static int qsearch(int alpha, int beta, int ply) {
     int chk = in_check(), best, stand = -INF, a0 = alpha;
     if (!chk) {
         corr_ply = ply; stand = best = eval_corr();
+#ifdef SSTAT
+        { int d_ = stand >= beta ? stand - beta : (stand <= alpha ? alpha - stand : -1); st_e[0][d_ < 0 ? 0 : (d_ < 50 ? 0 : (d_ < 100 ? 1 : (d_ < 150 ? 2 : (d_ < 200 ? 3 : (d_ < 300 ? 4 : 5)))))]++; }
+#endif
         if (best >= beta) { ST(24); return best; }
         if (best > alpha) alpha = best;
     } else best = -INF;
@@ -1477,6 +1492,9 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
 #endif
     corr_ply = ply;
     int ev = chk ? -INF : eval_corr(), raw_ev = ev;
+#ifdef SSTAT
+    if (!chk) { int d_ = ev >= beta ? ev - beta : (ev <= alpha ? alpha - ev : -1); st_e[1][d_ < 0 ? 0 : (d_ < 50 ? 0 : (d_ < 100 ? 1 : (d_ < 150 ? 2 : (d_ < 200 ? 3 : (d_ < 300 ? 4 : 5)))))]++; }
+#endif
     evals_stack[ply] = ev;
     int improving = !chk && ply >= 2 && ev > evals_stack[ply - 2];
     int thr_node = (par[THR_LMR] && !chk && depth >= 3) ? cheap_threat() : 0;       // a cheaper enemy piece attacks one of the mover's: reduce its moves less
@@ -2117,6 +2135,7 @@ int main(int argc, char **argv) {
             if (m) { move_str(m, ms); printf("bestmove %s\n", ms); } else printf("bestmove 0000\n");
         } else if (!strncmp(line, "perft", 5)) { printf("perft %llu\n", perft(atoi(line + 6))); }
         else if (!strcmp(line, "eval")) printf("eval %d\n", evaluate());
+        else if (!strcmp(line, "qeval")) { nodes = 0; stop_flag = 0; node_limit = 0; hard_ms_limit = time_ms_limit = 0; printf("eval %d\n", qsearch(-INF, INF, 0)); }   // the value after captures are played out, as a search leaf returns it
         else if (!strcmp(line, "pol")) {                 // the read-out's scores for the quiet moves of the current position
             if (have_pol && !in_check()) { evaluate(); Picker q; mp_init(&q, 0, 0, 0); q.pol = 1; Move m; char ms[8]; while ((m = mp_next(&q))) if (q.pol_on && !is_capture(m) && !PROMO(m)) { move_str(m, ms); printf("pol %s %d\n", ms, q.pol_now); } }
             printf("pol end\n");
@@ -2142,6 +2161,7 @@ int main(int argc, char **argv) {
                      100.0 * t[9] / cut, 100.0 * t[27] / cut, 100.0 * t[32] / cut, t[10] / cut, 100.0 * t[28] / (double)(t[8] + t[22]), (double)t[23] / (t[22] ? t[22] : 1));
               printf("info string cutoffs at nodes with a table move %.1f%% of all (on the first move %.1f%%); without one: on the first move %.1f%%, by a capture %.1f%%, by a killer %.1f%%, mean move number %.2f\n",
                      100.0 * t[33] / cut, 100.0 * t[34] / (t[33] ? t[33] : 1), 100.0 * t[36] / (t[35] ? t[35] : 1), 100.0 * t[37] / (t[35] ? t[35] : 1), 100.0 * t[38] / (t[35] ? t[35] : 1), (double)t[39] / (t[35] ? t[35] : 1));
+              for (int k_ = 0; k_ < 2; k_++) { double te = 0; for (int i_ = 0; i_ < 6; i_++) te += (double)st_e[k_][i_]; printf("info string %s evaluations %.0f: within 50 of the window or inside %.1f%%, outside by 50-100 %.1f%%, 100-150 %.1f%%, 150-200 %.1f%%, 200-300 %.1f%%, 300+ %.1f%%\n", k_ ? "main-search" : "quiescence", te, 100 * st_e[k_][0] / te, 100 * st_e[k_][1] / te, 100 * st_e[k_][2] / te, 100 * st_e[k_][3] / te, 100 * st_e[k_][4] / te, 100 * st_e[k_][5] / te); }
               printf("info string nodes by purpose: first look %.1f%%, inside a null-move try %.1f%%, inside a singular test %.1f%%, inside a reduced look %.1f%%, re-search after a reduced look %.1f%%, full-window re-search %.1f%%\n", 100.0 * st_p[0] / all, 100.0 * st_p[1] / all, 100.0 * st_p[2] / all, 100.0 * st_p[5] / all, 100.0 * st_p[3] / all, 100.0 * st_p[4] / all);
               printf("info string main nodes by depth left (share of all nodes %%, moves searched per node, quiet share):");
               for (int d = 1; d < 24; d++) if (st_d[d]) printf(" %d: %.1f%% %.2f %.0f%% |", d, 100.0 * st_d[d] / all, (double)st_dm[d] / st_d[d], 100.0 * st_dq[d] / (st_dm[d] ? st_dm[d] : 1));

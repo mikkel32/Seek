@@ -1,0 +1,23 @@
+zero/w_BIGS.bin.ema.pt: 768 hidden units a view, 16 king buckets, 8 read-out buckets
+input weights: shared table |w| mean 0.2673 max 8.457; bucket corrections |w| mean 0.2212 max 7.429; corrections carry 38% of the input weights' squared size
+read-out weights: |w| mean 0.121 (own view) 0.133 (other view), largest 3.45 (the engine clips at 8)
+largest sum a unit could reach by the engine's bound: 244.2 -> integer scale 2^7 (a unit's working range 0..1 has 128 steps)
+
+== ival: 400000 positions; held-out loss 0.54375
+evaluation (logit units; 1 = 272 centipawns): spread of the whole 1.410, of the piece-square shortcut 1.534, of the hidden part 0.761
+a position has on average 10.5% of the units active (above zero) and 0.8% saturated (at one)
+units never active: 0; active in under 1% of positions: 76; under 5%: 303; saturated in over 95%: 0; active in over 95%: 0
+share of the hidden part's variance carried by the most important units: top 16 22.6%, top 64 39.7%, top 128 52.6%, top 256 68.8%, top 384 80.1%, top 512 88.9%, top 640 95.7%
+largest sum actually reached by any unit on these positions: 52.78 (median unit 14.57)
+10% of the units averaged out: loss 0.54428; 20% of the units averaged out: loss 0.54523; 30% of the units averaged out: loss 0.54667; 40% of the units averaged out: loss 0.54847; 50% of the units averaged out: loss 0.55121
+
+== gval: 102307 positions; held-out loss 0.47493
+evaluation (logit units; 1 = 272 centipawns): spread of the whole 1.787, of the piece-square shortcut 1.911, of the hidden part 0.755
+a position has on average 8.9% of the units active (above zero) and 1.1% saturated (at one)
+units never active: 0; active in under 1% of positions: 55; under 5%: 283; saturated in over 95%: 0; active in over 95%: 0
+share of the hidden part's variance carried by the most important units: top 16 35.7%, top 64 59.5%, top 128 70.2%, top 256 81.5%, top 384 88.7%, top 512 93.9%, top 640 97.6%
+largest sum actually reached by any unit on these positions: 50.37 (median unit 13.21)
+10% of the units averaged out: loss 0.47536; 20% of the units averaged out: loss 0.47595; 30% of the units averaged out: loss 0.47667; 40% of the units averaged out: loss 0.47817; 50% of the units averaged out: loss 0.47954
+
+shortcut table, mean over squares in centipawns (own piece middlegame/endgame; opponent's the same with the sign turned): pawn 96/91 (100/92), knight 450/359 (429/333), bishop 495/393 (475/370), rook 702/652 (657/604), queen 1913/835 (1821/734)
+
