@@ -1011,13 +1011,13 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
-#define NPAR 61
-enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3, SEL, SEL_A, SEL_B, OFF, LM_DEPTH };
-static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3", "Sel", "SelA", "SelB", "Off", "LmDepth"};
+#define NPAR 62
+enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3, SEL, SEL_A, SEL_B, OFF, LM_DEPTH, LM_WAIT };
+static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3", "Sel", "SelA", "SelB", "Off", "LmDepth", "LmWait"};
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0, 0, 250, 100, 0, 0};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0, 0, 250, 100, 0, 0, 1};
 // PruneV2 (bit flags, 0 = off): 1 = a late quiet move whose two continuation histories are both negative is skipped when
 // its reduced depth is under 5; 2 = quiet futility counts the reduced depth and the move's history; 4 = a quiet table move
 // that cuts off straight from the table is rewarded in the histories; 8 = one ply less reduction when the parent node is
@@ -1237,25 +1237,87 @@ static inline float fdot(const float *a, const float *b, int n) {
 // the read-out's hidden units for the position on the board (its evaluation sums must be in place)
 // ------------------------------------------------------------------ the transformer at the top of the tree
 // LmDepth=d (and the environment variable OURO_SOCK = the socket of lm/serve.py): at nodes with d or more plies left, the
-// quiet moves are scored by the transformer's log-probabilities (x256) in place of the read-out's (the same use as the
-// policy read-out: PolW orders them, PolLmr shifts their reductions). One call per position, kept in a table by key.
+// quiet moves are scored by the transformer's policy (logits x256, only differences matter; the server sends them x100) in place of the read-out's
+// (the same use as the policy read-out: PolW orders them, PolLmr shifts their reductions). The request carries the board
+// already encoded in the transformer's frame and the quiet moves' indices, so the server does no chess work:
+//   "Q <key hex> <64 piece codes 0-c, mover's frame> <castling bits, mover's frame> <ep square or 64> <n> <move index>..."
+// and the reply is "<key hex> <logit x100, integer>..." in the same order. LmWait=1: wait for the reply. LmWait=0: send it and search on;
+// the answer is taken from the table when the node is visited again (the next iteration of the deepening loop).
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-static int lm_fd = -2; static FILE *lm_in = 0, *lm_out = 0; static unsigned long long lm_calls = 0, lm_hits = 0;
+static int lm_fd = -2; static unsigned long long lm_calls = 0, lm_hits = 0, lm_late = 0;
 #define LMC_BITS 15
-typedef struct { U64 key; unsigned short n, mv[96]; short lp[96]; } LmEnt;
-static LmEnt *lm_cache = 0;
+#define LMN 96
+typedef struct { U64 key; unsigned char state; unsigned short n, mv[LMN]; short lp[LMN]; } LmEnt;   // state: 0 empty, 1 asked, 2 answered
+static LmEnt *lm_cache = 0; static char lm_buf[1 << 16]; static int lm_len = 0;
 static int lm_ready(void) {
     if (lm_fd == -2) {
         lm_fd = -1; const char *path = getenv("OURO_SOCK");
         if (path && *path) {
             int fd = socket(AF_UNIX, SOCK_STREAM, 0); struct sockaddr_un a; memset(&a, 0, sizeof a); a.sun_family = AF_UNIX; strncpy(a.sun_path, path, sizeof a.sun_path - 1);
-            if (fd >= 0 && connect(fd, (struct sockaddr *)&a, sizeof a) == 0) { lm_fd = fd; lm_in = fdopen(fd, "r"); lm_out = fdopen(dup(fd), "w"); lm_cache = calloc((size_t)1 << LMC_BITS, sizeof(LmEnt)); }
+            if (fd >= 0 && connect(fd, (struct sockaddr *)&a, sizeof a) == 0) { lm_fd = fd; lm_cache = calloc((size_t)1 << LMC_BITS, sizeof(LmEnt)); }
             else { if (fd >= 0) close(fd); fprintf(stderr, "cannot reach the transformer at %s\n", path); }
         }
     }
     return lm_fd >= 0;
+}
+static LmEnt *lm_slot(U64 key) { return &lm_cache[key & (((U64)1 << LMC_BITS) - 1)]; }
+static void lm_line(char *l) {                  // one reply: fill its table entry if it is still waiting for it
+    char *q; U64 key = strtoull(l, &q, 16); LmEnt *e = lm_slot(key);
+    if (e->key != key || e->state != 1) { lm_late++; return; }
+    for (int j = 0; j < e->n; j++) { float x = strtof(q, &q) * 2.56f; e->lp[j] = (short)(x < -32000.0f ? -32000.0f : (x > 32000.0f ? 32000.0f : x)); }
+    e->state = 2;
+}
+static void lm_read(int block) {                // take in whatever replies have arrived (block: wait for at least some bytes)
+    for (;;) {
+        ssize_t r = recv(lm_fd, lm_buf + lm_len, sizeof lm_buf - 1 - lm_len, block ? 0 : MSG_DONTWAIT);
+        if (r <= 0) { if (r == 0) lm_fd = -1; return; }
+        lm_len += (int)r; lm_buf[lm_len] = 0; char *st = lm_buf, *nl;
+        while ((nl = strchr(st, '\n'))) { *nl = 0; lm_line(st); st = nl + 1; }
+        lm_len -= (int)(st - lm_buf); memmove(lm_buf, st, lm_len);
+        if (block) return;
+    }
+}
+static void lm_ask(LmEnt *e, const Move *list, int n) {
+    int us = P.side; char req[64 * 2 + 16 * LMN + 128], *o = req;
+    o += sprintf(o, "Q %llx ", (unsigned long long)P.key);
+    for (int sq = 0; sq < 64; sq++) {
+        int pc = P.sq[us == WHITE ? sq : sq ^ 56];
+        int c = pc == EMPTY ? 0 : (pc / 6 == us ? 1 + pc % 6 : 7 + pc % 6); *o++ = "0123456789abc"[c];
+    }
+    int ca = us == WHITE ? P.castle : (((P.castle >> 2) & 3) | ((P.castle & 3) << 2));
+    int ep = P.ep == NOSQ ? 64 : (us == WHITE ? P.ep : P.ep ^ 56);
+    if (n > LMN) n = LMN;
+    o += sprintf(o, " %d %d %d", ca, ep, n);
+    e->key = P.key; e->state = 1; e->n = (unsigned short)n;
+    for (int k = 0; k < n; k++) {
+        int f = FROM(list[k]), t = TO(list[k]); e->mv[k] = (unsigned short)(f * 64 + t);
+        if (us == BLACK) { f ^= 56; t ^= 56; }
+        o += sprintf(o, " %d", f * 64 + t);
+    }
+    *o++ = '\n';
+    if (send(lm_fd, req, (size_t)(o - req), MSG_NOSIGNAL) < 0) { lm_fd = -1; e->state = 0; return; }
+    lm_calls++;
+}
+static unsigned long long lm_waits = 0, lm_wait_us = 0;
+static void lm_early(void) {                                // LmWait=2: the request goes out as the node is entered; the answer is needed only
+    LmEnt *e = lm_slot(P.key);                              // when its quiet moves come up, after the table move, the captures, the null move...
+    if (e->key == P.key && e->state) return;
+    lm_read(0); if (lm_fd < 0) return;
+    Move l[256]; int n = gen(l, 2); if (n) lm_ask(e, l, n);
+}
+static const LmEnt *lm_get(const Move *list, int n) {      // the transformer's scores for this position's quiet moves, if available
+    lm_read(0); if (lm_fd < 0) return 0;
+    LmEnt *e = lm_slot(P.key);
+    if (e->key == P.key && e->state == 2) { lm_hits++; return e; }
+    if (!(e->key == P.key && e->state == 1)) lm_ask(e, list, n);
+    if (par[LM_WAIT] && lm_fd >= 0 && e->key == P.key && e->state == 1) {
+        struct timespec t0, t1; clock_gettime(CLOCK_MONOTONIC, &t0); lm_waits++;
+        while (lm_fd >= 0 && e->key == P.key && e->state == 1) lm_read(1);
+        clock_gettime(CLOCK_MONOTONIC, &t1); lm_wait_us += (unsigned long long)((t1.tv_sec - t0.tv_sec) * 1000000LL + (t1.tv_nsec - t0.tv_nsec) / 1000);
+    }
+    return (lm_fd >= 0 && e->key == P.key && e->state == 2) ? e : 0;
 }
 static void pos_fen(char *o) {
     const char *pcs = "PNBRQKpnbrqk";
@@ -1270,21 +1332,6 @@ static void pos_fen(char *o) {
     else { if (P.castle & 1) *o++ = 'K'; if (P.castle & 2) *o++ = 'Q'; if (P.castle & 4) *o++ = 'k'; if (P.castle & 8) *o++ = 'q'; }
     *o++ = ' '; if (P.ep == NOSQ) *o++ = '-'; else { *o++ = (char)('a' + (P.ep & 7)); *o++ = (char)('1' + (P.ep >> 3)); }
     sprintf(o, " %d 1", P.half);
-}
-static const LmEnt *lm_get(void) {
-    LmEnt *e = &lm_cache[P.key & (((U64)1 << LMC_BITS) - 1)];
-    if (e->key == P.key && e->n) { lm_hits++; return e; }
-    char fen[128], buf[8192]; pos_fen(fen); fprintf(lm_out, "P %s\n", fen); fflush(lm_out); lm_calls++;
-    if (!fgets(buf, sizeof buf, lm_in)) { lm_fd = -1; return 0; }
-    e->key = P.key; e->n = 0; char *q = buf;
-    while (e->n < 96) {
-        while (*q == ' ') q++;
-        if (!*q || *q == '\n' || q[1] == 0 || q[2] == 0 || q[3] == 0) break;
-        int f = (q[0] - 'a') + 8 * (q[1] - '1'), t = (q[2] - 'a') + 8 * (q[3] - '1'); while (*q && *q != ' ') q++;
-        float lp = strtof(q, &q) * 256.0f;
-        e->mv[e->n] = (unsigned short)(f * 64 + t); e->lp[e->n] = (short)(lp < -32000.0f ? -32000.0f : lp); e->n++;
-    }
-    return e->n ? e : 0;
 }
 static void pol_hidden(float *hid) {
     const Acc *A = &accs[hply]; int us = P.side; float h[2 * HMAX];
@@ -1376,7 +1423,7 @@ static Move mp_next(Picker *p) {
         p->n = gen(p->list, 2); p->i = 0;
         if (p->skip_quiets == 2) mp_filter(p);
         if (p->pol && p->lm) {                          // the transformer's view of the quiet moves
-            const LmEnt *e = p->n ? lm_get() : 0;
+            const LmEnt *e = p->n ? lm_get(p->list, p->n) : 0;
             if (e) {
                 int lo = 0; for (int j = 0; j < e->n; j++) if (e->lp[j] < lo) lo = e->lp[j];
                 p->pol_best = -1000000; p->pol_on = 1;
@@ -1573,6 +1620,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
         }
     }
     thr_stack[ply] = par[THR_HIST] ? attacks_by(P.side ^ 1) : 0;
+    if (par[LM_WAIT] == 2 && par[LM_DEPTH] && par[POL_W] && !chk && !excl && depth >= par[LM_DEPTH] && lm_ready()) lm_early();   // ask now, use at the quiet moves
 #ifdef CHECK_THR
     { U64 t = attacks_by(P.side ^ 1); for (int q = 0; q < 64; q++) if (((t >> q) & 1) != (U64)attacked(q, P.side ^ 1)) { printf("attack map disagrees on square %d\n", q); fflush(stdout); abort(); } }
 #endif
@@ -2220,7 +2268,7 @@ int main(int argc, char **argv) {
             }
             use_bonus = 0;
             char ms[8];
-            if (lm_fd >= 0) printf("info string transformer calls %llu, from the table %llu\n", lm_calls, lm_hits);
+            if (lm_fd >= 0) printf("info string transformer requests %llu, answers used %llu, answers too late %llu, waits %llu, waited %llu ms\n", lm_calls, lm_hits, lm_late, lm_waits, lm_wait_us / 1000);
             if (m) { move_str(m, ms); printf("bestmove %s\n", ms); } else printf("bestmove 0000\n");
         } else if (!strncmp(line, "perft", 5)) { printf("perft %llu\n", perft(atoi(line + 6))); }
         else if (!strcmp(line, "eval")) printf("eval %d\n", evaluate());

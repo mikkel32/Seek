@@ -1,0 +1,16 @@
+[04:25:30] transformer L1p steering the quiet moves at the top of the tree, against the search alone
+300000 nodes, LmDepth 0, PolW 0, PolLmr 0 (88s): +0.00 (standard error 0.00, +0.0 of them); 0 positions scored differently
+300000 nodes, LmDepth 8, PolW 2000, PolLmr 1 (2086s): -0.82 (standard error 0.27, -3.0 of them); 1562 positions scored differently
+[05:07:16] transformer L1p steering the quiet moves at the top of the tree (calc/calc_s19M), against the search alone; training paused: Ss+ Sl+ 
+[05:08:19] transformer L1p steering the quiet moves at the top of the tree (calc/calc_s19M), against the search alone; training paused: Tl+ 
+300000 nodes, LmDepth 8, PolW 2000, PolLmr 1, LmWait 0, 22 at once (118s): +0.00 (standard error 0.00, +0.0 of them); 0 positions scored differently
+[05:11:16] transformer L1p steering the quiet moves at the top of the tree (calc/calc_s19M), against the search alone; training paused: Tl+ 
+300000 nodes, LmDepth 8, PolW 2000, PolLmr 1, LmWait 0, 22 at once (141s): +0.00 (standard error 0.00, +0.0 of them); 0 positions scored differently
+[05:14:33] transformer L1p steering the quiet moves at the top of the tree (calc/calc_s19M), against the search alone; training paused: Tl+ 
+[05:22:10] transformer L1p steering the quiet moves at the top of the tree (calc/calc_s19M), against the search alone; training paused: Tl+ 
+300000 nodes, LmDepth 8, PolW 2000, PolLmr 1, LmWait 0, 22 at once (397s): +0.05 (standard error 0.18, +0.3 of them); 526 positions scored differently
+[05:30:14] transformer L1p steering the quiet moves at the top of the tree (calc/calc_s19M), against the search alone; training paused: Tl+ 
+300000 nodes, LmDepth 8, PolW 2000, PolLmr 1, LmWait 0, 4 at once (368s): +0.08 (standard error 0.23, +0.3 of them); 969 positions scored differently
+[05:37:38] transformer L1p steering the quiet moves at the top of the tree (calc/calc_s19M), against the search alone; training paused: Tl+ 
+300000 nodes, LmDepth 8, PolW 2000, PolLmr 1, LmWait 1, 22 at once (2195s): -0.35 (standard error 0.27, -1.3 of them); 1619 positions scored differently
+[06:14:14] finished L1p

@@ -721,3 +721,34 @@ scale). Against the single 300,000-node search on the quality test:
 
 The score of a 150,000-node line is a far better judge of it than any single evaluation of its end position, the
 transformer's included. Static judgment, however good, does not reach play through the ends of deep lines.
+
+**The transformer steering the search** (`calc_s19.c` `LmDepth`, `OURO_SOCK`; `lm/serve.py`; `lm/lmtree_test.sh`;
+`zero/results/vault_lm_tree.log`). At every node with `LmDepth` or more plies left, the transformer's policy scores the quiet
+moves in place of the fast network's policy read-out: `PolW` orders them, `PolLmr` reduces moves far below its favourite
+one ply more and moves close to it one ply less. The request carries the board already in the transformer's frame and the
+quiet moves' indices (`Q <key> <64 codes> <castling> <ep> <n> <indices>`; the engine's `fen` command and a decoding test
+server checked the encoding on 23,377 game positions and 194,393 requested moves; the encoded and the FEN paths agree to
+0.01 logits). Quality test at 300,000 nodes against BIGM's search alone:
+
+| `LmDepth 8, PolW 2000, PolLmr 1` | Against the search alone | Positions with another move |
+|---|---|---|
+| waiting for every answer, first run (FEN link) | −0.82 (0.27) | 1,562 |
+| waiting for every answer, second run (encoded link, the same guidance) | −0.35 (0.27) | 1,619 |
+| not waiting (answers used when the node comes round again), 22 engines | +0.05 (0.18) | 526 |
+| not waiting, 4 engines | +0.08 (0.23) | 969 |
+
+The two waiting runs give the search the same guidance up to the rounding of the scores and still choose another move in
+980 positions (+0.46, standard error 0.22, between them): at this depth any small change moves a tenth of the choices.
+Together they put the steering at roughly −0.35 to −0.8 units at equal nodes, +15 to +30 Elo. Not waiting loses all of
+it: the nodes that decide the last iteration are mostly seen for the first time, and the answer comes after they are done.
+
+The price: about 540 requests per 300,000-node search on test positions (a search takes ~0.1 s on this machine); one call
+costs ~3.9 ms on an idle card at batch 1, whatever the batching. One engine, eight test positions, wall time a search:
+search alone 107 ms; `LmDepth 12` 620 ms (133 calls); `LmDepth 14` 287 ms (45 calls); `LmDepth 8` about 3 s. Doubling the
+time is worth more than the gain at any setting, so the steering does not pay at the clock with this transformer and
+card. It would need calls under ~0.1 ms, or a policy computed on the processor next to the search.
+
+The server was rewritten on the way (one thread around a selector, batches parsed with numpy: ~15,000 answers a second;
+a thread per client managed ~2,000) after three faults that each silently left non-waiting engines without answers:
+the batching thread died on a write to an engine that had quit, file handles of finished engines were never closed, and
+reading and writing through one text wrapper dropped requests that had already arrived.
