@@ -598,3 +598,76 @@ read-out on 64 units a side (+12). Never run: the queen-aware read-out heads (`-
 clipping (`--wclip`), the expert router and attack maps at this scale. `ext/vault_probe.sh` runs them on the current recipe
 (768 wide, 16 king buckets, half labels and half the two teachers, 1.09 billion positions); `calc/train_nnue.py --am`
 adds attack-map inputs to the main trainer (not yet in the engine).
+
+Probes on the current recipe, each one pass over 1.09 billion positions (`zero/results/vault_vault_probe.log`; reference
+`r0`: held-out loss 0.54415, −195 against Stockfish 14.1 at 10,000 nodes each):
+
+| Probe | Held-out loss | Against `r0`, 30,000 nodes, 2,000 games | Against Stockfish 14.1, 10,000 nodes |
+|---|---|---|---|
+| 16 read-out heads: piece count × any queen on the board (`--buckets 16 --obk 1`) | 0.54402 | +8 (−4 to +19) | −185 |
+| 32 heads: piece count × my queen × the opponent's queen (`--buckets 32 --obk 2`) | 0.54397 | **+11 (0 to +22)** | −184 |
+| input weights clipped to ±2 (`--wclip 2`) | 0.54415 | match lost in the log | −205 |
+
+The 32 queen-aware heads cost nothing at run time and go into the next full-scale network. Not yet run at this scale:
+the loss exponent, attack maps, the full layered read-out, product terms, the expert router (the card went to the
+transformer, below).
+
+The engine's integer scale (`zero/results/vault_scale_match.log`, `vault_brain.log`): the engine-against-trainer difference
+falls from 3.1 to 1.1 centipawns with a finer scale, and nothing changes in play: a single scale of 2^9 or 2^8 against
+2^7 is +4 (−3 to +11) each over 4,000 games at 30,000 nodes, a per-unit scale −3 (−10 to +5) for BIGS and −7 (−16 to +1)
+for BIGX. The default stays the single scale (`QUNIT=1` selects per-unit, `QBITS=n` forces one).
+
+## The transformer again: what it knows, and where that knowledge reaches (17 November)
+
+The looped transformer of the first weeks (`model.py`: 64 square tokens, attention biased by the rules' relations between
+squares, one block applied repeatedly, heads for the move, the value and a value for every move) was last trained at 2
+million weights on 15 November. This section scales it up on the Lichess evaluation database and measures where it helps.
+
+**Pipeline.** `lm/prep_lm.sh` / `lm/prep_lm.py`: the database's files -> shards of positions with up to five candidate
+moves and Stockfish's deep win chance for each (171 million positions in nine shards; 45 to 62% of the positions of a
+shard have more than one labelled move). `lm/train_lm.py`: the trainer on the graphics card. Profiling showed the rule
+relations and the 64×64 attention maps to dominate, not the blocks; half-precision attention through PyTorch's own
+attention kernel and a compiled model took training from 6,100 to 14,200 positions per second for the pilot (same best
+move as the plain path in 98.8% of positions). `lm/serve.py`: one transformer on the card for every board of a match
+(requests within a millisecond share a batch). `duo_uci.py`: the two-brain player, a fast search whose root moves get the
+transformer's move probabilities as an additive prior; the transformer's time is charged to the mover's clock.
+
+| Transformer | Weights | Trained on | Held-out best move | ChessBench test positions: best move / blunders / value error |
+|---|---|---|---|---|
+| old (`ckpt/B.pt`) | 2.0M | as of 15 November | | 48.9% / 6.6% |
+| pilot `L1p` | 5.8M | 15 million positions, 18 minutes | 51.6% | 55.3% / 4.0% / 0.044 |
+| `L2` (training) | 14.3M | 171 million positions, about 7 hours on the shared card | 50.4% after 6% of the run | 55.0% / 4.0% after 6% |
+
+**As a prior on the root moves** (`lm/lm_test.sh`, quality test of `ext/quality.py`, BIGM search with and without the
+transformer at the same node budget; thousandths of a point per move, negative = better, about 40 Elo a unit;
+`zero/results/vault_lm_duo.log`):
+
+| Nodes per move | old 2M, prior 8 (cap 40) | pilot, prior 8 (cap 40) | pilot, prior 16 (cap 80) |
+|---|---|---|---|
+| 30,000 | −1.44 (0.50) | −2.05 (0.53) | **−2.53 (0.50)** |
+| 100,000 | | −0.87 (0.36) | −0.70 (0.40) |
+| 300,000 | −0.31 (0.28) | −0.30 (0.28) | +0.29 (0.30) |
+
+At the clock (`lm/duo_clock.sh`, `zero/results/vault_clock.log`): BIGS with the pilot as root prior, 1,000 games at 10+0.1
+against Stockfish 14.1: 30-602-368, **−122 (−135 to −109)**; BIGS alone, the same evening: −111 (−123 to −98). The
+transformer took a median 20 ms a move on a card it shared with a training run. A prior on the root is worth about 100
+Elo to a 30,000-node search and nothing at playing depth, and a better transformer did not change the deep figure: a
+search of 300,000 nodes already knows what the transformer knows about the root's moves.
+
+**What it knows, without search** (`ext/brain_lm.py`, the same questions as `ext/brain_metric.py`: on 29,848 positions with
+Stockfish's two-line 4,000,000-node analysis, which of the two moves is better; 10,334 of them with a clear difference):
+
+| Evaluator | Clear cases chosen right | Score given away (thousandths) | Fit of the position's own value |
+|---|---|---|---|
+| BIGS, static | 70.90% | 15.72 | 0.01785 |
+| Stockfish 14.1's network, static | 71.57% | 15.29 | 0.01511 |
+| BIGS, captures played out | 74.70% | 11.96 | 0.01186 |
+| Stockfish 14.1's network, captures played out | 74.78% | 11.90 | 0.01004 |
+| pilot transformer, move probabilities | **76.55%** | 11.42 | |
+| pilot transformer, its value for every move | 76.23% | 11.49 | |
+| pilot transformer, value of the two positions | 76.08% | **11.11** | 0.01303 |
+
+An 18-minute pilot already tells the better of two moves more often than Stockfish 14.1's network does after its
+captures are played out. Its judgment is above anything the fast evaluator has been taught from (its teachers were
+BIGX and Stockfish's network), and it is only ever asked at the root. The work from here is to get that judgment into
+the leaves.

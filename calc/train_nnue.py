@@ -61,6 +61,12 @@ ap.add_argument('--am', default='')                      # attack-map inputs com
                                                          # first piece): all = 12 kinds, class = pawn / knight+bishop / rook / queen / king per side, colour = one map
                                                          # per side, slide, nonslide, pawn. Not king-bucketed; added into the same hidden layer.
 ap.add_argument('--amk', type=int, default=0)            # the attack maps feed only the first amk hidden units of each side (0 = all; the engine pays per unit fed)
+ap.add_argument('--sib', default='')                     # sibling families: shards of the transformer's data (lm/prep_lm.py prefixes, comma separated): positions with several
+                                                         # candidate moves, each with Stockfish's deep win chance. The network scores the positions after the quiet candidates and
+                                                         # is trained on which of two siblings is better and by how much -- the question the search asks of it
+ap.add_argument('--sibw', type=float, default=1.0)       # weight of the pair loss: log-loss of sigmoid(z_a - z_b) against sigmoid(t_a - t_b), logits of the two siblings
+ap.add_argument('--sibp', type=float, default=0.0)       # weight of the plain loss on the same sibling positions (each against its own deep win chance)
+ap.add_argument('--sibn', type=int, default=4096)        # families a step
 ap.add_argument('--tscale', type=float, default=0.277)   # our units per Stockfish internal unit (361 of its units = 100 of ours)
 a = ap.parse_args()
 torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
@@ -520,6 +526,52 @@ def unpack(c):
     return torch.where(sq < 64, code * 64 + sq, torch.tensor(768, device=c.device, dtype=torch.int16))
 
 
+SIBLOG = [0.0, 0.0, 0.0, 0]
+if a.sib:
+    _sb = [tuple(np.load(f'{p_}_{k_}.npy', mmap_mode='r') for k_ in 'bvw') for p_ in a.sib.split(',')]
+    _SWAP = torch.tensor([0, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6], device=DEV); _S64 = torch.arange(64, device=DEV); _TRI = torch.triu(torch.ones(5, 5, dtype=torch.bool, device=DEV), 1)
+    SIB_HOLD = 200_000                                       # the last rows of the last shard are never trained on
+
+    def sib_rows(fi, s, n):
+        """rows s..s+n of a shard -> the positions after the quiet candidate moves as feature numbers (n, 5, 32), seen by the
+        side then to move; the first mover's win chance after each move (n, 5); which candidates are used (n, 5).
+        Boards: square 0 = the mover's a1; 0 empty, 1-6 the mover's P N B R Q K, 7-12 the opponent's. Moves: from x 64 + to
+        (castling = the king's two-square move; 4096 and up are under-promotions, not used here)."""
+        B_, V_, W_ = _sb[fi]
+        pk = torch.from_numpy(np.ascontiguousarray(B_[s:s + n])).to(DEV).long(); mv = torch.from_numpy(np.ascontiguousarray(V_[s:s + n])).to(DEV).long()
+        w = torch.from_numpy(np.ascontiguousarray(W_[s:s + n]).astype(np.float32)).to(DEV)
+        bd = torch.stack([pk & 15, pk >> 4], 2).reshape(n, 64); m = mv.clamp(0, 4095); fr = m // 64; to = m % 64
+        pc = bd.gather(1, fr); tg = bd.gather(1, to)
+        ok = (mv >= 0) & (mv < 4096) & (tg == 0) & ~((pc == 1) & (((fr % 8) != (to % 8)) | (to >= 56)))     # no captures (en passant included), no promotions
+        cb = bd[:, None, :].repeat(1, 5, 1); cb.scatter_(2, fr[:, :, None], 0); cb.scatter_(2, to[:, :, None], pc[:, :, None])
+        for kto, rf, rt in ((6, 7, 5), (2, 0, 3)):                                                          # castling: the rook moves too
+            c_ = (pc == 6) & (fr == 4) & (to == kto)
+            cb[:, :, rf] = torch.where(c_, torch.zeros_like(pc), cb[:, :, rf]); cb[:, :, rt] = torch.where(c_, torch.full_like(pc, 4), cb[:, :, rt])
+        f = torch.where(cb > 0, (_SWAP[cb] - 1) * 64 + (_S64 ^ 56), torch.full_like(cb, 768)).sort(2).values[:, :, :32]
+        return f, w, ok
+
+    def sib_terms(m_, f, w, ok):
+        """-> pair loss, plain loss, share of clearly different pairs ranked right, number of pairs"""
+        z = torch.zeros(ok.shape, device=DEV); z[ok] = -m_(f[ok]).float()                                   # a child is scored from the other side
+        t = torch.logit(w.clamp(0.02, 0.98)); pm = ok[:, :, None] & ok[:, None, :] & _TRI
+        dz = (z[:, :, None] - z[:, None, :])[pm]; dt = (t[:, :, None] - t[:, None, :])[pm]; dw = (w[:, :, None] - w[:, None, :])[pm]
+        clear = dw.abs() >= 0.04
+        return (F.binary_cross_entropy_with_logits(dz, torch.sigmoid(dt)), F.binary_cross_entropy_with_logits(z[ok], w[ok]),
+                ((dz[clear] > 0) == (dw[clear] > 0)).float().mean(), int(pm.sum()))
+
+    def sib_step():
+        fi = rs.randint(len(_sb)); last = len(_sb[fi][0]) - a.sibn - (SIB_HOLD if fi == len(_sb) - 1 else 0)
+        return sib_terms(fwd, *sib_rows(fi, rs.randint(0, last), a.sibn))
+
+    @torch.no_grad()
+    def sib_validate(m_=None):
+        fi = len(_sb) - 1; n0 = len(_sb[fi][0]) - SIB_HOLD; acc = [0.0, 0.0, 0.0, 0]
+        for s_ in range(n0, n0 + SIB_HOLD, 20_000):
+            pl, pt, ch, npair = sib_terms(m_ or net, *sib_rows(fi, s_, 20_000))
+            acc = [acc[0] + float(pl) * npair, acc[1] + float(pt) * npair, acc[2] + float(ch) * npair, acc[3] + npair]
+        return f'held-out sibling pairs {acc[3]}: pair loss {acc[0] / acc[3]:.5f}, plain loss {acc[1] / acc[3]:.5f}, clearly different pairs ranked right {100 * acc[2] / acc[3]:.2f}%'
+    print('start ' + sib_validate(), flush=True)
+
 AUXLOG = {}
 done = False
 assert not (a.mirror > 0 and a.aux > 0), 'the foresight targets are not mirrored'
@@ -555,6 +607,10 @@ while not done:
                     with torch.no_grad():
                         ly = torch.logit(yb.clamp(1 / 510, 1 - 1 / 510)); yb = torch.sigmoid(ly + a.extrap * (ly - REF(xb)))
                 loss = (torch.sigmoid(fwd(xb)) - yb).abs().pow(a.pow).mean() if a.pow > 0 else F.binary_cross_entropy_with_logits(fwd(xb), yb); run_main = loss.detach()
+            if a.sib:
+                sl_pair, sl_point, sl_right, _ = sib_step()
+                loss = loss + a.sibw * sl_pair + a.sibp * sl_point
+                SIBLOG = [SIBLOG[0] + sl_pair.detach(), SIBLOG[1] + sl_point.detach(), SIBLOG[2] + sl_right, SIBLOG[3] + 1]
             opt.zero_grad(set_to_none=True)
             if matopt is not None:
                 net.E.grad = None
@@ -574,8 +630,9 @@ while not done:
             step += 1; seen += a.bs; run = run + run_main; nrun += 1          # the loss stays on the GPU until it is printed: no wait every step
             if step % 500 == 0:
                 print(f'step {step}/{steps_total} seen {seen/1e6:.1f}M loss {float(run)/nrun:.5f} {seen/(time.time()-t0)/1e3:.0f}k pos/s'
-                      + ('  foresight ' + ' '.join(f'{k_} {v_:.3f}' for k_, v_ in AUXLOG.items()) if AUXLOG else ''), flush=True)
-                run = 0.0; nrun = 0
+                      + ('  foresight ' + ' '.join(f'{k_} {v_:.3f}' for k_, v_ in AUXLOG.items()) if AUXLOG else '')
+                      + (f'  siblings: pair {float(SIBLOG[0]) / SIBLOG[3]:.5f} plain {float(SIBLOG[1]) / SIBLOG[3]:.5f} right {100 * float(SIBLOG[2]) / SIBLOG[3]:.1f}%' if a.sib else ''), flush=True)
+                run = 0.0; nrun = 0; SIBLOG = [0.0, 0.0, 0.0, 0]
             if step >= steps_total or time.time() - t0 > a.minutes * 60:
                 done = True; break
         if done:
@@ -587,3 +644,5 @@ while not done:
 if ema is not None:
     torch.save({k_: v_.cpu() for k_, v_ in ema.state_dict().items()}, a.out + '.ema.pt')
 print(f'done: steps {step}, val (log-loss, MAE) raw {validate()} averaged {validate(ema) if ema is not None else None}, {time.time()-t0:.0f}s -> {a.out}', flush=True)
+if a.sib:
+    print('end ' + sib_validate(ema or net), flush=True)

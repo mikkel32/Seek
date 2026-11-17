@@ -1,4 +1,5 @@
 [22:09:20] BIGS against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 34, "d": 624, "l": 342, "score": 0.346, "elo": -110.6, "lo": -123.4, "hi": -98.1, "avg_plies": 152.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 24.8}
 [22:34:38] BIGM against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 26, "d": 590, "l": 384, "score": 0.321, "elo": -130.1, "lo": -143.4, "hi": -117.2, "avg_plies": 151.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 25.3}
 [22:34:38] finished
-
+[03:27:58] BIGS + transformer L1p as root prior (8 per unit, cap 40) against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 30, "d": 602, "l": 368, "score": 0.331, "elo": -122.2, "lo": -135.4, "hi": -109.4, "avg_plies": 149.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 25.3}
+[03:27:58] finished duo clock L1p
