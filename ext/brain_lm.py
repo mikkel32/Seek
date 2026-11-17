@@ -55,3 +55,14 @@ vp = [min(1 - 1e-6, max(1e-6, r[2])) for r in rp]; lg = [math.log(x / (1 - x)) f
 raw = sum((x - y) ** 2 for x, y in zip(vp, tw)) / n
 best = min((sum((1 / (1 + math.exp(-a * x)) - y) ** 2 for x, y in zip(lg, tw)) / n, a) for a in (0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.25, 1.4, 1.6, 1.8, 2.0, 2.3))
 print(f'fit {raw:.5f} as it comes, {best[0]:.5f} at its best scale ({best[1]} x its own logit)')
+if os.environ.get('QUIET_BY'):                               # QUIET_BY="<engine command with network>": split as ext/brain_quiet.py does
+    import brain_metric as BM
+    f1 = [b.fen() for b in kids[0]]; f2 = [b.fen() for b in kids[1]]; ev = []
+    for qv in ('', '1'):
+        os.environ['QEVAL'] = qv; v = BM.evals(os.environ['QUIET_BY'], '', '', f1 + f2); ev.append((v[:n], v[n:]))
+    quiet = [i for i in range(n) if ev[0][0][i] == ev[1][0][i] and ev[0][1][i] == ev[1][1][i]]; rest = sorted(set(range(n)) - set(quiet))
+    for nm, pref in (('policy', pol), ('move values', mv), ('value of the children', [sgn(b[2] - a[2]) for a, b in zip(r1, r2)])):
+        line = f'{nm:22s}'
+        for lab, idx in (('quiet pairs', quiet), ('the rest', rest)):
+            cl = [i for i in idx if crit[i]]; line += f'  {lab} ({len(cl)} clear): {100 * sum(0.5 + 0.5 * pref[i] for i in cl) / len(cl):5.2f}%'
+        print(line, flush=True)

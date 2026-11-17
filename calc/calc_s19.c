@@ -1011,13 +1011,13 @@ static void tt_alloc(int mb) { U64 n = 1; while (n * 2 * sizeof(TTE) <= (U64)mb 
 
 // ------------------------------------------------------------------ search
 // search parameters (hand-set defaults; tunable through UCI options so the engine can tune them by playing itself)
-#define NPAR 60
-enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3, SEL, SEL_A, SEL_B, OFF };
-static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3", "Sel", "SelA", "SelB", "Off"};
+#define NPAR 61
+enum { RAZOR, RFP, NMP_BASE, NMP_DIV, NMP_EV, LMP_BASE, FUT_BASE, FUT_MUL, HIST_PRUNE, SEE_Q, SEE_C, SE_DEPTH, SE_MUL, ASP, DELTA_Q, LMR_BASE, LMR_DIV, HB_QUAD, HB_LIN, HB_MAX, PROBCUT, SE_DOUBLE, CUT_LMR, CUT_IIR, NEG_EXT, TTCAP_LMR, LMR_HIST, CAP_LMR, DEEPER, NP_CORR, CHK_EXT, VOL_MIX, VOL_REF, VOL_LMR, VOL_NMP, CONT_CORR, NMP_TT, PV_PRUNE, THR_HIST, VOL_TM, ROOT_LMR, ROOT_ORD, POL_W, POL_DEPTH, POL_LMR, TT_BUCKET, MM_CORR, THR_RFP, THR_LMR, LMR_PRUNE, LMP_DEPTH, NMP_MARGIN, EVAL_SCALE, HIST_V2, PRUNE_V2, SEARCH_V3, SEL, SEL_A, SEL_B, OFF, LM_DEPTH };
+static const char *par_name[NPAR] = {"Razor", "Rfp", "NmpBase", "NmpDiv", "NmpEv", "LmpBase", "FutBase", "FutMul", "HistPrune", "SeeQ", "SeeC", "SeDepth", "SeMul", "Asp", "DeltaQ", "LmrBase", "LmrDiv", "HbQuad", "HbLin", "HbMax", "ProbCut", "SeDouble", "CutLmr", "CutIir", "NegExt", "TtCapLmr", "LmrHist", "CapLmr", "Deeper", "NpCorr", "ChkExt", "VolMix", "VolRef", "VolLmr", "VolNmp", "ContCorr", "NmpTt", "PvPrune", "ThrHist", "VolTm", "RootLmr", "RootOrd", "PolW", "PolDepth", "PolLmr", "TtBucket", "MmCorr", "ThrRfp", "ThrLmr", "LmrPrune", "LmpDepth", "NmpMargin", "EvalScale", "HistV2", "PruneV2", "SearchV3", "Sel", "SelA", "SelB", "Off", "LmDepth"};
 // search parameters the engine tuned for itself: 20,000 self-play iterations (zero/spsa.py). Against the hand-set values
 // (250, 70, 3, 4, 200, 3, 90, 85, 4000, 50, 90, 7, 2, 25, 200, 75, 225, 4, 20, 1200) they scored +50 Elo at 2,500 nodes
 // and +37 at 10,000 nodes over 2,000 games each.
-static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0, 0, 250, 100, 0};
+static int par[NPAR] = {293, 53, 3, 4, 191, 6, 89, 94, 4245, 48, 92, 7, 2, 33, 190, 68, 240, 5, 33, 1322, 0, 0, 0, 0, 0, 0, 8192, 1, 1, 1, 1, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0, 100, 0, 0, 0, 0, 250, 100, 0, 0};
 // PruneV2 (bit flags, 0 = off): 1 = a late quiet move whose two continuation histories are both negative is skipped when
 // its reduced depth is under 5; 2 = quiet futility counts the reduced depth and the move's history; 4 = a quiet table move
 // that cuts off straight from the table is rewarded in the histories; 8 = one ply less reduction when the parent node is
@@ -1235,6 +1235,57 @@ static inline float fdot(const float *a, const float *b, int n) {
     return out;
 }
 // the read-out's hidden units for the position on the board (its evaluation sums must be in place)
+// ------------------------------------------------------------------ the transformer at the top of the tree
+// LmDepth=d (and the environment variable OURO_SOCK = the socket of lm/serve.py): at nodes with d or more plies left, the
+// quiet moves are scored by the transformer's log-probabilities (x256) in place of the read-out's (the same use as the
+// policy read-out: PolW orders them, PolLmr shifts their reductions). One call per position, kept in a table by key.
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
+static int lm_fd = -2; static FILE *lm_in = 0, *lm_out = 0; static unsigned long long lm_calls = 0, lm_hits = 0;
+#define LMC_BITS 15
+typedef struct { U64 key; unsigned short n, mv[96]; short lp[96]; } LmEnt;
+static LmEnt *lm_cache = 0;
+static int lm_ready(void) {
+    if (lm_fd == -2) {
+        lm_fd = -1; const char *path = getenv("OURO_SOCK");
+        if (path && *path) {
+            int fd = socket(AF_UNIX, SOCK_STREAM, 0); struct sockaddr_un a; memset(&a, 0, sizeof a); a.sun_family = AF_UNIX; strncpy(a.sun_path, path, sizeof a.sun_path - 1);
+            if (fd >= 0 && connect(fd, (struct sockaddr *)&a, sizeof a) == 0) { lm_fd = fd; lm_in = fdopen(fd, "r"); lm_out = fdopen(dup(fd), "w"); lm_cache = calloc((size_t)1 << LMC_BITS, sizeof(LmEnt)); }
+            else { if (fd >= 0) close(fd); fprintf(stderr, "cannot reach the transformer at %s\n", path); }
+        }
+    }
+    return lm_fd >= 0;
+}
+static void pos_fen(char *o) {
+    const char *pcs = "PNBRQKpnbrqk";
+    for (int r = 7; r >= 0; r--) {
+        int emp = 0;
+        for (int f = 0; f < 8; f++) { int pc = P.sq[r * 8 + f]; if (pc == EMPTY) emp++; else { if (emp) *o++ = (char)('0' + emp); emp = 0; *o++ = pcs[pc]; } }
+        if (emp) *o++ = (char)('0' + emp);
+        if (r) *o++ = '/';
+    }
+    *o++ = ' '; *o++ = P.side == WHITE ? 'w' : 'b'; *o++ = ' ';
+    if (!P.castle) *o++ = '-';
+    else { if (P.castle & 1) *o++ = 'K'; if (P.castle & 2) *o++ = 'Q'; if (P.castle & 4) *o++ = 'k'; if (P.castle & 8) *o++ = 'q'; }
+    *o++ = ' '; if (P.ep == NOSQ) *o++ = '-'; else { *o++ = (char)('a' + (P.ep & 7)); *o++ = (char)('1' + (P.ep >> 3)); }
+    sprintf(o, " %d 1", P.half);
+}
+static const LmEnt *lm_get(void) {
+    LmEnt *e = &lm_cache[P.key & (((U64)1 << LMC_BITS) - 1)];
+    if (e->key == P.key && e->n) { lm_hits++; return e; }
+    char fen[128], buf[8192]; pos_fen(fen); fprintf(lm_out, "P %s\n", fen); fflush(lm_out); lm_calls++;
+    if (!fgets(buf, sizeof buf, lm_in)) { lm_fd = -1; return 0; }
+    e->key = P.key; e->n = 0; char *q = buf;
+    while (e->n < 96) {
+        while (*q == ' ') q++;
+        if (!*q || *q == '\n' || q[1] == 0 || q[2] == 0 || q[3] == 0) break;
+        int f = (q[0] - 'a') + 8 * (q[1] - '1'), t = (q[2] - 'a') + 8 * (q[3] - '1'); while (*q && *q != ' ') q++;
+        float lp = strtof(q, &q) * 256.0f;
+        e->mv[e->n] = (unsigned short)(f * 64 + t); e->lp[e->n] = (short)(lp < -32000.0f ? -32000.0f : lp); e->n++;
+    }
+    return e->n ? e : 0;
+}
 static void pol_hidden(float *hid) {
     const Acc *A = &accs[hply]; int us = P.side; float h[2 * HMAX];
     for (int v = 0; v < 2; v++) {
@@ -1269,12 +1320,12 @@ typedef struct {
     Move list[256], bad[96], ttm; int sc[256], bsc[96], bsee[96];
     int n, i, nbad, stage, ply, caps_only, skip_quiets;   // skip_quiets: 1 = no more quiet moves, 2 = only those that give check
     int filt, ci_ok; U64 cs[6], dc;            // quiet list already cut down to checks; squares each piece type checks from, pieces that may uncover a check
-    int pl[256], pol, pol_on, pol_best, pol_now;   // the read-out's score of each quiet move (x256), whether to use it at this node, the best and the current move's
+    int pl[256], pol, pol_on, pol_best, pol_now, lm;   // lm: the scores come from the transformer (lm_get) instead; the read-out's score of each quiet move (x256), whether to use it at this node, the best and the current move's
     int hist, bad_now, see_now;                // about the move just returned: its history score (quiet moves), is it a losing capture, its exchange value
 } Picker;
 static inline void mp_init(Picker *p, Move ttm, int ply, int caps_only) {
     p->ttm = pseudo_legal(ttm) ? ttm : 0; p->stage = p->ttm ? ST_TT : ST_GENCAP; p->ply = ply; p->caps_only = caps_only;
-    p->n = p->i = p->nbad = p->skip_quiets = 0; p->pol = p->pol_on = 0; p->filt = p->ci_ok = 0;
+    p->n = p->i = p->nbad = p->skip_quiets = 0; p->pol = p->pol_on = p->lm = 0; p->filt = p->ci_ok = 0;
 #ifdef CHECK_PL
     { Move l[256]; int n = gen(l, 0), in = 0; for (int k = 0; k < n; k++) in |= l[k] == ttm; if (ttm && in != (p->ttm != 0)) { printf("pseudo_legal disagrees with the generator: move %d\n", ttm); fflush(stdout); abort(); } }
 #endif
@@ -1324,7 +1375,18 @@ static Move mp_next(Picker *p) {
         if (p->skip_quiets == 1) { p->stage = ST_BAD; p->i = 0; break; }
         p->n = gen(p->list, 2); p->i = 0;
         if (p->skip_quiets == 2) mp_filter(p);
-        if (p->pol) {                                   // which quiet moves would a search choose here? (only at nodes with depth left for it to matter)
+        if (p->pol && p->lm) {                          // the transformer's view of the quiet moves
+            const LmEnt *e = p->n ? lm_get() : 0;
+            if (e) {
+                int lo = 0; for (int j = 0; j < e->n; j++) if (e->lp[j] < lo) lo = e->lp[j];
+                p->pol_best = -1000000; p->pol_on = 1;
+                for (int k = 0; k < p->n; k++) {
+                    int key = FROM(p->list[k]) * 64 + TO(p->list[k]), v = lo - 256;     // a move it was not asked about counts as below all it was
+                    for (int j = 0; j < e->n; j++) if (e->mv[j] == key) { v = e->lp[j]; break; }
+                    p->pl[k] = v; if (v > p->pol_best) p->pol_best = v;
+                }
+            }
+        } else if (p->pol) {                            // which quiet moves would a search choose here? (only at nodes with depth left for it to matter)
             float hid[PHMAX], val[448]; unsigned char got[448]; memset(got, 0, sizeof got); pol_hidden(hid);
             int us = P.side; p->pol_best = -1000000; p->pol_on = 1;
             for (int k = 0; k < p->n; k++) {
@@ -1585,6 +1647,7 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
     U64 ls_thr = 0; int ls_thr_ok = 0;                                     // the opponent's attack map, worked out once per node when the judgment model needs it
     Picker mp; mp_init(&mp, ttm, ply, 0);
     mp.pol = have_pol && par[POL_W] && !chk && depth >= par[POL_DEPTH];
+    if (par[LM_DEPTH] && par[POL_W] && !chk && depth >= par[LM_DEPTH] && lm_ready()) mp.pol = mp.lm = 1;
     int is_capture_tt = mp.ttm && is_capture(mp.ttm);
     while ((m = mp_next(&mp))) {
         if (m == excl) continue;
@@ -2062,7 +2125,8 @@ int main(int argc, char **argv) {
 #endif
     set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     if (argc > 1 && !strcmp(argv[1], "mob")) { eval_mode = 1; int unit[5] = {100, 100, 100, 100, 100}; set_piece_values(unit); }
-    else if (argc > 1) load_net(argv[1]);
+    else if (argc > 1 && !load_net(argv[1])) {          // never fall back silently to the built-in evaluation: a wrong figure looks like a weak network
+        fprintf(stderr, "cannot load network %s (missing, unknown format, or wider than this build's HMAX %d)\n", argv[1], HMAX); return 1; }
     if (argc > 6 && !strcmp(argv[2], "selfplay")) {       // calc <weights|mob> selfplay <out> <games> <nodes> <seed> [adjudicate] [tree positions per move] [1 = also write <out>.o for the transformer]
         selfplay(argv[3], atoi(argv[4]), atoi(argv[5]), strtoull(argv[6], 0, 10), argc > 7 ? atoi(argv[7]) : 1, argc > 8 ? atoi(argv[8]) : 0, argc > 9 ? atoi(argv[9]) : 0);
         return 0;
@@ -2156,9 +2220,11 @@ int main(int argc, char **argv) {
             }
             use_bonus = 0;
             char ms[8];
+            if (lm_fd >= 0) printf("info string transformer calls %llu, from the table %llu\n", lm_calls, lm_hits);
             if (m) { move_str(m, ms); printf("bestmove %s\n", ms); } else printf("bestmove 0000\n");
         } else if (!strncmp(line, "perft", 5)) { printf("perft %llu\n", perft(atoi(line + 6))); }
         else if (!strcmp(line, "eval")) printf("eval %d\n", evaluate());
+        else if (!strcmp(line, "fen")) { char f_[128]; pos_fen(f_); printf("fen %s\n", f_); }       // the position as the transformer is sent it
         else if (!strcmp(line, "qeval")) { nodes = 0; stop_flag = 0; node_limit = 0; hard_ms_limit = time_ms_limit = 0; printf("eval %d\n", qsearch(-INF, INF, 0)); }   // the value after captures are played out, as a search leaf returns it
         else if (!strcmp(line, "pol")) {                 // the read-out's scores for the quiet moves of the current position
             if (have_pol && !in_check()) { evaluate(); Picker q; mp_init(&q, 0, 0, 0); q.pol = 1; Move m; char ms[8]; while ((m = mp_next(&q))) if (q.pol_on && !is_capture(m) && !PROMO(m)) { move_str(m, ms); printf("pol %s %d\n", ms, q.pol_now); } }

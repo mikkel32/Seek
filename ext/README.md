@@ -671,3 +671,53 @@ An 18-minute pilot already tells the better of two moves more often than Stockfi
 captures are played out. Its judgment is above anything the fast evaluator has been taught from (its teachers were
 BIGX and Stockfish's network), and it is only ever asked at the root. The work from here is to get that judgment into
 the leaves.
+
+**Where the transformer's edge is** (`ext/brain_quiet.py`, `ext/brain_lm.py` with `QUIET_BY`): the pairs are split by whether
+playing out the captures changes BIGS's score of either position. Where it does not, the value a search gets from the leaf
+is the evaluator's own judgment; where it does, the capture search has a say. Choice in the clear cases:
+
+| Evaluator | Quiet pairs (5,939 clear) | The rest (6,595 clear), captures played out |
+|---|---|---|
+| BIGS | 73.20% | 76.01% |
+| Stockfish 14.1's network | 71.98% | 75.75% |
+| pilot transformer, move probabilities | **76.02%** | 76.66% |
+| pilot transformer, value of the two positions | **75.60%** | 76.37% |
+
+Where captures decide, the capture search brings the fast network level with the transformer. In quiet positions the
+transformer is 2.4 to 2.8 points ahead of BIGS and 3.6 to 4 ahead of Stockfish's network, and that is where a search
+leaf is nothing but the evaluator's judgment.
+
+**Teaching the fast network to rank siblings** (`calc/train_nnue.py --sib`, `ext/sib_probe.sh`, `zero/results/vault_sib_probe.log`):
+the database holds, for 45 to 62% of its positions, several candidate moves with Stockfish's win chance for each. The
+sibling loss scores the positions after the quiet candidates and trains the network on which of two is better and by how
+much. BIGS trained on for one pass over 192 million positions of its own recipe, with and without it:
+
+| Fine-tune of BIGS | Held-out loss | Held-out sibling pairs ranked right | Quality-test pairs, static | ... captures played out |
+|---|---|---|---|---|
+| control (`c0`) | 0.54339 | | 70.68% | 74.81% |
+| sibling pairs (`s1`) | 0.54485 | 71.27% -> 73.10% | 71.25% | 74.68% |
+| sibling pairs and their plain values (`s2`) | 0.54435 | 71.27% -> 73.34% | 70.73% | 74.01% |
+
+The network learns the database's sibling pairs and none of it carries over to Stockfish's deep two-line analysis. The
+transformer, taught from the same labels, does carry it over: what is missing in the fast network is the means to see
+it (the relations between pieces the transformer's attention reads directly), not the teaching signal. BIGX, twice as
+wide, chooses 70.73% statically (`calc/calc_s19x`), the same as BIGS: width does not buy it either.
+
+The engine no longer falls back to its built-in evaluation when the network named on its command line cannot be loaded
+(a file wider than the build's `HMAX`, for example): it stops with a message. A static test of BIGX with the default build
+had quietly measured the built-in evaluation instead (60.4%).
+
+**The transformer judging the ends of the main lines** (`duo_uci.py` `TwoLines=1`, `lm/leaf_test.sh`,
+`zero/results/vault_lm_leaf.log`): half the nodes find the best move and its line; that move is held back and the other
+half find the runner-up and its line; the transformer values the position at the end of each line, and the move is
+chosen by a mix of the search score and the transformer's value (both as logits of the win chance at their best-fitting
+scale). Against the single 300,000-node search on the quality test:
+
+| 300,000 nodes in all | Against the single search | Against the control |
+|---|---|---|
+| control: the two searches, chosen by score alone | +1.75 (0.30) | |
+| half search score, half transformer | +2.28 (0.33) | +0.54 (0.31) |
+| transformer alone | +8.03 (0.50) | +6.28 (0.51) |
+
+The score of a 150,000-node line is a far better judge of it than any single evaluation of its end position, the
+transformer's included. Static judgment, however good, does not reach play through the ends of deep lines.
