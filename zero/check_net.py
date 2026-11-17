@@ -49,6 +49,9 @@ def ev(b):
     hm = lambda f: f ^ 7 if MIR and (int(f[(f >= 320) & (f < 384)][0]) & 7) < 4 else f      # mirrored inputs: the view's own king on files a-d flips the files
     co = (w['b'] + w['E'][kbf(hm(o))].sum(0)).clip(0, 1); cp = (w['b'] + w['E'][kbf(hm(p))].sum(0)).clip(0, 1)
     bk = min(nb - 1, (len(o) - 2) // 4)
+    if nb in (16, 32):                       # the queens join the key (own queen: piece code 4, the opponent's: 10, in the mover's view)
+        pcb = min(7, (len(o) - 2) // 4); mq = int(any(256 <= f < 320 for f in o)); oq = int(any(640 <= f < 704 for f in o))
+        bk = pcb * 2 + int(mq or oq) if nb == 16 else pcb * 4 + mq * 2 + oq
     lin = w['c'] + w['S'][o].sum(0); ph = min(1.0, PT_W[o].sum() / 24)
     out = ph * lin[0] + (1 - ph) * lin[1] + w['cb'][bk] + (co ** 2) @ w['wo'][bk] + (cp ** 2) @ w['wp'][bk]
     pr = 0.0

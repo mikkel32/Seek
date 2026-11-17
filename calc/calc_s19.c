@@ -490,7 +490,10 @@ static void quantize_net(void) {
         QU[i] = (unsigned char)q;
     }
     q_bits = 10; while (q_bits > 4 && worst * (float)(1 << q_bits) > 32000.0f) q_bits--;
-    if (getenv("QBITS")) { int f = atoi(getenv("QBITS")); if (f > 0) { q_bits = f; for (int i = 0; i < NH; i++) QU[i] = (unsigned char)f; } else for (int i = 0; i < NH; i++) QU[i] = (unsigned char)q_bits; }   // QBITS=n: one scale for all (n = 0: the old single worst-case scale)
+    // Default: the single scale set by the worst unit (the standing behaviour; measured level with the finer ones in play).
+    // QUNIT=1: every unit its own finest scale. QBITS=n: one scale 2^-n for all (sums wrap; only safe while no unit's final sum leaves 16 bits).
+    if (getenv("QBITS") && atoi(getenv("QBITS")) > 0) { q_bits = atoi(getenv("QBITS")); for (int i = 0; i < NH; i++) QU[i] = (unsigned char)q_bits; }
+    else if (!getenv("QUNIT")) for (int i = 0; i < NH; i++) QU[i] = (unsigned char)q_bits;
     for (int i = 0; i < HMAX + 16; i++) { int q = i < NH ? QU[i] : q_bits; QU_ONE[i] = (short)(1 << q); QU_MUL[i] = (short)(1 << (15 - q)); }
     for (int i = 0; i < NH; i++) hist_q[QU[i]]++;
     if (getenv("QINFO")) { printf("info string integer scale per unit:"); for (int q = 4; q <= 10; q++) if (hist_q[q]) printf(" %d units with %d steps,", hist_q[q], 1 << q); printf(" worst bound %.1f\n", worst); }

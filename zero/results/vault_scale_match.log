@@ -1,0 +1,4 @@
+[00:56:24] BIGS, per-unit integer scale against the single scale, 30,000 nodes: {"opponent": "BIGS old scale", "tc": "30000 positions per move", "n": 4000, "w": 949, "d": 2069, "l": 982, "score": 0.4959, "elo": -2.9, "lo": -10.3, "hi": 4.6, "avg_plies": 142.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.9}
+[01:05:03] BIGX, per-unit integer scale against the single scale, 30,000 nodes: {"opponent": "BIGX old scale", "tc": "30000 positions per move", "n": 3000, "w": 685, "d": 1568, "l": 747, "score": 0.4897, "elo": -7.2, "lo": -15.8, "hi": 1.4, "avg_plies": 148.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 8.7}
+[01:05:03] finished
+

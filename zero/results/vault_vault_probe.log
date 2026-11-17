@@ -1,0 +1,18 @@
+[00:58:44] r0 (): held-out loss 0.5441492199897766, mean error 0.05850815773010254; 1207s, 911k pos/s
+[00:58:51]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 13.13 centipawns, mean 2.090; evaluations range -2131 to 1956, the product terms
+[00:58:53]   speed: depth 13: 2,143,108 positions in 1.92s = 1117k per second; signature 6990d12570
+[01:05:56]   r0 against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 117, "d": 258, "l": 625, "score": 0.246, "elo": -194.6, "lo": -215.4, "hi": -174.9, "avg_plies": 136.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
+[01:05:56] probes finished
+[01:26:24] obk1 (--buckets 16 --obk 1): held-out loss 0.5440245866775513, mean error 0.058342620730400085; 1228s, 893k pos/s
+[01:26:31]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 581.07 centipawns, mean 95.111; evaluations range -1897 to 2285, the product ter
+[01:26:33]   speed: depth 13: 2,256,885 positions in 1.86s = 1217k per second; signature 4e75067bdd
+[01:30:02]   obk1 against r0, 30,000 positions per move: {"opponent": "r0", "tc": "30000 positions per move", "n": 2000, "w": 117, "d": 213, "l": 1670, "score": 0.1118, "elo": -360.1, "lo": -381.8, "hi": -340.3, "avg_plies": 121.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.2}
+[01:30:45]   obk1 against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 23, "d": 59, "l": 918, "score": 0.0525, "elo": -502.6, "lo": -548.0, "hi": -465.8, "avg_plies": 114.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.7}
+[01:50:57] obk2 (--buckets 32 --obk 2): held-out loss 0.5439710021018982, mean error 0.058252062648534775; 1212s, 905k pos/s
+[01:51:04]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 4.54 centipawns, mean 0.917; evaluations range -2070 to 1749, the product terms 
+[01:51:06]   speed: depth 13: 1,789,215 positions in 1.55s = 1155k per second; signature befaac1502
+[01:52:46]   obk1 against r0, 30,000 positions per move (replayed with bucket support): {"opponent": "r0", "tc": "30000 positions per move", "n": 2000, "w": 554, "d": 936, "l": 510, "score": 0.511, "elo": 7.6, "lo": -3.5, "hi": 18.8, "avg_plies": 146.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[01:53:39]   obk1 against Stockfish 14.1, 10,000 positions per move each (replayed): {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 108, "d": 296, "l": 596, "score": 0.256, "elo": -185.3, "lo": -205.2, "hi": -166.5, "avg_plies": 141.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
+[01:57:40]   obk2 against r0, 30,000 positions per move: {"opponent": "r0", "tc": "30000 positions per move", "n": 2000, "w": 560, "d": 945, "l": 495, "score": 0.5162, "elo": 11.3, "lo": 0.2, "hi": 22.4, "avg_plies": 147.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[01:58:35]   obk2 against Stockfish 14.1, 10,000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 123, "d": 269, "l": 608, "score": 0.2575, "elo": -184.0, "lo": -204.4, "hi": -164.7, "avg_plies": 143.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
+

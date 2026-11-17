@@ -5,7 +5,7 @@
 Works in any chess GUI or tournament manager. Options: Prior (centipawns per unit of OURO log-probability,
 0 = calculator alone), PriorCap. All `go` parameters are passed through to the calculator.
 """
-import subprocess, sys, time
+import os, subprocess, sys, time
 import numpy as np, chess
 from engine import Net
 
@@ -13,7 +13,7 @@ from engine import Net
 def main():
     weights = sys.argv[1] if len(sys.argv) > 1 else 'calc/net256k.bin'
     ckpt = sys.argv[2] if len(sys.argv) > 2 else 'ckpt/B.pt'
-    calc = subprocess.Popen(['calc/calc', weights], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
+    calc = subprocess.Popen([os.environ.get('CALC_BIN', 'calc/calc'), weights], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)   # CALC_BIN: which calculator binary
     ouro = None; lam = 8.0; cap = 40.0
     board = chess.Board()
     out = lambda s: (sys.stdout.write(s + '\n'), sys.stdout.flush())
@@ -60,6 +60,9 @@ def main():
                 send('bonus ' + ' '.join(f'{m.uci()[:4]} {int(round(x))}' for m, x in zip(moves, g)))
             if 'movetime' in t:                       # OURO's own thinking comes out of the move time
                 k = t.index('movetime'); t[k + 1] = str(max(1, int(t[k + 1]) - int(1000 * (time.time() - t0))))
+            ck = 'wtime' if board.turn == chess.WHITE else 'btime'      # ... and out of the mover's clock
+            if ck in t:
+                k = t.index(ck); t[k + 1] = str(max(1, int(t[k + 1]) - int(1000 * (time.time() - t0))))
             send(' '.join(t))
             while True:
                 r = calc.stdout.readline()
