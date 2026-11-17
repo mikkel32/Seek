@@ -305,7 +305,10 @@ PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a
 net = Net()
 ema = Net() if a.ema > 0 else None
 if a.resume:
-    net.load_state_dict(torch.load(a.resume, map_location='cpu'))
+    _sd = torch.load(a.resume, map_location='cpu'); _miss = [k for k in net.state_dict() if k not in _sd]
+    assert all(k in ('Eam', 'qo', 'qp', 'qx', 'L1', 'b1', 'L2', 'b2', 'L3') for k in _miss), _miss      # parts the earlier network lacks start at zero: the same function to begin with
+    net.load_state_dict(_sd, strict=False)
+    if _miss: print('new parts added to the resumed network:', _miss, flush=True)
 elif a.widen:
     w = torch.load(a.widen, map_location='cpu'); h0 = w['E'].shape[1]
     with torch.no_grad():                               # function-preserving growth: the new network computes what the old one did

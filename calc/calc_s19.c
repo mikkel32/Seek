@@ -137,6 +137,9 @@ static float NQO[NBMAX][HMAX / 2], NQP[NBMAX][HMAX / 2], NQX[NBMAX][HMAX]; stati
 // adding and removing pieces along a search path can never drift.
 static short *NEq, NBq[HMAX], NWOq[NBMAX][HMAX], NWPq[NBMAX][HMAX], NQOq[NBMAX][HMAX / 2], NQPq[NBMAX][HMAX / 2], NQXq[NBMAX][HMAX];
 static int q_bits = 8;
+// Each hidden unit has its own integer scale 2^-qu: the finest at which the largest sum that unit could ever produce still
+// fits 16 bits (QU_ONE = 1.0 in the unit's scale, QU_MUL brings a clipped sum to 15 bits whatever the scale).
+static short QU_ONE[HMAX + 16] __attribute__((aligned(32))), QU_MUL[HMAX + 16] __attribute__((aligned(32))); static unsigned char QU[HMAX];
 // reliability read-out (optional trailer 'VOL1'): predicts how far a search will move the static score of this position
 // "where to search" read-out (optional trailer 'POL1', zero/pol_train.py): from the hidden layer, a score for every quiet move
 #define PHMAX 64
@@ -467,19 +470,34 @@ static void quantize_net(void) {
     // The largest sum any position could produce, per hidden unit: its bias plus the 32 largest per-square maxima (a square
     // holds one piece, a board 32 pieces). The integer scale is the finest power of two at which that still fits 16 bits.
     // (A view reads one king bucket's table at a time, so the bound is taken bucket by bucket.)
-    float worst = 0;
-    for (int i = 0; i < NH; i++) for (int kb = 0; kb < NKB; kb++) {
-        float m[64], sum = fabsf(NB[i]);
-        for (int sq = 0; sq < 64; sq++) { float x = 0; for (int r = kb * 12; r < kb * 12 + 12; r++) { float v = fabsf(NE[((size_t)r * 64 + sq) * NH + i]); if (v > x) x = v; } m[sq] = x; }
-        for (int k = 0; k < 32; k++) { int b = k; for (int j = k + 1; j < 64; j++) if (m[j] > m[b]) b = j; float t = m[b]; m[b] = m[k]; m[k] = t; sum += t; }
-        if (sum > worst) worst = sum;
+    // Per unit: the largest sum above zero and the largest below, each the bias plus the 32 largest per-square maxima of
+    // that sign (a square holds one piece, a board 32 pieces), bucket by bucket. Sums wrap consistently in 16 bits, so only
+    // the final value has to fit; a single scale for all units (the old rule) was set by the worst unit's negative side.
+    float worst = 0; int hist_q[16] = {0};
+    for (int i = 0; i < NH; i++) {
+        float bound = 0;
+        for (int kb = 0; kb < NKB; kb++) {
+            float mp[64], mn[64], sp = NB[i], sn = NB[i];
+            for (int sq = 0; sq < 64; sq++) { float x = 0, y = 0; for (int r = kb * 12; r < kb * 12 + 12; r++) { float v = NE[((size_t)r * 64 + sq) * NH + i]; if (v > x) x = v; if (v < y) y = v; } mp[sq] = x; mn[sq] = -y; }
+            for (int k = 0; k < 32; k++) {
+                int b = k; for (int j = k + 1; j < 64; j++) if (mp[j] > mp[b]) b = j; float t = mp[b]; mp[b] = mp[k]; mp[k] = t; sp += t;
+                b = k; for (int j = k + 1; j < 64; j++) if (mn[j] > mn[b]) b = j; t = mn[b]; mn[b] = mn[k]; mn[k] = t; sn -= t;
+            }
+            if (sp > bound) bound = sp; if (-sn > bound) bound = -sn;
+        }
+        if (bound > worst) worst = bound;
+        int q = 10; while (q > 4 && bound * (float)(1 << q) > 32000.0f) q--;
+        QU[i] = (unsigned char)q;
     }
     q_bits = 10; while (q_bits > 4 && worst * (float)(1 << q_bits) > 32000.0f) q_bits--;
-    if (getenv("QBITS")) q_bits = atoi(getenv("QBITS"));       // experiment: a finer scale than the worst-case bound allows (sums wrap consistently; only the final value must fit)
-    float qa = (float)(1 << q_bits); size_t ne = (size_t)NKB * 768 * NH;
+    if (getenv("QBITS")) { int f = atoi(getenv("QBITS")); if (f > 0) { q_bits = f; for (int i = 0; i < NH; i++) QU[i] = (unsigned char)f; } else for (int i = 0; i < NH; i++) QU[i] = (unsigned char)q_bits; }   // QBITS=n: one scale for all (n = 0: the old single worst-case scale)
+    for (int i = 0; i < HMAX + 16; i++) { int q = i < NH ? QU[i] : q_bits; QU_ONE[i] = (short)(1 << q); QU_MUL[i] = (short)(1 << (15 - q)); }
+    for (int i = 0; i < NH; i++) hist_q[QU[i]]++;
+    if (getenv("QINFO")) { printf("info string integer scale per unit:"); for (int q = 4; q <= 10; q++) if (hist_q[q]) printf(" %d units with %d steps,", hist_q[q], 1 << q); printf(" worst bound %.1f\n", worst); }
+    size_t ne = (size_t)NKB * 768 * NH;
     free(NEq); NEq = (short *)big_alloc(ne * 2);
-    for (size_t k = 0; k < ne; k++) NEq[k] = (short)lrintf(NE[k] * qa);
-    for (int i = 0; i < NH; i++) NBq[i] = (short)lrintf(NB[i] * qa);
+    for (size_t k = 0; k < ne; k++) NEq[k] = (short)lrintf(NE[k] * (float)(1 << QU[k % NH]));
+    for (int i = 0; i < NH; i++) NBq[i] = (short)lrintf(NB[i] * (float)(1 << QU[i]));
     #define QW(x) ({ float t_ = (x) * 2048.0f; (short)lrintf(t_ > 16383.0f ? 16383.0f : (t_ < -16383.0f ? -16383.0f : t_)); })   /* output weights beyond +-8 are clipped */
     for (int k = 0; k < NBMAX; k++) {
         for (int i = 0; i < NH; i++) { NWOq[k][i] = QW(NWO[k][i]); NWPq[k][i] = QW(NWP[k][i]); NQXq[k][i] = NPROD ? QW(NQX[k][i]) : 0; }
@@ -617,16 +635,16 @@ static inline float prod_dot(const float *a, const float *b, const float *w, int
 }
 // sum_i w[i] * clamp(a[i], 0, 1) * clamp(b[i], 0, 1) in integers (a == b gives the squares). The clamped values, shifted to
 // 15 bits, are multiplied keeping the high half: a 14-bit product; times an 11-bit-scaled weight the result is in units of 2^-25.
-static inline long long qdot(const short *a, const short *b, const short *w, int n) {
-    long long out = 0; int i = 0; const int one_i = 1 << q_bits, sh_i = 15 - q_bits;
+static inline long long qdot(const short *a, const short *b, const short *w, int n, int oa, int ob) {      // a[i] belongs to unit oa + i, b[i] to unit ob + i
+    long long out = 0; int i = 0;
 #if defined(__AVX2__)
-    const __m256i zero = _mm256_setzero_si256(), one = _mm256_set1_epi16((short)one_i); const __m128i sh = _mm_cvtsi32_si128(sh_i);
+    const __m256i zero = _mm256_setzero_si256();
     __m256i acc64 = _mm256_setzero_si256();
     while (i + 16 <= n) {
         __m256i acc32 = _mm256_setzero_si256();
         for (int k = 0; k < 4 && i + 16 <= n; k++, i += 16) {          // four steps at most before widening: cannot overflow 32 bits
-            __m256i x = _mm256_sll_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(a + i)), zero), one), sh);
-            __m256i y = _mm256_sll_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(b + i)), zero), one), sh);
+            __m256i x = _mm256_mullo_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(a + i)), zero), _mm256_loadu_si256((const __m256i *)(QU_ONE + oa + i))), _mm256_loadu_si256((const __m256i *)(QU_MUL + oa + i)));
+            __m256i y = _mm256_mullo_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(b + i)), zero), _mm256_loadu_si256((const __m256i *)(QU_ONE + ob + i))), _mm256_loadu_si256((const __m256i *)(QU_MUL + ob + i)));
             acc32 = _mm256_add_epi32(acc32, _mm256_madd_epi16(_mm256_mulhi_epu16(x, y), _mm256_loadu_si256((const __m256i *)(w + i))));
         }
         acc64 = _mm256_add_epi64(acc64, _mm256_add_epi64(_mm256_cvtepi32_epi64(_mm256_castsi256_si128(acc32)), _mm256_cvtepi32_epi64(_mm256_extracti128_si256(acc32, 1))));
@@ -634,7 +652,8 @@ static inline long long qdot(const short *a, const short *b, const short *w, int
     long long t[4]; _mm256_storeu_si256((__m256i *)t, acc64); out = t[0] + t[1] + t[2] + t[3];
 #endif
     for (; i < n; i++) {
-        unsigned x = (unsigned)(a[i] < 0 ? 0 : (a[i] > one_i ? one_i : a[i])) << sh_i, y = (unsigned)(b[i] < 0 ? 0 : (b[i] > one_i ? one_i : b[i])) << sh_i;
+        int oi = QU_ONE[oa + i], oj = QU_ONE[ob + i];
+        unsigned x = (unsigned)(a[i] < 0 ? 0 : (a[i] > oi ? oi : a[i])) * (unsigned)(unsigned short)QU_MUL[oa + i], y = (unsigned)(b[i] < 0 ? 0 : (b[i] > oj ? oj : b[i])) * (unsigned)(unsigned short)QU_MUL[ob + i];
         out += (long long)((x * y) >> 16) * w[i];
     }
     return out;
@@ -644,17 +663,19 @@ static unsigned short nnz_lut[256][8];      // for every 8-bit mask, the positio
 static void init_nnz(void) { for (int m = 0; m < 256; m++) { int k = 0; for (int b = 0; b < 8; b++) if (m >> b & 1) nnz_lut[m][k++] = (unsigned short)b; } }
 // squared clipped hidden units of both views as 16-bit integers (1.0 = 16384): T[0..n) the mover's, T[n..2n) the opponent's
 static inline void act_sq(const short *ao, const short *ap, short *T) {
-    int n = NH; const int one_i = 1 << q_bits, sh_i = 15 - q_bits; int i = 0;
+    int n = NH; int i = 0;
 #if defined(__AVX2__)
-    const __m256i zero = _mm256_setzero_si256(), one = _mm256_set1_epi16((short)one_i); const __m128i sh = _mm_cvtsi32_si128(sh_i);
+    const __m256i zero = _mm256_setzero_si256();
     for (; i + 16 <= n; i += 16) {
-        __m256i x = _mm256_sll_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ao + i)), zero), one), sh);
-        __m256i y = _mm256_sll_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ap + i)), zero), one), sh);
+        const __m256i one = _mm256_load_si256((const __m256i *)(QU_ONE + i)), mul = _mm256_load_si256((const __m256i *)(QU_MUL + i));
+        __m256i x = _mm256_mullo_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ao + i)), zero), one), mul);
+        __m256i y = _mm256_mullo_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ap + i)), zero), one), mul);
         _mm256_store_si256((__m256i *)(T + i), _mm256_mulhi_epu16(x, x)); _mm256_store_si256((__m256i *)(T + n + i), _mm256_mulhi_epu16(y, y));
     }
 #endif
     for (; i < n; i++) {
-        unsigned x = (unsigned)(ao[i] < 0 ? 0 : (ao[i] > one_i ? one_i : ao[i])) << sh_i, y = (unsigned)(ap[i] < 0 ? 0 : (ap[i] > one_i ? one_i : ap[i])) << sh_i;
+        int o = QU_ONE[i];
+        unsigned x = (unsigned)(ao[i] < 0 ? 0 : (ao[i] > o ? o : ao[i])) * (unsigned)(unsigned short)QU_MUL[i], y = (unsigned)(ap[i] < 0 ? 0 : (ap[i] > o ? o : ap[i])) * (unsigned)(unsigned short)QU_MUL[i];
         T[i] = (short)((x * x) >> 16); T[n + i] = (short)((y * y) >> 16);
     }
 }
@@ -745,12 +766,13 @@ static float mlp_small(const short *ao, const short *ap, int bk) {
     const int n = MHK, h1 = MH1, h2r = (MH2 + 7) & ~7, nch = 2 * n / 16; int acc[M1MAX + 8];
     const short *W = MLD + (size_t)bk * nch * h1 * 16; const float *F = MLF + (size_t)bk * mlf_stride;
 #if defined(__AVX2__)
-    short T[2 * 128] __attribute__((aligned(32))); const int one_i = 1 << q_bits, sh_i = 15 - q_bits;
+    short T[2 * 128] __attribute__((aligned(32)));
     {
-        const __m256i zero = _mm256_setzero_si256(), one = _mm256_set1_epi16((short)one_i); const __m128i sh = _mm_cvtsi32_si128(sh_i);
+        const __m256i zero = _mm256_setzero_si256();
         for (int i = 0; i < n; i += 16) {
-            __m256i x = _mm256_sll_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ao + i)), zero), one), sh);
-            __m256i y = _mm256_sll_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ap + i)), zero), one), sh);
+            const __m256i one = _mm256_load_si256((const __m256i *)(QU_ONE + i)), mul = _mm256_load_si256((const __m256i *)(QU_MUL + i));
+            __m256i x = _mm256_mullo_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ao + i)), zero), one), mul);
+            __m256i y = _mm256_mullo_epi16(_mm256_min_epi16(_mm256_max_epi16(_mm256_loadu_si256((const __m256i *)(ap + i)), zero), one), mul);
             _mm256_store_si256((__m256i *)(T + i), _mm256_mulhi_epu16(x, x)); _mm256_store_si256((__m256i *)(T + n + i), _mm256_mulhi_epu16(y, y));
         }
     }
@@ -902,8 +924,7 @@ static int evaluate(void) {
     }
     if (NM > 1) {                        // learned router: the piece-count group has NM specialists; run the one the router scores highest
         float x[128]; int best = 0; float bg = -1e30f;
-        const float qi = 1.0f / (float)(1 << q_bits);
-        for (int i = 0; i < NG; i++) { float a = ao[i] * qi, b = ap[i] * qi; a = a < 0 ? 0 : (a > 1 ? 1 : a); b = b < 0 ? 0 : (b > 1 ? 1 : b); x[i] = a * a; x[NG + i] = b * b; }
+        for (int i = 0; i < NG; i++) { const float qi = 1.0f / (float)QU_ONE[i]; float a = ao[i] * qi, b = ap[i] * qi; a = a < 0 ? 0 : (a > 1 ? 1 : a); b = b < 0 ? 0 : (b > 1 ? 1 : b); x[i] = a * a; x[NG + i] = b * b; }
         for (int m = 0; m < NM; m++) {
             const float *gw = NGW[bk * NM + m]; float g = NGB[bk * NM + m];
             for (int i = 0; i < 2 * NG; i++) g += gw[i] * x[i];
@@ -920,11 +941,11 @@ static int evaluate(void) {
         const char *pf = (const char *)(MLF + (size_t)bk * mlf_stride), *pw = (const char *)(MLD + (size_t)bk * (2 * MHK / 16) * MH1 * 16);
         for (int o = 0; o < mlf_stride * 4; o += 64) __builtin_prefetch(pf + o);
         for (int o = 0; o < (2 * MHK / 16) * MH1 * 32; o += 64) __builtin_prefetch(pw + o);
-        q = qdot(ao, ao, NWOq[bk], n) + qdot(ap, ap, NWPq[bk], n);
+        q = qdot(ao, ao, NWOq[bk], n, 0, 0) + qdot(ap, ap, NWPq[bk], n, 0, 0);
     }
     else if (have_mlp) { act_sq(ao, ap, T); q = tdot(T, NWOq[bk], n) + tdot(T + n, NWPq[bk], n); }
-    else q = qdot(ao, ao, NWOq[bk], n) + qdot(ap, ap, NWPq[bk], n);
-    if (NPROD) q += qdot(ao, ao + n / 2, NQOq[bk], n / 2) + qdot(ap, ap + n / 2, NQPq[bk], n / 2) + qdot(ao, ap, NQXq[bk], n);
+    else q = qdot(ao, ao, NWOq[bk], n, 0, 0) + qdot(ap, ap, NWPq[bk], n, 0, 0);
+    if (NPROD) q += qdot(ao, ao + n / 2, NQOq[bk], n / 2, 0, n / 2) + qdot(ap, ap + n / 2, NQPq[bk], n / 2, 0, n / 2) + qdot(ao, ap, NQXq[bk], n, 0, 0);
     float out = lin + NCB[bk] + (float)q * (1.0f / 33554432.0f);
     if (have_mlp) out += small ? mlp_small(ao, ap, bk) : mlp_out(T, bk);
     int v = (int)(out * 271.58f);        // logit of win probability -> centipawns
@@ -945,7 +966,7 @@ static int eval_vol(void) {
         else if (NBK == 32) bk = bk * 4 + 2 * (P.bb[P.side][QUEEN] != 0) + (P.bb[P.side ^ 1][QUEEN] != 0);
         else if (bk > NBK - 1) bk = NBK - 1;
     }
-    float u = NV[bk][2 * NH] + (float)(qdot(A->a[us], A->a[us], NVOq[bk], NH) + qdot(A->a[us ^ 1], A->a[us ^ 1], NVPq[bk], NH)) * (1.0f / 33554432.0f);
+    float u = NV[bk][2 * NH] + (float)(qdot(A->a[us], A->a[us], NVOq[bk], NH, 0, 0) + qdot(A->a[us ^ 1], A->a[us ^ 1], NVPq[bk], NH, 0, 0)) * (1.0f / 33554432.0f);
     int v = (int)(u * 271.58f);
     return v < 10 ? 10 : (v > 600 ? 600 : v);
 }
@@ -1212,10 +1233,10 @@ static inline float fdot(const float *a, const float *b, int n) {
 }
 // the read-out's hidden units for the position on the board (its evaluation sums must be in place)
 static void pol_hidden(float *hid) {
-    const Acc *A = &accs[hply]; int us = P.side; float h[2 * HMAX]; const float qi = 1.0f / (float)(1 << q_bits);
+    const Acc *A = &accs[hply]; int us = P.side; float h[2 * HMAX];
     for (int v = 0; v < 2; v++) {
         const short *a = A->a[v ? us ^ 1 : us]; float *d = h + v * NH;
-        for (int i = 0; i < NH; i++) { float x = a[i] * qi; x = x < 0 ? 0 : (x > 1 ? 1 : x); d[i] = x * x; }
+        for (int i = 0; i < NH; i++) { float x = a[i] / (float)QU_ONE[i]; x = x < 0 ? 0 : (x > 1 ? 1 : x); d[i] = x * x; }
     }
     for (int k = 0; k < NPH; k++) { float t = PB1[k] + fdot(PW1 + (size_t)k * 2 * NH, h, 2 * NH); hid[k] = t > 0 ? t : 0; }
 }
