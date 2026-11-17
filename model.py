@@ -185,6 +185,15 @@ class Block(nn.Module):
         """x (B,T,d) fp32; bias (B*H,T,T) fp32, contiguous."""
         B, T, d = x.shape
         H = self.h
+        if x.is_cuda and amp:                  # graphics card: the whole block in bf16 with the fused attention kernel (the same function)
+            with torch.autocast('cuda', dtype=torch.bfloat16):
+                qkv = F.linear(norm(x), torch.cat([self.q.weight, self.k.weight, self.v.weight], 0))
+                q, k, v = qkv.view(B, T, 3, H, d // H).permute(2, 0, 3, 1, 4).unbind(0)       # each B,H,T,dh
+                q = q * (self.qk_scale.view(1, H, 1, 1) * math.sqrt(d // H))                 # the kernel divides by sqrt(dh) itself
+                a = F.scaled_dot_product_attention(q, k, v, attn_mask=bias.view(B, H, T, T).to(q.dtype))
+                x = x + self.o(a.transpose(1, 2).reshape(B, T, d))
+                x = x + self.pr(F.gelu(self.fc(norm(x))))
+            return x.float()
         with torch.autocast(x.device.type, dtype=torch.bfloat16, enabled=amp):
             qkv = F.linear(norm(x), torch.cat([self.q.weight, self.k.weight, self.v.weight], 0))
         q, k, v = qkv.float().view(B, T, 3, H, d // H).permute(2, 0, 3, 1, 4).unbind(0)   # each B,H,T,dh
@@ -268,6 +277,10 @@ class Ouro(nn.Module):
     def _biases(self, rel, B):
         """attention-logit bias for each group: 1x1 conv over the exact relation planes + a learned static map."""
         out = []
+        if self.use_rel and rel.is_cuda and self.amp:
+            with torch.autocast('cuda', dtype=torch.bfloat16):
+                b = F.conv2d(rel.to(torch.bfloat16), self.rel_w.reshape(3 * self.heads, N_REL, 1, 1)).view(B, 3, self.heads, 64, 64) + self.static
+            return [b[:, g].reshape(B * self.heads, 64, 64) for g in range(3)]
         relf = rel.float() if self.use_rel else None
         for g in range(3):
             if self.use_rel:

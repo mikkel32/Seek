@@ -3,7 +3,7 @@
 The converter is prep_lichess.py's (per unique position up to 5 candidate moves, the first move of each stored line, with
 the mover's win probability; the reply and the follow-up along the best line), run over all row groups of the file with
 every processor, and written as separate arrays so that training can map them without loading:
-  <out>_b.npy boards (n,64) uint8   <out>_m.npy castle, ep (n,2) uint8   <out>_v.npy moves (n,5) int16
+  <out>_b.npy boards (n,32) uint8, two squares a byte   <out>_m.npy castle, ep (n,2) uint8   <out>_v.npy moves (n,5) int16
   <out>_w.npy win probabilities (n,5) float16   <out>_p.npy reply and follow-up (n,2) int16
 Labels are Stockfish's (the outside-data line).
 
@@ -24,6 +24,8 @@ if __name__ == '__main__':
     res = [r for r in res if len(r[0])]
     rs = np.random.RandomState(abs(hash(os.path.basename(OUT))) % (2 ** 31)); n = sum(len(r[0]) for r in res); perm = rs.permutation(n)
     for k, suf in ((0, 'b'), (1, 'm'), (2, 'v'), (3, 'w'), (4, 'p')):
-        np.save(f'{OUT}_{suf}.npy', np.concatenate([r[k] for r in res])[perm])
+        x = np.concatenate([r[k] for r in res])[perm]
+        if suf == 'b': x = x[:, 0::2] | (x[:, 1::2] << 4)          # two squares a byte (piece codes are 0-12)
+        np.save(f'{OUT}_{suf}.npy', x)
     mv = np.concatenate([r[2] for r in res])
     print(f'{os.path.basename(PATH)}: {n} positions, {float((mv >= 0).sum(1).mean()):.2f} labelled moves each, {100 * float(((mv >= 0).sum(1) > 1).mean()):.0f}% with more than one', flush=True)

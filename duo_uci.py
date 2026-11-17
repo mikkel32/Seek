@@ -5,16 +5,15 @@
 Works in any chess GUI or tournament manager. Options: Prior (centipawns per unit of OURO log-probability,
 0 = calculator alone), PriorCap. All `go` parameters are passed through to the calculator.
 """
-import os, subprocess, sys, time
+import json, os, socket, subprocess, sys, time
 import numpy as np, chess
-from engine import Net
 
 
 def main():
     weights = sys.argv[1] if len(sys.argv) > 1 else 'calc/net256k.bin'
     ckpt = sys.argv[2] if len(sys.argv) > 2 else 'ckpt/B.pt'
     calc = subprocess.Popen([os.environ.get('CALC_BIN', 'calc/calc'), weights], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)   # CALC_BIN: which calculator binary
-    ouro = None; lam = 8.0; cap = 40.0
+    ouro = None; srv = srvf = None; lam = 8.0; cap = 40.0
     board = chess.Board()
     out = lambda s: (sys.stdout.write(s + '\n'), sys.stdout.flush())
     send = lambda s: (calc.stdin.write(s + '\n'), calc.stdin.flush())
@@ -27,8 +26,8 @@ def main():
             out('option name Prior type spin default 8 min 0 max 100'); out('option name PriorCap type spin default 40 min 0 max 400')
             out('option name Hash type spin default 32 min 1 max 4096'); out('uciok')
         elif t[0] == 'isready':
-            if ouro is None:
-                ouro = Net(ckpt, threads=1)
+            if ouro is None and not os.environ.get('OURO_SERVER'):
+                ouro = __import__('engine').Net(ckpt, threads=1)
             send('isready')
             while calc.stdout.readline().strip() != 'readyok':
                 pass
@@ -53,9 +52,15 @@ def main():
         elif t[0] == 'go':
             t0 = time.time()
             if lam > 0 and not board.is_game_over():
-                if ouro is None:
-                    ouro = Net(ckpt, threads=1)
-                moves, p, v, q = ouro.evaluate([board], loops=2)[0]
+                if os.environ.get('OURO_SERVER'):      # the transformer runs once, on the graphics card, for every board (lm/serve.py)
+                    if srv is None:
+                        srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM); srv.connect(os.environ['OURO_SERVER']); srvf = srv.makefile('rw')
+                    srvf.write(board.fen() + '\n'); srvf.flush(); r = json.loads(srvf.readline())
+                    moves, p = [chess.Move.from_uci(u) for u in r['moves']], np.array(r['p'])
+                else:
+                    if ouro is None:
+                        ouro = __import__('engine').Net(ckpt, threads=1)
+                    moves, p, v, q = ouro.evaluate([board], loops=2)[0]
                 lp = np.log(p + 1e-9); g = np.maximum(lam * (lp - lp.max()), -cap)
                 send('bonus ' + ' '.join(f'{m.uci()[:4]} {int(round(x))}' for m, x in zip(moves, g)))
             if 'movetime' in t:                       # OURO's own thinking comes out of the move time
