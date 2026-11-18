@@ -61,6 +61,7 @@ def paired_estimate(log, expected):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("engine", type=Path)
+    parser.add_argument("--student-engine", type=Path, help="candidate executable for search experiments")
     parser.add_argument("parent", type=Path)
     parser.add_argument("student", type=Path)
     parser.add_argument("--archive", type=Path,
@@ -84,6 +85,7 @@ def main():
     if args.workers < 1 or (args.nodes is not None and args.nodes <= 0):
         parser.error("Workers and fixed node budgets must be positive")
     engine, parent, student = [p.resolve(strict=True) for p in (args.engine, args.parent, args.student)]
+    student_engine = args.student_engine.resolve(strict=True) if args.student_engine else engine
     log = args.games_log.resolve()
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
@@ -91,11 +93,11 @@ def main():
         data.mkdir()
         (data / "openings.txt").write_text("\n".join(book[args.offset:args.offset + args.pool_size]) + "\n")
         # gauntlet uses space-delimited UCI commands. Short symlinks keep paths with spaces usable.
-        for name, target in [("engine", engine), ("parent.bin", parent), ("student.bin", student)]:
+        for name, target in [("engine", engine), ("challenger", student_engine), ("parent.bin", parent), ("student.bin", student)]:
             (work / name).symlink_to(target)
         parent_options = f"{args.common_options},EvalScale={args.parent_eval_scale}"
         student_options = f"{args.common_options},EvalScale={args.student_eval_scale}"
-        cmd = [sys.executable, str(ROOT / "gauntlet.py"), "--us", "./engine student.bin",
+        cmd = [sys.executable, str(ROOT / "gauntlet.py"), "--us", "./challenger student.bin",
                "--us_opts", student_options, "--opp", f"parent|./engine parent.bin|{parent_options}",
                "--workers", str(args.workers), "--openings", str(args.pairs), "--seed", str(args.seed)]
         cmd += ["--nodes", str(args.nodes)] if args.nodes else ["--tc", args.tc]

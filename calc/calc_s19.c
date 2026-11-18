@@ -1098,6 +1098,25 @@ static Move killers[MAXPLY][2];
 // Quiet-move history, kept separately for whether the square the piece leaves and the square it goes to are attacked by the
 // opponent: "this move was good" means something different when it rescues a piece or walks into an attack.
 static int history_t[2][4][64][64];
+#ifdef SEEK_HISTORY_PRIOR
+#include "history_prior.h"
+// Decay toward the teacher's quiet-move logit once per root search.
+static void age_trained_history(void) {
+    int phase = __builtin_popcountll(P.occ[WHITE] | P.occ[BLACK]) / 8;
+    if (phase > 3) phase = 3;
+    for (int side = 0; side < 2; side++) {
+        int flip = side == BLACK ? 56 : 0;
+        for (int t = 0; t < 4; t++) for (int from = 0; from < 64; from++) {
+            for (int to = 0; to < 64; to++) {
+                int idx = (from ^ flip) * 64 + (to ^ flip);
+                int prior = quiet_move_prior[phase][idx] * SEEK_HISTORY_PRIOR / 256;
+                int *cell = &history_t[side][t][from][to];
+                *cell = (*cell + prior) / 2;
+            }
+        }
+    }
+}
+#endif
 static U64 thr_stack[MAXPLY + 4];        // squares the opponent attacks, per ply (0 where it was not worked out)
 #define HIST(m, ply) history_t[P.side][(int)(((thr_stack[ply] >> FROM(m)) & 1) | (((thr_stack[ply] >> TO(m)) & 1) << 1))][FROM(m)][TO(m)]
 static int root_vol = 0;                 // the reliability read-out at the root (for the clock)
@@ -1983,7 +2002,11 @@ static Move search_root(int max_depth) {
     memset(killers, 0, sizeof killers);
     corr_ply = 0; evals_stack[0] = in_check() ? -INF : eval_corr();
     root_vol = (have_vol && !in_check()) ? eval_vol() : 0;
+#ifdef SEEK_HISTORY_PRIOR
+    age_trained_history();
+#else
     for (int i = 0; i < 2; i++) for (int t = 0; t < 4; t++) for (int a = 0; a < 64; a++) for (int b = 0; b < 64; b++) history_t[i][t][a][b] /= 2;
+#endif
     thr_stack[0] = 0;
     int last = 0, stable = 0;
     tt_age = (tt_age + 1) & 31;
