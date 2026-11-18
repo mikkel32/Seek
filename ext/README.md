@@ -787,3 +787,25 @@ fault that costs strength.
 Fifty Sonnet research agents (49 angles and a synthesis, 17 November) found no large lever: items of +3 to +10 Elo, and
 agreement that the gap is search efficiency. Of their first item, storing the evaluation in the hash entry, their own
 count says to skip it: a same-key entry is present at 9.5% of the evaluations, below the 25% they set as the bar.
+
+**At the clock and at equal time.** BIGS with L2 as root prior, 1,000 games at 10+0.1 against Stockfish 14.1
+(`zero/results/vault_clock.log`): 19-634-347, **−118 (−131 to −106)**; with the pilot −122, BIGS alone −111. The larger
+transformer's prior still buys nothing at game speed (it answered in a median 11 ms).
+
+`ext/quality.py test --nodes -<ms>` judges at equal time, so what a configuration costs in time is charged
+(`lm/eqtime_test.sh`: few engines at once, so that the card serves them as it would one game). The pilot steering the
+search, 200 ms a move, 3 engines, 4,000 positions, against the search alone (`zero/results/vault_lm_eq.log`):
+
+| Steering (`PolW 2000, PolLmr 1`) | Equal time |
+|---|---|
+| waiting for the answers, nodes with 12+ plies left | +2.43 (0.45) |
+| waiting, 14+ plies left | +0.36 (0.25) |
+| not waiting, asking ahead about the first 6 children (`LmAhead 6`), 8+ plies left | +0.54 (0.36) |
+
+`LmAhead` asks about the children a node is about to search as the node is entered, so that their answers arrive while
+the first child is searched; sends never block when the engine does not wait. It does not rescue the steering. With the
+root prior's three clock matches, every use of the transformer on top of or inside the running search is measured as
+no gain on this card. What is left for it is teaching (`lm/label_nnue.py`, `calc/train_nnue.py --tl`).
+
+`gauntlet.py` keeps every game with `GAMES_LOG=<file>` (moves and milliseconds per move; none were kept before), and
+`ext/autopsy.py` scores every position of every game with Stockfish and reports where the losses come from.

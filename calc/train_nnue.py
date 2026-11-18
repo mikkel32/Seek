@@ -61,6 +61,8 @@ ap.add_argument('--am', default='')                      # attack-map inputs com
                                                          # first piece): all = 12 kinds, class = pawn / knight+bishop / rook / queen / king per side, colour = one map
                                                          # per side, slide, nonslide, pawn. Not king-bucketed; added into the same hidden layer.
 ap.add_argument('--amk', type=int, default=0)            # the attack maps feed only the first amk hidden units of each side (0 = all; the engine pays per unit fed)
+ap.add_argument('--tl', type=float, default=0.0)         # > 0: a stored teacher, data/tl_<tag>.npy (one byte a position, win chance x255: the transformer's value, lm/label_nnue.py),
+                                                         # takes this share of the teachers' part of the target (1 = it alone); needs --max_rows no larger than what was labelled
 ap.add_argument('--sib', default='')                     # sibling families: shards of the transformer's data (lm/prep_lm.py prefixes, comma separated): positions with several
                                                          # candidate moves, each with Stockfish's deep win chance. The network scores the positions after the quiet candidates and
                                                          # is trained on which of two siblings is better and by how much -- the question the search asks of it
@@ -347,9 +349,11 @@ import os
 def _positions(t):                                       # a shard in the usual form (32 feature numbers a position) or the compact one (24 bytes, zero/compact.py)
     return np.load(f'data/ev_{t}_x.npy', mmap_mode='r') if os.path.exists(f'data/ev_{t}_x.npy') else np.load(f'data/ev_{t}_c.npy', mmap_mode='r')
 files = [(_positions(t), np.load(f'data/ev_{t}_{a.ytag}.npy', mmap_mode='r'),
-          np.load(f'data/ev_{t}_aux.npy', mmap_mode='r') if a.aux > 0 else None) for t in a.files.split(',')]
+          np.load(f'data/ev_{t}_aux.npy', mmap_mode='r') if a.aux > 0 else None,
+          np.load(f'data/tl_{t}.npy', mmap_mode='r') if a.tl > 0 else None) for t in a.files.split(',')]
 if a.max_rows:
-    files = [(x[:a.max_rows], y[:a.max_rows], None if ax is None else ax[:a.max_rows]) for x, y, ax in files]
+    files = [(x[:a.max_rows], y[:a.max_rows], None if ax is None else ax[:a.max_rows], None if tl is None else tl[:a.max_rows]) for x, y, ax, tl in files]
+assert a.tl == 0 or all(len(f_[3]) >= len(f_[0]) for f_ in files), 'the stored teacher covers fewer positions than are trained on: set --max_rows'
 total = sum(len(f_[0]) for f_ in files)
 steps_total = int(a.epochs * total / a.bs)
 
@@ -582,6 +586,7 @@ while not done:
         if X.shape[1] == 24:                                     # compact shard: unpack on the device, half a million positions at a time
             X = torch.cat([unpack(X[j:j + 500_000]) for j in range(0, len(X), 500_000)])
         AX = torch.from_numpy(np.ascontiguousarray(files[fi][2][s:s + a.chunk])).to(DEV) if a.aux > 0 else None
+        TL = torch.from_numpy(np.ascontiguousarray(files[fi][3][s:s + a.chunk])).to(DEV) if a.tl > 0 else None
         perm = torch.randperm(len(X), device=DEV)
         for j in range(0, len(X) - a.bs + 1, a.bs):
             k = perm[j:j + a.bs]
@@ -599,8 +604,10 @@ while not done:
             else:
                 xb = mirrored(X[k].long()) if a.mirror > 0 else X[k].long()
                 yb = Y[k].float() / 255
-                if TEACH is not None:
-                    yb = (1 - a.dw) * yb + a.dw * torch.sigmoid(TEACH(xb))
+                if TEACH is not None or TL is not None:
+                    tp = torch.sigmoid(TEACH(xb)) if TEACH is not None else None
+                    if TL is not None: tp = TL[k].float() / 255 if tp is None or a.tl >= 1 else (1 - a.tl) * tp + a.tl * TL[k].float() / 255
+                    yb = (1 - a.dw) * yb + a.dw * tp
                 if a.sharp != 1.0:
                     yb = torch.sigmoid(a.sharp * torch.logit(yb.clamp(1 / 510, 1 - 1 / 510)))
                 if REF is not None:
