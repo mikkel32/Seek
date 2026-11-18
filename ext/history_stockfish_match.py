@@ -29,16 +29,23 @@ def main():
         p.add_argument(arg, type=Path)
     p.add_argument('--workers', type=int, default=8)
     p.add_argument('--pairs', type=int, default=100)
-    p.add_argument('--tc', default='10+0.1')
+    control = p.add_mutually_exclusive_group()
+    control.add_argument('--tc', default='10+0.1')
+    control.add_argument('--nodes', type=int, help='Fixed search nodes per move for each engine')
+    p.add_argument('--offset', type=int, default=2400)
+    p.add_argument('--pool-size', type=int, default=570)
+    p.add_argument('--seed', type=int, default=403287)
     a = p.parse_args()
-    if a.workers < 2 or not 2 <= a.pairs <= 570:
-        p.error('Use two or more workers and 2 to 570 opening pairs')
+    if a.workers < 2 or not 2 <= a.pairs <= a.pool_size or a.offset < 0:
+        p.error('Use two or more workers and a nonnegative book offset with sufficient opening pairs')
+    if a.nodes is not None and a.nodes <= 0:
+        p.error('Node budget must be positive')
     out = a.output.resolve()
-    out.mkdir(exist_ok=False, parents=True)
     archive = ROOT / 'zero/results/games/games_bigs.jsonl.sc.jsonl.gz'
-    book = eligible_book(archive)[2400:2970]
-    if len(book) != 570:
+    book = eligible_book(archive)[a.offset:a.offset + a.pool_size]
+    if len(book) != a.pool_size:
         raise ValueError('Unexpected opening book')
+    out.mkdir(exist_ok=False, parents=True)
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
         (work/'data').mkdir()
@@ -48,8 +55,9 @@ def main():
         def run(label):
             log = out/(label+'.jsonl')
             cmd = [sys.executable, str(ROOT/'gauntlet.py'), '--us', f'./{label} weights', '--us_opts', OPTIONS,
-                   '--opp', 'Stockfish 14.1|./stockfish|Threads=1,Hash=64,Use NNUE=true', '--tc', a.tc,
-                   '--openings', str(a.pairs), '--seed','403287','--workers',str(a.workers//2)]
+                   '--opp', 'Stockfish 14.1|./stockfish|Threads=1,Hash=64,Use NNUE=true',
+                   '--openings', str(a.pairs), '--seed', str(a.seed), '--workers', str(a.workers//2)]
+            cmd += ['--nodes', str(a.nodes)] if a.nodes is not None else ['--tc', a.tc]
             r = subprocess.run(cmd, cwd=work, env={**os.environ,'GAMES_LOG':str(log)}, capture_output=True, text=True, check=True)
             raw = [json.loads(line) for line in r.stdout.splitlines() if line.startswith('{')][-1]
             return [raw, paired_estimate(log,a.pairs)]
