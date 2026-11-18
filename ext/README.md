@@ -856,3 +856,19 @@ L2 alone slightly worse. The gate is not met. With the sibling pairs (17 Novembe
 this evaluator what the transformer knows, and the second that the evaluator does not take up: a 768-wide sum of
 piece-square terms is at what it can express on quiet positions, whoever teaches it. The transformer's judgment (79.7% on
 the same pairs) stays out of reach of this design; relational inputs (attack maps) are the untested way to change that.
+
+## BIGQ: the 32 queen-aware read-out heads at full scale (18 November)
+
+The BIGS recipe from scratch with `--buckets 32 --obk 2` (piece count x my queen x the opponent's queen), two passes
+over the same 4.09 billion positions; held-out loss 0.54383 (BIGS 0.54400); the same speed (`zero/results/vault_big_run.log`,
+`vault_clock.log`).
+
+| Match | BIGQ | BIGS |
+|---|---|---|
+| against BIGS, 30,000 nodes, 2,000 games | +6 (−5 to +17) | |
+| against Stockfish 14.1, 10,000 nodes each | −145 (−164 to −126) | −179 |
+| against Stockfish 14.1, 30,000 nodes each | −174 (−191 to −157) | −162 |
+| against Stockfish 14.1, 10+0.1, 1,000 games | **−118 (−131 to −105)** | −110 (−123 to −97) |
+
+The probe's +11 (0 to +22) does not hold at full scale: +6 at equal nodes with zero inside the interval, and no gain at
+the clock. BIGS stays the standing network.

@@ -40,3 +40,11 @@
 [20:40:33] BIGS finished
 [15:27:06] options of the new network in its matches: Hash=64,PvPrune=1,ChkExt=0,SeDouble=20,CutIir=1
 [15:27:06] training BIGQ: 768 wide, 16 king buckets with a shared table, from scratch, 2 passes over e:0-11,f:0-39,h:0-59,s:0-406,t:0-22 --ytag yc --distill zero/w_BIGX.bin.ema.pt+sf:/root/ext/sf141_embedded.bin --dw 0.5 --buckets 32 --obk 2
+[22:42:48] network BIGQ trained in 26142s: done: steps 499047, val (log-loss, MAE) raw (0.5440674424171448, 0.05836063623428345) averaged (0.5438317656517029, 0.058018170297145844), 26137s -> z
+[22:42:52] engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 43.47 centipawns, mean 2.857; evaluations range -1
+[22:42:59] speed, BIGS: depth 14: 3,977,973 positions in 1.85s = 2149k per second; signature dbb831599e
+[22:43:00] speed, BIGQ: depth 14: 3,390,945 positions in 1.44s = 2352k per second; signature 9cf64d23eb
+[22:46:58] BIGQ against BIGS, 30,000 positions per move: {"opponent": "BIGS", "tc": "30000 positions per move", "n": 2000, "w": 542, "d": 951, "l": 507, "score": 0.5088, "elo": 6.1, "lo": -4.9, "hi": 17.1, "avg_plies": 146.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[22:47:51] BIGQ against Stockfish 14.1, 10000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 161, "d": 284, "l": 555, "score": 0.303, "elo": -144.7, "lo": -164.2, "hi": -126.0, "avg_plies": 139.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 0.9}
+[22:50:23] BIGQ against Stockfish 14.1, 30000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 76, "d": 386, "l": 538, "score": 0.269, "elo": -173.7, "lo": -191.4, "hi": -156.7, "avg_plies": 143.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.5}
+[22:50:23] BIGQ finished
