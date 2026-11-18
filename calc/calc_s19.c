@@ -1098,6 +1098,20 @@ static Move killers[MAXPLY][2];
 // Quiet-move history, kept separately for whether the square the piece leaves and the square it goes to are attacked by the
 // opponent: "this move was good" means something different when it rescues a piece or walks into an attack.
 static int history_t[2][4][64][64];
+#ifdef SEEK_COLLECT_PRIOR
+static FILE *prior_examples;
+static void record_quiet_cutoff(Move winner, const Move *failed, int count) {
+    if (!prior_examples || !count) return;
+    int flip = P.side == BLACK ? 56 : 0;
+    int phase = __builtin_popcountll(P.occ[WHITE] | P.occ[BLACK]) / 8;
+    unsigned short record[3] = {(unsigned short)(phase > 3 ? 3 : phase),
+        (unsigned short)((FROM(winner) ^ flip) * 64 + (TO(winner) ^ flip)), 0};
+    for (int i = 0; i < count; i++) {
+        record[2] = (unsigned short)((FROM(failed[i]) ^ flip) * 64 + (TO(failed[i]) ^ flip));
+        if (fwrite(record, sizeof record, 1, prior_examples) != 1) exit(2);
+    }
+}
+#endif
 #ifdef SEEK_HISTORY_PRIOR
 #include "history_prior.h"
 // Decay toward the teacher's quiet-move logit once per root search.
@@ -1910,6 +1924,9 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                         if ((par[HIST_V2] & 2) && ply > 0 && move_stack[ply - 1]) cmove[piece_stack[ply - 1]][TO(move_stack[ply - 1])] = m;
                         if (killers[ply][0] != m) { killers[ply][1] = killers[ply][0]; killers[ply][0] = m; }
                         int bonus = par[HB_QUAD] * depth * depth + par[HB_LIN] * depth; if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
+#ifdef SEEK_COLLECT_PRIOR
+                        if (!chk && depth >= 3) record_quiet_cutoff(m, quiets, nq);
+#endif
                         hist_update(m, ply, bonus);
                         for (int q = 0; q < nq; q++) hist_update(quiets[q], ply, -bonus);
                     } else if (is_capture(m) && FLAG(m) != F_EP) {
@@ -2212,6 +2229,10 @@ static void selfplay(const char *path, int ngames, int nodes_per_move, U64 seed,
 }
 
 int main(int argc, char **argv) {
+#ifdef SEEK_COLLECT_PRIOR
+    const char *output = getenv("SEEK_QUIET_PAIRS");
+    if (!output || !(prior_examples = fopen(output, "wb"))) return 2;
+#endif
     init_nnz(); init_tables(); init_pext(); init_zobrist(); tt_alloc(32);
 #ifdef SFNET
     if (getenv("SFNET_FILE") && !sf_load(getenv("SFNET_FILE"))) { printf("cannot read the network in SFNET_FILE\n"); return 1; }
