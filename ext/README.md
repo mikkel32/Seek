@@ -836,3 +836,23 @@ Stockfish spends a growing share of its clock through the middlegame (one eleven
 on the increment at 0.6 to 0.9 s; our constant share spends a shrinking amount exactly where the games are decided and
 leaves about 1.5 of its 10 seconds unused. `TmCurve=100` (calc_s19.c) makes the share follow the move number, each entry
 our measured clock-per-move ratio divided by Stockfish's.
+
+## L2 as a teacher of the fast network: the gate (18 November)
+
+`lm/label_nnue.py` wrote L2's value for 60 million training positions (twelve shards, 5 million each, 11,100 a second on
+the card alone; its values correlate 0.96 to 0.97 with the shards' own labels). BIGS was then trained on for one pass over
+those positions on its own recipe, with L2 taking none, a third or all of the teachers' half of the target
+(`calc/train_nnue.py --tl`, `zero/results/vault_teach_gate.log`). The gate was +1.0 point on the quiet pairs:
+
+| Continuation of BIGS | Held-out loss | Quiet pairs | The rest, captures played out | All pairs, captures played out |
+|---|---|---|---|---|
+| BIGS itself | 0.54400 | 73.25% | 76.03% | 74.70% |
+| control: its two teachers (`c5`) | 0.54358 | 72.85% | 76.16% | 74.59% |
+| L2 a third of the teaching (`t34`) | 0.54299 | 72.77% | 76.29% | 74.62% |
+| L2 the only teacher (`t100`) | 0.54264 | 72.27% | 76.05% | 74.27% |
+
+The network fits its labels a little better the more of L2 it is taught, and chooses between two moves no better, with
+L2 alone slightly worse. The gate is not met. With the sibling pairs (17 November) this is the second way of teaching
+this evaluator what the transformer knows, and the second that the evaluator does not take up: a 768-wide sum of
+piece-square terms is at what it can express on quiet positions, whoever teaches it. The transformer's judgment (79.7% on
+the same pairs) stays out of reach of this design; relational inputs (attack maps) are the untested way to change that.
