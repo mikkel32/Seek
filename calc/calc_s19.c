@@ -2046,6 +2046,25 @@ static void move_str(Move m, char *o) {
 
 // root: iterative deepening, PVS over the root moves, optional additive prior (root_bonus) from the judgment network
 static Move root_moves[256]; static int root_scores[256], n_root, use_bonus, print_root, silent, root_score;
+#ifdef SEEK_TRAINED_CLOCK
+#include "clock_weights.h"
+static void adjust_soft_time(void) {
+    if (!tm_dynamic || !time_ms_limit) return;
+    int captures = 0;
+    for (int i = 0; i < n_root; i++) captures += is_capture(root_moves[i]) != 0;
+    double features[7] = {1, log1p(n_root), log1p(captures), in_check() != 0,
+                          popc(P.occ[0] | P.occ[1]) / 16.0,
+                          popc(P.bb[0][QUEEN] | P.bb[1][QUEEN]), n_root == 1};
+    int phase = 0;
+    while (phase < 5 && game_move > phase_edges[phase]) phase++;
+    double pred = 0;
+    for (int i = 0; i < 7; i++) pred += (features[i] - feature_means[phase][i]) * clock_weights[i];
+    if (pred < -.90) pred = -.90;
+    if (pred > .60) pred = .60;
+    time_ms_limit = (int)(time_ms_limit * exp(.6 * pred) / phase_normalizer[phase]);
+    if (time_ms_limit < 1) time_ms_limit = 1;
+}
+#endif
 static Move search_root(int max_depth) {
 #ifdef SEEK_FILE_SYMMETRY
     prepare_file_symmetry();
@@ -2065,6 +2084,9 @@ static Move search_root(int max_depth) {
         return oracle;
     }
 #endif
+#ifdef SEEK_TRAINED_CLOCK
+    adjust_soft_time();
+#endif
     Move best = root_moves[0];
 #ifdef LSEL
     lsel_gid++;
@@ -2083,6 +2105,9 @@ static Move search_root(int max_depth) {
     memset(root_move_nodes, 0, sizeof root_move_nodes);
     for (root_depth = 1; root_depth <= max_depth; root_depth++) {
         int alpha = -INF, beta = INF, iter_best = -INF; Move iter_move = 0;
+#ifdef SEEK_PROVEN_ROOT
+        Move last_proven = best;
+#endif
         int delta = par[ASP], first_done = 0;
         if (root_depth >= 5) { alpha = last - delta; beta = last + delta; }
         for (;;) {
@@ -2115,13 +2140,36 @@ static Move search_root(int max_depth) {
                 if (v > a) { a = v; if (v >= beta) break; }
             }
             if (stop_flag) break;
-            if (iter_best <= alpha) { alpha = iter_best - delta; if (alpha < -INF) alpha = -INF; delta *= 3; continue; }
-            if (iter_best >= beta) { beta = iter_best + delta; if (beta > INF) beta = INF; delta *= 3;
-                                     for (int i = 1; i < n_root; i++) if (root_moves[i] == iter_move) { memmove(root_moves + 1, root_moves, i * sizeof(Move)); root_moves[0] = iter_move; break; }
-                                     continue; }
+            if (iter_best <= alpha) {
+#ifdef SEEK_PROVEN_ROOT
+                last_proven = best;
+#endif
+                alpha = iter_best - delta; if (alpha < -INF) alpha = -INF;
+                delta *= 3; continue;
+            }
+            if (iter_best >= beta) {
+#ifdef SEEK_PROVEN_ROOT
+                last_proven = iter_move;
+#endif
+                beta = iter_best + delta; if (beta > INF) beta = INF;
+                delta *= 3;
+                for (int i = 1; i < n_root; i++) if (root_moves[i] == iter_move) {
+                    memmove(root_moves + 1, root_moves, i * sizeof(Move)); root_moves[0] = iter_move; break;
+                }
+                continue;
+            }
             break;
         }
-        if (stop_flag) { if (first_done && iter_move && root_depth > 1) best = iter_move; break; }   // partial iteration: usable once the previous best has been re-searched
+        if (stop_flag) {
+#ifdef SEEK_PROVEN_ROOT
+            // A score at or below alpha is only an upper bound. It cannot
+            // establish that this move is better than the earlier leader.
+            best = first_done && iter_move && root_depth > 1 && iter_best > alpha ? iter_move : last_proven;
+#else
+            if (first_done && iter_move && root_depth > 1) best = iter_move;
+#endif
+            break;
+        }
         int prev_score = last; stable = (iter_move == best && root_depth > 1) ? stable + 1 : 0;
         best = iter_move; last = iter_best; root_score = last;
         for (int i = 1; i < n_root; i++) if (root_moves[i] == best) { memmove(root_moves + 1, root_moves, i * sizeof(Move)); root_moves[0] = best; break; }
