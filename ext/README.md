@@ -752,3 +752,38 @@ The server was rewritten on the way (one thread around a selector, batches parse
 a thread per client managed ~2,000) after three faults that each silently left non-waiting engines without answers:
 the batching thread died on a write to an engine that had quit, file handles of finished engines were never closed, and
 reading and writing through one text wrapper dropped requests that had already arrived.
+
+## The larger transformer, L2 (18 November)
+
+L2: 14.3 million weights (width 384, 2 + 5 looped + 2 blocks), one pass over 171 million positions of the evaluation
+database, 512 minutes on the card. Held-out best move 56.2% (pilot 51.6%); ChessBench test positions: best move 60.1%,
+blunders 2.4%, value error 0.034 (pilot 55.3% / 4.0% / 0.044).
+
+Without search (`ext/brain_lm.py`, `zero/results/vault_lm_L2_tests.log`; the table of the pilot above, same positions):
+
+| Evaluator | Clear cases chosen right | Quiet pairs | The rest | Fit of the position's value |
+|---|---|---|---|---|
+| BIGS, captures played out | 74.70% | 73.20% | 76.01% | 0.01186 |
+| Stockfish 14.1's network, captures played out | 74.78% | 71.98% | 75.75% | 0.01004 |
+| pilot (5.8M), move probabilities | 76.55% | 76.02% | 76.66% | 0.01303 |
+| **L2 (14.3M), move probabilities** | **79.82%** | **79.71%** | 79.92% | **0.00872** |
+
+As a prior on the root moves (`zero/results/vault_lm_duo.log`, against BIGM's search alone):
+
+| Nodes per move | pilot | L2 |
+|---|---|---|
+| 30,000 (prior 16, cap 80) | −2.53 (0.50) | **−3.53 (0.51)** |
+| 100,000 (prior 8, cap 40) | −0.87 (0.36) | **−1.69 (0.38)** |
+| 300,000 (prior 8, cap 40) | −0.30 (0.28) | −0.47 (0.29) |
+
+One step in size is worth 3.3 points of static judgment, and the root prior's gain reaches deeper: doubled at 100,000
+nodes, where the pilot's was already fading.
+
+**Hash-size control** (`zero/results/vault_hash_ctl.log`, 300,000 nodes): 512 MB against 1 GB, where almost nothing
+collides, still differ in 6.3% of the moves; each differs from 64 MB in 18.5 to 18.8%; quality is the same (+0.07 and
++0.40, standard errors 0.25). The instability is what a one-entry table does with the few collisions there are, not a
+fault that costs strength.
+
+Fifty Sonnet research agents (49 angles and a synthesis, 17 November) found no large lever: items of +3 to +10 Elo, and
+agreement that the gap is search efficiency. Of their first item, storing the evaluation in the hash entry, their own
+count says to skip it: a same-key entry is present at 9.5% of the evaluations, below the 25% they set as the bar.

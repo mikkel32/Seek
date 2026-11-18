@@ -16,3 +16,8 @@
 100000 nodes, prior 8 per unit, cap 40: -0.87 (standard error 0.36, -2.4 of them); 1937 positions scored differently
 100000 nodes, prior 16 per unit, cap 80: -0.70 (standard error 0.40, -1.8 of them); 2103 positions scored differently
 [03:02:38] finished L1p
+[15:26:31] transformer L2 as root prior, against the search alone
+30000 nodes, prior 16 per unit, cap 80: -3.53 (standard error 0.51, -6.9 of them); 2243 positions scored differently
+100000 nodes, prior 8 per unit, cap 40: -1.69 (standard error 0.38, -4.5 of them); 1906 positions scored differently
+300000 nodes, prior 8 per unit, cap 40: -0.47 (standard error 0.29, -1.6 of them); 1682 positions scored differently
+[15:32:09] finished L2
