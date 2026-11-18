@@ -52,6 +52,10 @@ class Eng:
     def new(self):
         self.send('ucinewgame'); self.send('isready'); self.wait('readyok')
 
+    def move_time(self, fen, ms):
+        self.send('position fen ' + fen); self.send(f'go movetime {ms}')
+        return self.wait('bestmove').split()[1]
+
     def move(self, fen, nodes, moves=None, extra=''):
         self.send('position fen ' + fen + (' moves ' + ' '.join(moves) if moves else ''))
         self.send(f'go nodes {nodes}{extra}')
@@ -159,7 +163,7 @@ def truth(a):
 def w_test(a):
     cmd, opts, nodes, items = a; e = Eng(cmd, opts_of(opts)); out = []
     for i, fen in items:
-        e.new(); out.append((i, e.move(fen, nodes)))
+        e.new(); out.append((i, e.move(fen, nodes) if nodes > 0 else e.move_time(fen, -nodes)))     # a negative budget is milliseconds per move
     e.quit()
     return out
 
@@ -254,7 +258,7 @@ if __name__ == '__main__':
     c = sub.add_parser('collect'); c.add_argument('--us'); c.add_argument('--us_opts', default='Hash=64'); c.add_argument('--opp', default=SF)
     c.add_argument('--nodes', type=int, default=30000); c.add_argument('--games', type=int, default=1000); c.add_argument('--per', type=int, default=8); c.add_argument('--workers', type=int, default=22); c.add_argument('--skip', type=int, default=0)
     t = sub.add_parser('truth'); t.add_argument('--nodes', type=int, default=4000000); t.add_argument('--workers', type=int, default=22); t.add_argument('--limit', type=int, default=0)
-    s = sub.add_parser('test'); s.add_argument('--name'); s.add_argument('--cmd'); s.add_argument('--opts', default='Hash=64'); s.add_argument('--nodes', type=int)
+    s = sub.add_parser('test'); s.add_argument('--name'); s.add_argument('--cmd'); s.add_argument('--opts', default='Hash=64'); s.add_argument('--nodes', type=int)       # negative: milliseconds per move instead (equal time, so whatever a configuration costs in time is charged; keep --workers at or below the cores)
     s.add_argument('--workers', type=int, default=22); s.add_argument('--limit', type=int, default=0); s.add_argument('--first', type=int, default=0); s.add_argument('--subset', default='')   # positions [first, limit) of the usable list
     m = sub.add_parser('cmp'); m.add_argument('a'); m.add_argument('b')
     u = sub.add_parser('subset'); u.add_argument('--runs'); u.add_argument('--out', default='contested')

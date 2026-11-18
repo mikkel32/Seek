@@ -8,7 +8,7 @@ chess, or on the clock.
 Prints (and appends to --out) one JSON line: our wins, draws, losses, score, Elo difference with its 95% range, and how many
 games each side lost on time.
 """
-import argparse, json, math, subprocess, time
+import argparse, json, math, os, subprocess, time
 import chess
 from multiprocessing import Pool
 from match import openings, elo_from
@@ -64,7 +64,7 @@ OPP_NODES = 0   # --opp_nodes: the opponent's own budget per move when it differ
 def one_game(us, opp, fen, us_white, base, inc, nodes):
     """-> (our score, plies, who lost on time or by an illegal move)"""
     us.new_game(); opp.new_game()
-    board = chess.Board(fen); moves = []; clock = {chess.WHITE: base, chess.BLACK: base}; flag = None; res = None
+    board = chess.Board(fen); moves = []; clock = {chess.WHITE: base, chess.BLACK: base}; flag = None; res = None; ms = []
     while res is None:
         if board.is_checkmate():
             res = 0.0 if board.turn == chess.WHITE else 1.0                    # white's score
@@ -74,7 +74,7 @@ def one_game(us, opp, fen, us_white, base, inc, nodes):
             eng = us if (board.turn == chess.WHITE) == us_white else opp
             t0 = time.perf_counter()
             mv = eng.go(fen, moves, clock[chess.WHITE], clock[chess.BLACK], inc, nodes if eng is us or not OPP_NODES else OPP_NODES)
-            clock[board.turn] -= 0 if nodes else time.perf_counter() - t0
+            dt = time.perf_counter() - t0; ms.append(int(1000 * dt)); clock[board.turn] -= 0 if nodes else dt
             try:
                 m = chess.Move.from_uci(mv); legal = m in board.legal_moves
             except Exception:
@@ -84,6 +84,11 @@ def one_game(us, opp, fen, us_white, base, inc, nodes):
                 flag = ('us' if eng is us else 'opp') + ('_time' if legal else '_illegal')
             else:
                 clock[board.turn] += inc; board.push(m); moves.append(mv)
+    if os.environ.get('GAMES_LOG'):                          # GAMES_LOG=<file>: one line a game, to look at where games are lost
+        import fcntl, json
+        with open(os.environ['GAMES_LOG'], 'a') as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            f.write(json.dumps({'fen': fen, 'us_white': us_white, 'score': res if us_white else 1.0 - res, 'flag': flag, 'moves': moves, 'ms': ms}) + '\n')
     return (res if us_white else 1.0 - res, board.ply(), flag)
 
 
