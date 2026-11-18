@@ -36,3 +36,33 @@ The G101 collection build used s19’s standard scale 100 to generate 481,094 tr
 | G101 cutoffs, 1024 at 10+0.1 | 240 | 35–163–42 | −10.1 | −32.3 to +11.9 |
 
 The strongest screen advanced to 120 fresh pairs at the clock (offset 1280, seed 55489). Its clock match provided no evidence of an additional Elo gain over calibrated G101. All games were legal and neither side lost on time. The published G101 cutoff table is `ext/nets/g101-cutoff/history_prior.h` with SHA-256 `19745aa33159ad57a46c6594040dc4787e1de72ff48bb5c0edffe2ed434811b9`. Opening-paired game scores are in `ext/results/history-g101-pairs.tsv.gz`.
+
+## Production BIGS
+
+The collector used the 768-wide BIGS network. It produced 487,824 training comparisons and 118,917 held-out comparisons. With the quantized table, held-out pairwise log loss fell from 0.69315 to 0.68164. The NNUE SHA-256 was `9b204a84cbb78acab433ce79fbefdc848e02c71df2a2966e73affb3a2f2fe2fa`. The trained history table SHA-256 was `38657505c19eb44e41b352ac69afea636ed6d645e6bb14613c2d7bbd0e0d77fd`. The trained table and game logs are stored privately in `/root/loopchess/zero/results/seek_policy_61311764/` on the project vault.
+
+Each candidate played unchanged BIGS on the same 250 color-reversed openings at 20,000 nodes per move (pool offset 0, seed 971116). The candidate with the highest score then played 200 additional color-reversed openings at 10 seconds plus 0.1 seconds per move (pool offset 640, seed 77436). Both sides used EvalScale 100.
+
+| Seek candidate | Wins–draws–losses | Points scored | Match Elo | Opening-paired 95% Elo interval |
+|---|---:|---:|---:|---:|
+| Stockfish choices, 512 | 120–231–149 | 47.10% | −20.2 | −42.6 to +2.1 |
+| BIGS cutoffs, 256 | 125–224–151 | 47.40% | −18.1 | −40.6 to +4.3 |
+| BIGS cutoffs, 1024 | 140–230–130 | 51.00% | +6.9 | −14.9 to +28.9 |
+| BIGS cutoffs, 1024 at 10+0.1 | 42–304–54 | 48.50% | −10.4 | −26.0 to +5.1 |
+
+## Direct match against Stockfish 14.1
+
+Unchanged BIGS and BIGS with cutoff prior 1024 played the same 100 additional openings in both colors. Each side had one thread, 64 MiB of hash and 10 seconds plus 0.1 seconds per move. The arms ran concurrently on the same host, with five boards per build. The opening pool excluded the entire source game archive and the 200 openings from the BIGS clock match. Its offset was 2400 and the opening seed was 403287.
+
+The opponent was compiled from the official `sf_14.1` tag with `make build ARCH=x86-64-bmi2` on an Intel Xeon E5-2680 v4. Its default NNUE was enabled. Both Seek executables used `gcc -O3 -march=native -DHMAX=768`. An independent fit on the match machine reproduced the private history table byte for byte. Network SHA-256 was `13406b1dcbe0a36dfc5e07da51d8db38b7a45d7da43078ec25a7624c2b83236f`. The complete match can be repeated with `ext/history_stockfish_match.py`. The per-game logs are stored privately in `/root/loopchess/zero/results/seek_stockfish_61315839/` on the project vault.
+
+| Seek candidate | Wins–draws–losses | Points scored | Match Elo | Opening-paired 95% Elo interval |
+|---|---:|---:|---:|---:|
+| Unchanged BIGS | 5–95–100 | 26.25% | −179.5 | −212.9 to −148.8 |
+| Trained BIGS | 3–97–100 | 25.75% | −184.0 | −221.3 to −150.2 |
+
+The trained model changed the score against Stockfish by −0.50 percentage points (paired 95% interval −5.23 to +4.23). This interval uses the difference between the two Seek builds on each opening, averaged across the two colors.
+
+All 1,900 BIGS head-to-head games and all 400 Stockfish games completed with zero time losses and zero illegal moves. The 400-game BIGS clock match and the matched Stockfish comparison both leave the existing champion in place.
+
+For historical context, the archived 1,000-game run gave BIGS 39 wins, 616 draws and 345 losses against Stockfish 14.1, or 34.7% of the points. That run used a different match setup. The 26.25% baseline above is the appropriate comparison for the new model. [Archived run](../../zero/results/vault_clock.log)
