@@ -21,6 +21,7 @@ C1a and G1a started from the same BIGS training checkpoint. C1a continued on the
 | Average | 20,000 nodes | 105–192–103 | +1.7 | −23.3 to +26.8 |
 | Contrast | 20,000 nodes | 108–178–114 | −5.2 | −29.8 to +19.3 |
 | Previously trained C1a control | 20,000 nodes | 115–172–113 | +1.7 | −23.5 to +27.0 |
+| Previously trained C1a control | 10 s + 0.1 s, fresh openings | 53–306–41 | +10.4 | −5.4 to +26.3 |
 
 The three matches used the same 200 pairs (offset 1920, seed 75219, pool size 640). Average and C1a tied on game points. The implemented tie-break selected C1a for 200 fresh pairs under 10+0.1 (offset 1280, seed 73148, pool size 640).
 
@@ -28,5 +29,7 @@ The three matches used the same 200 pairs (offset 1920, seed 75219, pool size 64
 python ext/blend_bigs.py average w_BIGS.bin w_C1a.bin w_G1a.bin /tmp/average.bin
 python ext/blend_bigs.py contrast w_BIGS.bin w_C1a.bin w_G1b.bin /tmp/contrast.bin
 ```
+
+The C1a clock match finished 53–306–41 with no flags or illegal moves. The paired interval includes zero. Across the two production experiments, 2,540 completed games provide no established replacement for the current BIGS champion. These are direct matches against BIGS. An Elo change against Stockfish 14.1 would require its own head-to-head comparison. Raw match summaries are in `bigs-match-results.json`.
 
 SHA-256 for the exported average was `1675f1e7e8d8e96ed85721fc01bbe2dde2122561accc58fb51e4c7262c7b4798`. SHA-256 for the contrast was `298405c63599afc540676c11fe87cb308728de08701dc2168b63040b319a8eba`.
