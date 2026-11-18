@@ -92,6 +92,9 @@ static void init_pext(void) {
 typedef struct { U64 bb[2][6], occ[2]; signed char sq[64]; int side, castle, ep, half; U64 key, pkey, npkey[2], mmkey[2]; } Pos;      // mmkey: where the minor pieces and kings stand / the major pieces and kings
 typedef struct { Move m; int cap, castle, ep, half; U64 key; } Undo;
 static Pos P;
+#ifdef SEEK_SYZYGY
+#include "syzygy.h"
+#endif
 static Undo ust[2048];
 static U64 keys[2048];
 static int hply;
@@ -1594,6 +1597,10 @@ static int qsearch(int alpha, int beta, int ply) {
 #ifdef SSTAT
     st_p[st_mode]++;
 #endif
+#ifdef SEEK_SYZYGY
+    int tb_score;
+    if (tb_cutoff(alpha, beta, ply, &tb_score)) return tb_score;
+#endif
     TTE *e = tt_find(P.key);
     Move ttm = 0;
     if (e->key == P.key) {
@@ -1653,6 +1660,10 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
     if (alpha < -MATE + ply) alpha = -MATE + ply;                         // mate-distance pruning
     if (beta > MATE - ply - 1) beta = MATE - ply - 1;
     if (alpha >= beta) return alpha;
+#ifdef SEEK_SYZYGY
+    int tb_score;
+    if (!excluded[ply] && tb_cutoff(alpha, beta, ply, &tb_score)) return tb_score;
+#endif
     ST(1); if (pv_node) ST(30);
 #ifdef SSTAT
     st_d[depth > 23 ? 23 : depth]++; st_p[st_mode]++;
@@ -2012,6 +2023,14 @@ static Move search_root(int max_depth) {
     n_root = 0;
     for (int i = 0; i < n; i++) if (make(list[i])) { unmake(); root_moves[n_root++] = list[i]; }
     if (!n_root) return 0;
+#ifdef SEEK_SYZYGY
+    tb_hits = 0;
+    Move oracle = tb_root_moves(root_moves, &n_root, &root_score);
+    if (oracle) {
+        root_scores[0] = root_score;
+        return oracle;
+    }
+#endif
     Move best = root_moves[0];
 #ifdef LSEL
     lsel_gid++;
@@ -2257,9 +2276,20 @@ int main(int argc, char **argv) {
         if (!strcmp(line, "uci")) {
             printf("id name CALC\nid author loopchess\noption name EvalFile type string default <none>\noption name Hash type spin default 32 min 1 max 4096\noption name Bonus type string default <none>\n");
             for (int i = 0; i < NPAR; i++) printf("option name %s type spin default %d min 0 max 100000\n", par_name[i], par[i]);
+#ifdef SEEK_SYZYGY
+            puts("option name SyzygyPath type string default <empty>");
+#endif
             printf("uciok\n");
         } else if (!strcmp(line, "isready")) printf("readyok\n");
         else if (!strncmp(line, "setoption name EvalFile value ", 30)) { if (!load_net(line + 30)) printf("info string cannot load %s\n", line + 30); }
+#ifdef SEEK_SYZYGY
+        else if (!strncmp(line, "setoption name SyzygyPath value ", sizeof("setoption name SyzygyPath value ") - 1)) {
+            const char *path = line + sizeof("setoption name SyzygyPath value ") - 1;
+            tb_init(strcmp(path, "<empty>") ? path : "");
+            memset(tt, 0, (tt_mask + 1) * sizeof(TTE));
+            printf("info string Syzygy up to %u pieces\n", TB_LARGEST);
+        }
+#endif
         else if (!strncmp(line, "setoption name Hash value ", 26)) tt_alloc(atoi(line + 26));
         else if (!strncmp(line, "setoption name SelFile value ", 29)) { if (!ls_load(line + 29)) printf("info string cannot read the model %s\n", line + 29); }
         else if (!strncmp(line, "setoption name TmNew value ", 27)) tm_new = atoi(line + 27);
@@ -2350,6 +2380,9 @@ int main(int argc, char **argv) {
             use_bonus = 0;
             char ms[8];
             if (lm_fd >= 0) printf("info string transformer requests %llu, answers used %llu, answers too late %llu, waits %llu, waited %llu ms, asked ahead %llu, not sent (link full) %llu\n", lm_calls, lm_hits, lm_late, lm_waits, lm_wait_us / 1000, lm_ahead_n, lm_full);
+#ifdef SEEK_SYZYGY
+            if (tb_hits) printf("info tbhits %u\n", tb_hits);
+#endif
             if (m) { move_str(m, ms); printf("bestmove %s\n", ms); } else printf("bestmove 0000\n");
         } else if (!strncmp(line, "perft", 5)) { printf("perft %llu\n", perft(atoi(line + 6))); }
         else if (!strcmp(line, "eval")) printf("eval %d\n", evaluate());
