@@ -512,6 +512,26 @@ static void quantize_net(void) {
     }
     #undef QW
 }
+#ifdef SEEK_FILE_SYMMETRY
+static float pst_original[2][768], pst_projected[2][768];
+static int pst_eligible, pst_is_projected;
+
+// With castling unavailable, reflecting files is a chess symmetry. For king-
+// mirrored nets the hidden output is already invariant; only the linear tables
+// have to be averaged. Once castling is gone it stays gone in every descendant.
+static void prepare_file_symmetry(void) {
+    int want_projected = pst_eligible && !P.castle;
+    if (want_projected == pst_is_projected) return;
+    const float (*tables)[768] = want_projected ? pst_projected : pst_original;
+    memcpy(NS, tables[0], sizeof NS);
+    memcpy(NS2, tables[1], sizeof NS2);
+    pst_is_projected = want_projected;
+    acc_refresh();
+    // Searches from earlier roots may have seen rights-free descendants with
+    // the old table. Their backed-up scores belong to the previous evaluator.
+    memset(tt, 0, (tt_mask + 1) * sizeof(*tt));
+}
+#endif
 static int load_net(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f) return 0;
@@ -589,6 +609,15 @@ static int load_net(const char *path) {
     fclose(f);
     if (!taper) { NC2 = 0; memset(NS2, 0, sizeof NS2); }
     have_net = (int)ok;
+#ifdef SEEK_FILE_SYMMETRY
+    pst_eligible = have_net && (NKB == 7 || NKB == 16 || NKB == 32 || (NKB == 1 && NMIR));
+    pst_is_projected = 0;
+    memcpy(pst_original[0], NS, sizeof NS);
+    memcpy(pst_original[1], NS2, sizeof NS2);
+    for (int stage = 0; stage < 2; stage++)
+        for (int i = 0; i < 768; i++)
+            pst_projected[stage][i] = (pst_original[stage][i] + pst_original[stage][i ^ 7]) * 0.5f;
+#endif
     if (have_net && NH) quantize_net();
     kc_reset();
     acc_refresh();
@@ -2018,13 +2047,18 @@ static void move_str(Move m, char *o) {
 // root: iterative deepening, PVS over the root moves, optional additive prior (root_bonus) from the judgment network
 static Move root_moves[256]; static int root_scores[256], n_root, use_bonus, print_root, silent, root_score;
 static Move search_root(int max_depth) {
+#ifdef SEEK_FILE_SYMMETRY
+    prepare_file_symmetry();
+#endif
     Move list[256];
     int n = gen(list, 0);
     n_root = 0;
     for (int i = 0; i < n; i++) if (make(list[i])) { unmake(); root_moves[n_root++] = list[i]; }
-    if (!n_root) return 0;
 #ifdef SEEK_SYZYGY
     tb_hits = 0;
+#endif
+    if (!n_root) return 0;
+#ifdef SEEK_SYZYGY
     Move oracle = tb_root_moves(root_moves, &n_root, &root_score);
     if (oracle) {
         root_scores[0] = root_score;
@@ -2385,9 +2419,18 @@ int main(int argc, char **argv) {
 #endif
             if (m) { move_str(m, ms); printf("bestmove %s\n", ms); } else printf("bestmove 0000\n");
         } else if (!strncmp(line, "perft", 5)) { printf("perft %llu\n", perft(atoi(line + 6))); }
-        else if (!strcmp(line, "eval")) printf("eval %d\n", evaluate());
+        else if (!strcmp(line, "eval")) {
+#ifdef SEEK_FILE_SYMMETRY
+            prepare_file_symmetry();
+#endif
+            printf("eval %d\n", evaluate());
+        }
         else if (!strcmp(line, "fen")) { char f_[128]; pos_fen(f_); printf("fen %s\n", f_); }       // the position as the transformer is sent it
-        else if (!strcmp(line, "qeval")) { nodes = 0; stop_flag = 0; node_limit = 0; hard_ms_limit = time_ms_limit = 0; printf("eval %d\n", qsearch(-INF, INF, 0)); }   // the value after captures are played out, as a search leaf returns it
+        else if (!strcmp(line, "qeval")) {
+#ifdef SEEK_FILE_SYMMETRY
+            prepare_file_symmetry();
+#endif
+            nodes = 0; stop_flag = 0; node_limit = 0; hard_ms_limit = time_ms_limit = 0; printf("eval %d\n", qsearch(-INF, INF, 0)); }   // the value after captures are played out, as a search leaf returns it
         else if (!strcmp(line, "pol")) {                 // the read-out's scores for the quiet moves of the current position
             if (have_pol && !in_check()) { evaluate(); Picker q; mp_init(&q, 0, 0, 0); q.pol = 1; Move m; char ms[8]; while ((m = mp_next(&q))) if (q.pol_on && !is_capture(m) && !PROMO(m)) { move_str(m, ms); printf("pol %s %d\n", ms, q.pol_now); } }
             printf("pol end\n");
