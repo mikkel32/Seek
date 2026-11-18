@@ -38,4 +38,5 @@
 [20:35:33] BIGS against Stockfish 14.1, 10000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "10000 positions per move", "n": 1000, "w": 115, "d": 296, "l": 589, "score": 0.263, "elo": -179.0, "lo": -198.8, "hi": -160.2, "avg_plies": 137.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 1.7}
 [20:40:33] BIGS against Stockfish 14.1, 30000 positions per move each: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 84, "d": 398, "l": 518, "score": 0.283, "elo": -161.5, "lo": -178.9, "hi": -144.8, "avg_plies": 142.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.0}
 [20:40:33] BIGS finished
-
+[15:27:06] options of the new network in its matches: Hash=64,PvPrune=1,ChkExt=0,SeDouble=20,CutIir=1
+[15:27:06] training BIGQ: 768 wide, 16 king buckets with a shared table, from scratch, 2 passes over e:0-11,f:0-39,h:0-59,s:0-406,t:0-22 --ytag yc --distill zero/w_BIGX.bin.ema.pt+sf:/root/ext/sf141_embedded.bin --dw 0.5 --buckets 32 --obk 2
