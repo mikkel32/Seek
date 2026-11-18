@@ -1,14 +1,19 @@
 # G101 evaluation scale and output-layer fitting
 
-On s19, the readout fitted to archived Stockfish labels scored +42.6 Elo over stock G101 across 1,400 games at 30,000 nodes per move (95% opening-paired interval +26.7 to +58.8). A simpler G101 with its existing UCI EvalScale set to 72 then beat the fitted readout by 48.4 Elo in a direct 600-game control. This experiment uses the public 384-wide G101 checkpoint. A comparison to the private BIGS champion or to Stockfish needs a separate match.
+On s19, the readout fitted to archived Stockfish labels scored +42.6 Elo over stock G101 across 1,400 games at 30,000 nodes per move (95% opening-paired interval +26.7 to +58.8). A simpler G101 with its existing UCI EvalScale set to 72 then beat the fitted readout by 48.4 Elo in a direct 600-game control. In a direct 240-game match, changing G101 to EvalScale 72 scored +88.7 Elo over its default of 100. The same setting scored +36.3 Elo at 10+0.1 over 240 games (paired 95% interval +10.8 to +62.2). These estimates apply to the public 384-wide G101 checkpoint.
 
 | Candidate | Opponent | Control | W–D–L | Elo | Paired 95% interval |
 |---|---|---|---|---:|---:|
 | Fitted G101 | G101 | 30k nodes, first book | 151–116–133 | +15.6 | −13.9 to +45.5 |
 | Fitted G101 | G101 | 30k nodes, independent replication | 441–271–288 | +53.6 | +34.6 to +72.9 |
 | Fitted G101 | G101 | 10 s + 0.1 s per move | 58–98–44 | +24.4 | −10.0 to +59.2 |
+| Fitted G101 | G101 | 10 s + 0.1 s, independent replication | 56–98–46 | +17.4 | −18.1 to +53.3 |
 | Fitted G101 | G101, EvalScale 72 | 30k nodes, calibration control | 166–185–249 | −48.4 | −70.6 to −26.5 |
+| G101, EvalScale 72 | Stock G101 | 30k nodes, direct calibration test | 111–78–51 | +88.7 | +52.7 to +126.7 |
+| G101, EvalScale 72 | Stock G101 | 10 s + 0.1 s | 60–145–35 | +36.3 | +10.8 to +62.2 |
 | Exploratory capture-leaf fit | G101 | 10k nodes | 82–50–68 | +24.4 | −14.3 to +63.6 |
+
+The two clock runs together scored 114–196–90 (+20.9 Elo across 400 games, paired 95% interval −3.6 to +45.6). The clock confirmation used offset 1280 and seed 192826.
 
 Every pair reverses colors. The engine, hash, threads and search options were held fixed, with the explicit EvalScale change shown above. Across these games there were zero time losses or illegal moves. Intervals use the mean and standard error of the two-game opening scores and a Student-t critical value, transformed to the Elo scale. All match openings come from the repository book after excluding every starting position in the teacher archive. The first and replication books for the same control are disjoint. The compressed TSV contains one row per opening per match.
 
@@ -40,6 +45,8 @@ OPENBLAS_NUM_THREADS=1 python ext/readout_arena.py /tmp/seek-s19 "$parent" "$stu
   --offset 2400 --pool-size 580 --pairs 300 --seed 93017 --nodes 30000 --parent-eval-scale 72 \
   --games-log /tmp/calibration-control.jsonl
 ```
+
+The scale-only test used the unchanged parent on both sides with `--student-eval-scale 72 --offset 1920 --pool-size 640 --pairs 120 --seed 731 --nodes 30000`. This reused a subset of the node replication openings. The direct scale-only clock match used offset 0, pool size 640, 120 pairs and seed 91921. To apply this G101 result in UCI, send `setoption name EvalScale value 72` before starting a game.
 
 The first node screen used offset 0 and 200 pairs. The first clock screen used offset 640 and 100 pairs at `--tc 10+0.1`. Both used pool size 640 and seed 181126. The exploratory model used the same fitter with `--settle`, then offset 1280, pool size 640 and seed 181126 for 100 pairs. Each invocation requires a new game-log path.
 
