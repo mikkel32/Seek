@@ -68,6 +68,8 @@ def main():
     parser.add_argument("--offset", type=int, default=640, help="start of reserved opening pool")
     parser.add_argument("--pool-size", type=int, default=640)
     parser.add_argument("--pairs", type=int, default=100)
+    parser.add_argument("--student-eval-scale", type=int, default=100, help="UCI EvalScale for the candidate")
+    parser.add_argument("--parent-eval-scale", type=int, default=100, help="UCI EvalScale for a calibration control")
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--seed", type=int, default=181126)
     control = parser.add_mutually_exclusive_group()
@@ -90,8 +92,10 @@ def main():
         # gauntlet uses space-delimited UCI commands. Short symlinks keep paths with spaces usable.
         for name, target in [("engine", engine), ("parent.bin", parent), ("student.bin", student)]:
             (work / name).symlink_to(target)
+        parent_options = f"{OPTIONS},EvalScale={args.parent_eval_scale}"
+        student_options = f"{OPTIONS},EvalScale={args.student_eval_scale}"
         cmd = [sys.executable, str(ROOT / "gauntlet.py"), "--us", "./engine student.bin",
-               "--us_opts", OPTIONS, "--opp", f"parent|./engine parent.bin|{OPTIONS}",
+               "--us_opts", student_options, "--opp", f"parent|./engine parent.bin|{parent_options}",
                "--workers", str(args.workers), "--openings", str(args.pairs), "--seed", str(args.seed)]
         cmd += ["--nodes", str(args.nodes)] if args.nodes else ["--tc", args.tc]
         with log.open("x"):
