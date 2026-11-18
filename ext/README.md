@@ -809,3 +809,30 @@ no gain on this card. What is left for it is teaching (`lm/label_nnue.py`, `calc
 
 `gauntlet.py` keeps every game with `GAMES_LOG=<file>` (moves and milliseconds per move; none were kept before), and
 `ext/autopsy.py` scores every position of every game with Stockfish and reports where the losses come from.
+
+## Where the games are lost, and the clock (18 November)
+
+The first recorded match (`GAMES_LOG`, BIGS against Stockfish 14.1 at 10+0.1, 1,000 games: 39-616-345, −110 (−123 to
+−97), the standing −111 again) and its autopsy (`ext/autopsy.py`, every position scored by Stockfish at 100,000 nodes;
+`zero/results/vault_autopsy.log`):
+
+- Of the 345 lost games, 33 (10%) turn on a single move of ours (0.25 of a point or more), 206 (60%) on two or three
+  moves of 0.10 or more, 106 (31%) are a slow decline.
+- 211 of the 345 are decided in moves 21 to 40 (the last move at which the judge still gave us 0.35), 67 by move 20.
+- Win chance given away per move, ours / Stockfish's (thousandths; the judge is Stockfish, at more nodes than in the
+  game): moves up to 20 13.9 / 11.9; 21-40 15.1 / 11.6; 41-60 7.9 / 6.6; later 3.1 / 2.6.
+
+The clock (`ext/timefrac.py`), milliseconds a move and the clock before the move:
+
+| Moves | Ours | clock | Stockfish's | clock |
+|---|---|---|---|---|
+| 17-20 | 349 | 6.4 s | 426 | 6.1 s |
+| 25-28 | 268 | 4.7 s | 345 | 3.8 s |
+| 33-36 | 216 | 3.6 s | 261 | 2.0 s |
+| 41-50 | 161 | 2.6 s | 149 | 0.9 s |
+| 81 on | 97 | 1.45 s | 93 | 0.7 s |
+
+Stockfish spends a growing share of its clock through the middlegame (one eleventh a move by move 35) and then lives
+on the increment at 0.6 to 0.9 s; our constant share spends a shrinking amount exactly where the games are decided and
+leaves about 1.5 of its 10 seconds unused. `TmCurve=100` (calc_s19.c) makes the share follow the move number, each entry
+our measured clock-per-move ratio divided by Stockfish's.

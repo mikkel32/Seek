@@ -5,3 +5,4 @@
 [03:27:58] finished duo clock L1p
 [15:57:05] BIGS + transformer L2 as root prior (8 per unit, cap 40) against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 19, "d": 634, "l": 347, "score": 0.336, "elo": -118.3, "lo": -130.7, "hi": -106.2, "avg_plies": 147.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 24.4}
 [15:57:05] finished duo clock L2
+[17:12:54] BIGS against Stockfish 14.1, 10+0.1, 22 boards, games recorded: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 39, "d": 616, "l": 345, "score": 0.347, "elo": -109.8, "lo": -122.8, "hi": -97.2, "avg_plies": 153.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 24.8}

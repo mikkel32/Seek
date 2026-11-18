@@ -1089,6 +1089,7 @@ static void fill_rec(Rec *r, int sc) {
 }
 
 static int stop_flag, time_ms_limit, hard_ms_limit, root_depth;
+static int tm_curve = 0, fen_fullmove = 1, game_move = 1;   // UCI option TmCurve; the move number of the position on the board
 static int tm_new = 1, tm_soft = 55;        // UCI options TmNew, TmSoft (percent of the base share that an average move gets)
 static int tm_dynamic;                    // clock games: the time for a move stretches and shrinks with how settled the choice is
 static U64 root_move_nodes[4096];         // positions searched under each root move (from*64+to), over the whole search
@@ -2082,6 +2083,9 @@ static void set_fen(const char *fen) {
     if (*c >= 'a' && *c <= 'h' && c[1]) { P.ep = (c[1] - '1') * 8 + (*c - 'a'); c += 2; } else if (*c) c++;
     while (*c == ' ') c++;
     P.half = atoi(c);
+    while (*c && *c != ' ') c++;
+    while (*c == ' ') c++;
+    fen_fullmove = atoi(c) > 0 ? atoi(c) : 1;
     // recompute the key from scratch
     P.key = 0;
     for (int s = 0; s < 64; s++) if (P.sq[s] != EMPTY) P.key ^= zpiece[(int)P.sq[s]][s];
@@ -2216,6 +2220,7 @@ int main(int argc, char **argv) {
         else if (!strncmp(line, "setoption name SelFile value ", 29)) { if (!ls_load(line + 29)) printf("info string cannot read the model %s\n", line + 29); }
         else if (!strncmp(line, "setoption name TmNew value ", 27)) tm_new = atoi(line + 27);
         else if (!strncmp(line, "setoption name TmSoft value ", 28)) tm_soft = atoi(line + 28);
+        else if (!strncmp(line, "setoption name TmCurve value ", 29)) tm_curve = atoi(line + 29);     // 0 = the constant share; 100 = the fitted curve; between = part of the way
         else if (!strncmp(line, "setoption name ", 15) && strstr(line, " value ") && strncmp(line + 15, "Bonus", 5) && strncmp(line + 15, "EvalFile", 8)) {
             char *v = strstr(line, " value "); int len = (int)(v - (line + 15));
             for (int i = 0; i < NPAR; i++) if ((int)strlen(par_name[i]) == len && !strncmp(line + 15, par_name[i], len)) { par[i] = atoi(v + 7); if (par[i] < 1 && i != LMP_BASE && i < PROBCUT) par[i] = 1; }
@@ -2226,7 +2231,7 @@ int main(int argc, char **argv) {
             char *p = line + 9;
             if (!strncmp(p, "startpos", 8)) set_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             else if (!strncmp(p, "fen ", 4)) set_fen(p + 4);
-            char *mv = strstr(p, "moves");
+            char *mv = strstr(p, "moves"); int plies = P.side == BLACK;
             if (mv) {
                 mv += 5;
                 for (;;) {
@@ -2234,9 +2239,11 @@ int main(int argc, char **argv) {
                     if (!*mv) break;
                     Move m = parse_move(mv);
                     if (!m || !make(m)) break;
+                    plies++;
                     while (*mv && *mv != ' ') mv++;
                 }
             }
+            game_move = fen_fullmove + plies / 2;
         } else if (!strncmp(line, "bonus", 5) || !strncmp(line, "setoption name Bonus value", 26)) {   // bonus e2e4 12 d2d4 -5 ...  (next go only)
             memset(root_bonus, 0, sizeof root_bonus); use_bonus = 1;
             char *p = line + (line[0] == 'b' ? 5 : 26);
@@ -2270,7 +2277,14 @@ int main(int argc, char **argv) {
                 int alloc = t / 30 + inc * 3 / 4; if (alloc > t / 3) alloc = t / 3; if (alloc < 5) alloc = 5;
                 time_ms_limit = alloc * 6 / 10; hard_ms_limit = alloc * 2; if (hard_ms_limit > t / 2) hard_ms_limit = t / 2;
                 if (tm_new) {                                             // a larger share per move as the base, a wider reach for hard positions
-                    alloc = t / 20 + inc * 3 / 4; if (alloc > t / 3) alloc = t / 3; if (alloc < 5) alloc = 5;
+                    // TmCurve=1: the share of the clock a move gets follows the move number, fitted to how Stockfish 14.1 spent its clock
+                    // in 1,000 recorded games at 10+0.1 (ext/autopsy.py): each entry is our measured clock-per-move ratio at those move
+                    // numbers divided by Stockfish's (percent). About the standing share up to move 16, rising to 2.4 times it around
+                    // moves 33-50. The standing rule (a constant share) left 1.5 s of 10 unused at the end and spent a shrinking share
+                    // through moves 17-40, where three fifths of the lost games were decided.
+                    static const int curve[13][2] = {{8, 114}, {12, 103}, {16, 108}, {20, 135}, {24, 152}, {28, 175}, {32, 205}, {36, 230}, {40, 237}, {50, 242}, {60, 170}, {80, 111}, {9999, 165}};
+                    int mult = 100; if (tm_curve) { for (int k = 0; k < 13; k++) if (game_move <= curve[k][0]) { mult = curve[k][1]; break; } mult = 100 + (mult - 100) * tm_curve / 100; }
+                    alloc = t / 20 * mult / 100 + inc * 3 / 4; if (alloc > t / 3) alloc = t / 3; if (alloc < 5) alloc = 5;
                     time_ms_limit = alloc * tm_soft / 100; hard_ms_limit = alloc * 3; if (hard_ms_limit > t * 2 / 5) hard_ms_limit = t * 2 / 5;
                     tm_dynamic = 1;
                 }
