@@ -1,4 +1,4 @@
-"""Match two builds using the same BIGS weights against Stockfish on identical openings."""
+"""Compare two Seek builds or networks against Stockfish on identical openings."""
 import argparse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
@@ -27,6 +27,8 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     for arg in ('baseline', 'trained', 'weights', 'stockfish', 'output'):
         p.add_argument(arg, type=Path)
+    p.add_argument('--trained-weights', type=Path, help='use a different network for the trained arm')
+    p.add_argument('--eval-scale', type=int, default=100, help='same evaluation scale for both arms')
     p.add_argument('--workers', type=int, default=8)
     p.add_argument('--pairs', type=int, default=100)
     control = p.add_mutually_exclusive_group()
@@ -36,6 +38,8 @@ def main():
     p.add_argument('--pool-size', type=int, default=570)
     p.add_argument('--seed', type=int, default=403287)
     a = p.parse_args()
+    if a.eval_scale <= 0:
+        p.error('Evaluation scale must be positive')
     if a.workers < 2 or not 2 <= a.pairs <= a.pool_size or a.offset < 0:
         p.error('Use two or more workers and a nonnegative book offset with sufficient opening pairs')
     if a.nodes is not None and a.nodes <= 0:
@@ -52,9 +56,12 @@ def main():
         (work/'data/openings.txt').write_text('\n'.join(book)+'\n')
         for label in ('baseline','trained','stockfish','weights'):
             (work/label).symlink_to(getattr(a,label).resolve(strict=True))
+        (work/'trained-weights').symlink_to((a.trained_weights or a.weights).resolve(strict=True))
         def run(label):
             log = out/(label+'.jsonl')
-            cmd = [sys.executable, str(ROOT/'gauntlet.py'), '--us', f'./{label} weights', '--us_opts', OPTIONS,
+            net = 'trained-weights' if label == 'trained' else 'weights'
+            cmd = [sys.executable, str(ROOT/'gauntlet.py'), '--us', f'./{label} {net}',
+                   '--us_opts', f'{OPTIONS},EvalScale={a.eval_scale}',
                    '--opp', 'Stockfish 14.1|./stockfish|Threads=1,Hash=64,Use NNUE=true',
                    '--openings', str(a.pairs), '--seed', str(a.seed), '--workers', str(a.workers//2)]
             cmd += ['--nodes', str(a.nodes)] if a.nodes is not None else ['--tc', a.tc]

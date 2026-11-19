@@ -34,10 +34,17 @@ def review(job):
             judge.new()
             options = judge.lines(fen, a.judge_nodes, ' searchmoves ' + old + ' ' + new)
             values = {move:cp for move,cp in options.values()}
-            if set(values) != {old,new}:
-                raise ValueError('Incomplete referee analysis')
+            fallback = set(values) != {old, new}
+            if fallback:
+                values = {}
+                for move in (old, new):
+                    judge.new()
+                    line = judge.lines(fen, a.judge_nodes, ' searchmoves ' + move)
+                    if 1 not in line or line[1][0] != move:
+                        raise ValueError(f'Referee failed to score a legal forced move {move} in {fen}')
+                    values[move] = line[1][1]
             out.append(dict(opening=case['opening'], fen=fen, parent=old, candidate=new,
-                            parent_cp=values[old], candidate_cp=values[new],
+                            parent_cp=values[old], candidate_cp=values[new], fallback=fallback,
                             change=E(values[new])-E(values[old]), cp=values[new]-values[old], moved=True))
     finally:
         for eng in engines:
@@ -72,5 +79,6 @@ if __name__ == '__main__':
     half = t.ppf(.975,len(means)-1)*statistics.stdev(means)/math.sqrt(len(means))
     print(json.dumps(dict(positions=len(rows), openings=len(means), moves_changed=sum(r['moved'] for r in rows),
                           better=sum(r['cp']>0 for r in rows), worse=sum(r['cp']<0 for r in rows),
+                          referee_fallbacks=sum(r.get('fallback', False) for r in rows),
                           equal_changed=sum(r['cp']==0 and r['moved'] for r in rows),
                           opening_mean_score_change=avg, lower=avg-half, upper=avg+half)))

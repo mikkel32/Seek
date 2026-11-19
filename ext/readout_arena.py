@@ -66,6 +66,8 @@ def main():
     parser.add_argument("student", type=Path)
     parser.add_argument("--archive", type=Path,
                         default=ROOT / "zero/results/games/games_bigs.jsonl.sc.jsonl.gz")
+    parser.add_argument("--exclude-games", nargs="+", type=Path, default=[],
+                        help="exclude openings in these earlier match logs before slicing the book")
     parser.add_argument("--offset", type=int, default=640, help="start of reserved opening pool")
     parser.add_argument("--pool-size", type=int, default=640)
     parser.add_argument("--pairs", type=int, default=100)
@@ -80,6 +82,12 @@ def main():
     parser.add_argument("--games-log", required=True, type=Path, help="new file for per-game results")
     args = parser.parse_args()
     book = eligible_book(args.archive)
+    if args.exclude_games:
+        excluded = set()
+        for prior in args.exclude_games:
+            with prior.open() as games:
+                excluded.update(opening_key(json.loads(line)["fen"]) for line in games if line.strip())
+        book = [fen for fen in book if opening_key(fen) not in excluded]
     if args.offset < 0 or args.offset + args.pool_size > len(book) or not 2 <= args.pairs <= args.pool_size:
         parser.error("Choose at least two pairs from a pool inside the unused opening book")
     if args.workers < 1 or (args.nodes is not None and args.nodes <= 0):
