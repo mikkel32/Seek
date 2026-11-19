@@ -872,3 +872,18 @@ over the same 4.09 billion positions; held-out loss 0.54383 (BIGS 0.54400); the 
 
 The probe's +11 (0 to +22) does not hold at full scale: +6 at equal nodes with zero inside the interval, and no gain at
 the clock. BIGS stays the standing network.
+
+## Attack-map inputs at the current scale: the loss gate (19 November)
+
+Two probes on the current recipe (768 wide, 16 king buckets, two teachers, one pass over 1.09 billion positions;
+reference `r0` 0.54415), with inputs that say which kind of piece attacks which square (`calc/train_nnue.py --am`,
+trainer only; `zero/results/vault_vault_probe.log`). The bar set beforehand was a drop of 0.002 in held-out loss.
+
+| Probe | Held-out loss | Against `r0` |
+|---|---|---|
+| attack maps by piece class into 128 units a side (`--am class --amk 128`) | 0.54389 | −0.00026 |
+| attack maps of all six piece kinds into every unit (`--am all`) | 0.54386 | −0.00029 |
+
+A tenth of the bar, and a tenth of what the same inputs gave in the small study of 15 November (−0.0032 on 59 million
+positions and a 384-wide network): with 1.09 billion positions the network has learnt most of what the attack maps told
+it. Closed: the engine-side cost of keeping attack maps up to date is not worth this.
