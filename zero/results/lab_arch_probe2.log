@@ -1,0 +1,9 @@
+59M training positions from 4 shards, 1.0M held out from another shard, 155051 played positions; 8000 steps of 8192; every variant from scratch, same order
+maps: pawns only 384               parameters     352k   held-out label loss 0.50280   played positions (half score, half result) 0.52668   210k positions/s
+maps: pawn knight king 384         parameters     450k   held-out label loss 0.50159   played positions (half score, half result) 0.52535   139k positions/s
+maps: bishop rook queen 384        parameters     450k   held-out label loss 0.50092   played positions (half score, half result) 0.52510   157k positions/s
+maps: one per side 384             parameters     352k   held-out label loss 0.50168   played positions (half score, half result) 0.52583   286k positions/s
+maps: pawns + one per side 384     parameters     401k   held-out label loss 0.50131   played positions (half score, half result) 0.52554   274k positions/s
+maps: pawn knight king + one per side 384 parameters     500k   held-out label loss 0.50081   played positions (half score, half result) 0.52475   211k positions/s
+maps: value classes 384            parameters     549k   held-out label loss 0.50009   played positions (half score, half result) 0.52396   291k positions/s
+maps into 128 of 384 units         parameters     401k   held-out label loss 0.50055   played positions (half score, half result) 0.52444   296k positions/s

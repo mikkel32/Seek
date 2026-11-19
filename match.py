@@ -138,19 +138,60 @@ class SFPlayer:
         self.e.quit()
 
 
+class RawUCI:
+    """a UCI engine driven over plain pipes: one write and a few reads per move. The chess library's engine layer
+    (a background event loop that parses every info line) cost about as much per move as a 4,000-node search."""
+    def __init__(self, cmd):
+        import subprocess
+        self.p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
+        self.send('uci'); self.wait('uciok'); self.send('isready'); self.wait('readyok')
+
+    def send(self, line):
+        self.p.stdin.write(line + '\n'); self.p.stdin.flush()
+
+    def wait(self, word):
+        last = ''
+        while True:
+            line = self.p.stdout.readline()
+            if not line:
+                raise RuntimeError('engine process died')
+            if line.startswith(word):
+                return line, last
+            if line.startswith('info') and ' depth ' in line:
+                last = line
+
+    def configure(self, opts):
+        for k, v in opts.items():
+            self.send(f'setoption name {k} value {v}')
+
+    def play(self, board, nodes=None, seconds=None):
+        """-> (move, nodes searched, depth reached)"""
+        fen = getattr(board, 'start_fen', None) or board.root().fen()        # the worker notes the opening on the board: rebuilding it costs a full replay
+        self.send('position fen ' + fen + (' moves ' + ' '.join(m.uci() for m in board.move_stack) if board.move_stack else ''))
+        self.send(f'go nodes {int(nodes)}' if nodes else f'go movetime {max(1, int(1000 * seconds))}')
+        best, info = self.wait('bestmove')
+        t = info.split(); g = lambda k: int(t[t.index(k) + 1]) if k in t else 0
+        return chess.Move.from_uci(best.split()[1]), g('nodes'), g('depth')
+
+    def quit(self):
+        try:
+            self.send('quit'); self.p.wait(timeout=2)
+        except Exception:
+            self.p.kill()
+
+
 class CalcPlayer:
     """the C calculator: calc:<weights file | none>:<seconds per move, or nodes if >= 100>[:<engine binary>[:<Option=value,...>]]"""
     def __init__(self, net, t, binary='calc/calc', opts=''):
-        self.e = chess.engine.SimpleEngine.popen_uci([binary] + ([net] if net != 'none' else []))
+        self.e = RawUCI([binary] + ([net] if net != 'none' else []))
         if opts:                                   # engine options, e.g. ProbCut=180,CutLmr=1
             self.e.configure({k: int(v) for k, v in (kv.split('=') for kv in opts.split(','))})
         self.t = float(t); self.moves = 0; self.secs = 0.0; self.nodes = 0; self.depth = 0
 
     def go(self, board, t):
-        lim = chess.engine.Limit(nodes=int(t)) if t >= 100 else chess.engine.Limit(time=t)     # >= 100 means a node budget
-        r = self.e.play(board, lim, info=chess.engine.INFO_BASIC)
-        self.nodes += r.info.get('nodes', 0); self.depth += r.info.get('depth', 0)
-        return r.move
+        m, n, d = self.e.play(board, nodes=t) if t >= 100 else self.e.play(board, seconds=t)     # >= 100 means a node budget
+        self.nodes += n; self.depth += d
+        return m
 
     def move(self, board, history):
         t = time.time()
@@ -168,9 +209,9 @@ class CalcPlayer:
 class DuoPlayer(CalcPlayer):
     """two systems: the calculator searches, OURO adds a prior to the root moves.
     duo:<weights>:<ouro ckpt>:<seconds per move>:<centipawns per nat of policy>[:<cap>[:<kind p|q>]]"""
-    def __init__(self, net, ckpt, t, lam, cap=40, kind='p'):
+    def __init__(self, net, ckpt, t, lam, cap=40, kind='p', binary='calc/calc'):
         from engine import Net
-        CalcPlayer.__init__(self, net, t)
+        CalcPlayer.__init__(self, net, t, binary)
         self.ouro = Net(ckpt, threads=1); self.lam = float(lam); self.cap = float(cap); self.kind = kind
 
     def move(self, board, history):
@@ -183,6 +224,51 @@ class DuoPlayer(CalcPlayer):
         g = np.maximum(g, -self.cap)
         self.e.configure({'Bonus': ' '.join(f'{m.uci()[:4]} {int(round(x))}' for m, x in zip(moves, g))})
         m = self.go(board, max(0.01, self.t - (time.time() - t)))
+        self.moves += 1; self.secs += time.time() - t
+        return m
+
+
+class DuoVPlayer(CalcPlayer):
+    """two brains: the calculator searches; each root move's score is corrected by OURO's judgment of the position
+    after it, measured against the calculator network's own static judgment of that position.
+    On fresh self-play positions the game result is predicted best by  search + 0.88 * OURO - 0.87 * static network
+    (zero/judge_cmp.py), i.e. OURO's opinion plus what the search found beyond the static network.
+    duov:<weights .bin, with its .ema.pt beside it>:<ouro ckpt>:<nodes or seconds>:<scale>[:<cap>[:<engine binary>]]"""
+    def __init__(self, net, ckpt, t, scale=1.0, cap=100, binary='calc/calc'):
+        import torch
+        from engine import Net
+        CalcPlayer.__init__(self, net, t, binary)
+        self.ouro = Net(ckpt, threads=1); self.scale = float(scale); self.cap = float(cap)
+        self.sd = torch.load(net + '.ema.pt', map_location='cpu'); self.torch = torch
+        i = np.arange(768); self.lut = torch.from_numpy(np.concatenate([((i // 64 + 6) % 12) * 64 + ((i % 64) ^ 56), [768]]).astype(np.int64))
+        self.ptw = torch.cat([torch.tensor([0, 1, 1, 2, 4, 0] * 2, dtype=torch.float32).repeat_interleave(64), torch.zeros(1)])
+
+    def static(self, boards):
+        """the calculator network's static judgment (logit of the win probability of the side to move)"""
+        torch, sd = self.torch, self.sd; F = torch.nn.functional
+        idx = torch.full((len(boards), 32), 768, dtype=torch.long)
+        for k, b in enumerate(boards):
+            for j, (sq, pc) in enumerate(list(b.piece_map().items())[:32]):
+                idx[k, j] = ((0 if pc.color == b.turn else 6) + pc.piece_type - 1) * 64 + (sq if b.turn == chess.WHITE else sq ^ 56)
+        with torch.no_grad():
+            ao = sd['b'] + F.embedding_bag(idx, sd['E'], mode='sum', padding_idx=768); ap = sd['b'] + F.embedding_bag(self.lut[idx], sd['E'], mode='sum', padding_idx=768)
+            lin = sd['c'] + F.embedding_bag(idx, sd['S'], mode='sum', padding_idx=768)
+            ph = (self.ptw[idx].sum(1) / 24).clamp(max=1.0); bk = (((idx < 768).sum(1) - 2) // 4).clamp(0, sd['wo'].shape[0] - 1)
+            return (ph * lin[:, 0] + (1 - ph) * lin[:, 1] + sd['cb'][bk] + (ao.clamp(0, 1) ** 2 * sd['wo'][bk]).sum(1) + (ap.clamp(0, 1) ** 2 * sd['wp'][bk]).sum(1)).numpy()
+
+    def move(self, board, history):
+        t = time.time(); moves = list(board.legal_moves); kids = []
+        for m in moves:
+            board.push(m); kids.append(board.copy(stack=False)); board.pop()
+        live = [k for k, b in enumerate(kids) if any(True for _ in b.legal_moves)]       # positions that are not mate or stalemate
+        if len(moves) > 1 and live:
+            ev = self.ouro.evaluate([kids[k] for k in live], loops=1)
+            o = np.array([math.log(max(1e-4, min(1 - 1e-4, e[2])) / (1 - max(1e-4, min(1 - 1e-4, e[2])))) for e in ev])   # the opponent's view
+            a = self.static([kids[k] for k in live])
+            g = np.zeros(len(moves)); g[live] = -271.58 * self.scale * (0.88 * o - 0.87 * a)                               # for the side to move at the root
+            g[live] -= g[live].max(); g = np.maximum(g, -self.cap)
+            self.e.configure({'Bonus': ' '.join(f'{m.uci()[:4]} {int(round(x))}' for m, x in zip(moves, g))})
+        m = self.go(board, self.t if self.t >= 100 else max(0.01, self.t - (time.time() - t)))
         self.moves += 1; self.secs += time.time() - t
         return m
 
@@ -211,6 +297,8 @@ def make(spec):
         return CalcPlayer(*p[1:])
     if p[0] == 'duo':
         return DuoPlayer(*p[1:])
+    if p[0] == 'duov':
+        return DuoVPlayer(*p[1:])
     if p[0] == 'net':
         return NetPlayer(p[1], p[2], p[3])
     if p[0] == 'mcts':
@@ -229,7 +317,7 @@ def _worker(args):
     out = []
     for f in fens:
         for a_white in (True, False):
-            board = chess.Board(f)
+            board = chess.Board(f); board.start_fen = f
             hist = [board._transposition_key()]
             while True:
                 r = result_of(board, max_plies, sf)

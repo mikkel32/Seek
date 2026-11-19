@@ -1,0 +1,7 @@
+[17:32:12] arm C1 (--epochs 1 --widen zero/w_N384.bin.pt): played held-out 0.518756
+[17:32:26] arm M1 (--epochs 1 --widen zero/w_N384.bin.pt --hm 1): played held-out 0.519246
+[17:32:33] engine against trainer, M1: 300 random positions, hidden 384, product terms off: largest difference 21.41 centipawns, mean 3.185; evaluations range -3869 to 4820, the product terms supply 0 centipawns on average
+[17:53:44] arm S384M (--epochs 8 --hm 1): played held-out 0.519095
+[17:59:28] mirrored inputs, one more pass from N384 (M1) against the same pass without (C1), 30,000 positions per move: {"opponent": "C1", "tc": "30000 positions per move", "n": 2000, "w": 675, "d": 696, "l": 629, "score": 0.5115, "elo": 8.0, "lo": -4.3, "hi": 20.3, "avg_plies": 152.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.2}
+[18:01:39] mirrored inputs from scratch (S384M) against plain from scratch (S384), 30,000 positions per move: {"opponent": "S384", "tc": "30000 positions per move", "n": 2000, "w": 668, "d": 686, "l": 646, "score": 0.5055, "elo": 3.8, "lo": -8.5, "hi": 16.2, "avg_plies": 152.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.2}
+[18:01:40] finished

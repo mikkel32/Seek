@@ -1,0 +1,21 @@
+[03:28:08] c0 (): FAILED: FileNotFoundError: [Errno 2] No such file or directory: 'calc/pst.npz'; 1s, 
+[03:28:10] s1 (--sib data/lm_0,data/lm_1,data/lm_2,data/lm_3 --sibw 1): FAILED: FileNotFoundError: [Errno 2] No such file or directory: 'calc/pst.npz'; 2s, 
+[03:28:12] s2 (--sib data/lm_0,data/lm_1,data/lm_2,data/lm_3 --sibw 1 --sibp 0.5): FAILED: FileNotFoundError: [Errno 2] No such file or directory: 'calc/pst.npz'; 2s, 
+[03:28:12] sibling probes finished
+[03:38:31] c0 (): held-out loss 0.5433945059776306, mean error 0.057487811893224716; 553s, 353k pos/s
+[03:38:37]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 23.77 centipawns, mean 2.924; evaluations range -1766 to 2062, the product terms
+[03:38:42]   static move choice:       c0                     choice 70.68%   regret  15.83   fit 0.01766 (scale 340)
+[03:38:47]   with captures played out: c0                     choice 74.81%   regret  11.81   fit 0.01198 (scale 210)
+[03:53:50] s1 (--sib data/lm_0,data/lm_1,data/lm_2,data/lm_3 --sibw 1): held-out loss 0.5448493957519531, mean error 0.05963480845093727; 903s, 215k pos/s
+[03:53:50]   start held-out sibling pairs 529143: pair loss 0.69382, plain loss 0.58810, clearly different pairs ranked right 71.27%
+[03:53:50]   end held-out sibling pairs 529143: pair loss 0.69119, plain loss 0.58853, clearly different pairs ranked right 73.10%
+[03:53:56]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 22.73 centipawns, mean 2.983; evaluations range -1807 to 2144, the product terms
+[03:54:01]   static move choice:       s1                     choice 71.25%   regret  15.28   fit 0.01790 (scale 340)
+[03:54:04]   with captures played out: s1                     choice 74.68%   regret  11.97   fit 0.01233 (scale 210)
+[04:08:46] s2 (--sib data/lm_0,data/lm_1,data/lm_2,data/lm_3 --sibw 1 --sibp 0.5): held-out loss 0.5443458557128906, mean error 0.059765931218862534; 882s, 220k pos/s
+[04:08:46]   start held-out sibling pairs 529143: pair loss 0.69382, plain loss 0.58810, clearly different pairs ranked right 71.27%
+[04:08:46]   end held-out sibling pairs 529143: pair loss 0.69195, plain loss 0.58032, clearly different pairs ranked right 73.34%
+[04:08:49]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 22.29 centipawns, mean 3.041; evaluations range -1458 to 1807, the product terms
+[04:08:52]   static move choice:       s2                     choice 70.73%   regret  15.48   fit 0.01760 (scale 340)
+[04:08:54]   with captures played out: s2                     choice 74.01%   regret  12.22   fit 0.01266 (scale 210)
+[04:08:54] sibling probes finished

@@ -1,0 +1,10 @@
+[07:44:14] start: generation 63 weights, 27 shards
+[07:45:57] arm W384 (--h 384 ; 0.585 passes): train loss loss 0.48202 -> played held-out 0.505394  [102s]
+[07:49:51] arm W768 (--h 768 ; 1.17 passes): train loss loss 0.47924 -> played held-out 0.504841  [234s]
+[07:57:35] arm W768L (--h 768 ; 2.3399 passes): train loss loss 0.48006 -> played held-out 0.505012  [463s]
+[07:58:20] 20,000 positions per move, W768 vs W384: {"n": 400, "w": 131, "d": 136, "l": 133, "score": 0.4975, "elo": -1.7, "lo": -29.5, "hi": 26.0, "avg_plies": 1
+[08:02:18] clock 10+0.1, W768 vs W384: {"opponent": "W384", "tc": "10+0.1", "n": 300, "w": 43, "d": 154, "l": 103, "score": 0.4, "elo": -70.4, "lo": -98.3, "hi": -43.4, "avg_plies": 159.3, 
+[08:03:02] 20,000 positions per move, W768L vs W384: {"n": 400, "w": 147, "d": 135, "l": 118, "score": 0.5363, "elo": 25.2, "lo": -2.4, "hi": 53.2, "avg_plies": 15
+[08:07:06] clock 10+0.1, W768L vs W384: {"opponent": "W384", "tc": "10+0.1", "n": 300, "w": 50, "d": 158, "l": 92, "score": 0.43, "elo": -49.0, "lo": -76.3, "hi": -22.2, "avg_plies": 155.8, 
+[08:11:20] clock 10+0.1, W384 vs its start: {"opponent": "start", "tc": "10+0.1", "n": 300, "w": 58, "d": 174, "l": 68, "score": 0.4833, "elo": -11.6, "lo": -37.2, "hi": 13.9, "avg_plies": 154.0
+[08:11:20] finished

@@ -1,0 +1,19 @@
+zero/ouro_eval.pt: step 513000, 2,054,635 parameters; 20000 positions from 12 fresh self-play files
+one CPU thread, 1 loop(s), 1 position(s) at a time: 20.71 ms per position = 48 positions per second
+one CPU thread, 1 loop(s), 16 position(s) at a time: 25.45 ms per position = 39 positions per second
+one CPU thread, 2 loop(s), 1 position(s) at a time: 24.95 ms per position = 40 positions per second
+one CPU thread, 2 loop(s), 16 position(s) at a time: 21.27 ms per position = 47 positions per second
+one CPU thread, 4 loop(s), 1 position(s) at a time: 32.58 ms per position = 31 positions per second
+one CPU thread, 4 loop(s), 16 position(s) at a time: 37.45 ms per position = 27 positions per second
+after k loops:   value loss (against half search score, half result)   move-match with the search
+  1 loop(s):      0.4933                                              0.481
+  2 loop(s):      0.4930                                              0.487
+  3 loop(s):      0.4929                                              0.488
+  4 loop(s):      0.4929                                              0.488
+how far the value (win probability) moves between loop 1 and loop 2: median 0.0073, 90th percentile 0.0264, 99th 0.0571
+halting at loop 2 when the value moved less than eps between loops 1 and 2 (otherwise 4 loops):
+  eps 0.005: halts on 39.5% of positions, 3.21 loops on average, value loss 0.4929, move-match 0.487
+  eps 0.01: halts on 60.0% of positions, 2.80 loops on average, value loss 0.4930, move-match 0.487
+  eps 0.02: halts on 82.7% of positions, 2.35 loops on average, value loss 0.4929, move-match 0.487
+  eps 0.05: halts on 98.4% of positions, 2.03 loops on average, value loss 0.4930, move-match 0.487
+for reference, always 2 loops: 0.4930 / 0.487;  always 4 loops: 0.4929 / 0.488

@@ -1,0 +1,54 @@
+/root/loopchess/ext/brain_err.py:116: RuntimeWarning: overflow encountered in exp
+15553 positions with a deep analysis
+BIGS                     best factor 1.086: mean squared error 22.733 thousandths; mean error -20.96 (positive = too hopeful for the mover)
+BIGX                     best factor 1.019: mean squared error 22.191 thousandths; mean error -18.64 (positive = too hopeful for the mover)
+BIGM                     best factor 0.9876: mean squared error 24.002 thousandths; mean error -13.59 (positive = too hopeful for the mover)
+Stockfish 14.1 network   best factor 0.001666: mean squared error 18.557 thousandths; mean error -23.48 (positive = too hopeful for the mover)
+
+category                                                   positions          BIGS          BIGX          BIGM  Stockfish 14   BIGS minus Stockfish, per 1000 positions of the whole set
+a passed pawn on the fifth rank or beyond                       3678        30.310        29.273        32.516        25.129     +1.225   bias  -13.7 /  -17.5
+best move: a capture or promotion                               3203        52.193        51.400        50.927        42.932     +1.907   bias -111.2 / -103.4
+best move: a check                                               919        20.798        19.061        21.147        16.166     +0.274   bias  -18.9 /  -13.8
+best move: quiet                                               11431        14.634        14.258        16.687        11.919     +1.996   bias   +4.1 /   -1.9
+castling: no rights left                                       13660        23.548        23.044        25.004        19.051     +3.949   bias  -20.7 /  -22.5
+castling: still possible for someone                            1893        16.858        16.037        16.770        14.989     +0.227   bias  -23.1 /  -30.8
+deep score: half to one and a half pawns                        3585        13.192        13.101        13.320        11.381     +0.417   bias  -22.5 /  -26.8
+deep score: more than one and a half pawns                      4601        50.608        48.630        54.587        40.728     +2.923   bias  -23.2 /  -29.8
+deep score: within half a pawn                                  7367         9.967        10.102        10.098         8.201     +0.837   bias  -18.8 /  -18.0
+material difference: none                                       7327        10.814        10.671        11.965         9.390     +0.671   bias   -8.1 /  -13.5
+material difference: one pawn                                   5061        20.386        19.686        22.424        16.743     +1.185   bias   -9.7 /  -14.9
+material difference: two or more pawns                          3165        54.081        52.866        54.390        42.677     +2.321   bias  -68.8 /  -60.3
+mobility: about even                                           11410        19.484        18.847        20.826        16.139     +2.454   bias  -17.4 /  -20.6
+mobility: mover has 10+ more moves                              1422        19.614        19.208        21.617        16.051     +0.326   bias  -22.3 /  -24.1
+mobility: opponent has 10+ more moves                           2721        37.990        37.771        38.567        30.005     +1.397   bias  -35.3 /  -35.3
+mover in check                                                   886        37.732        37.024        39.597        31.612     +0.349   bias  -10.5 /   +0.7
+mover's king: squares around it attacked 0                      6075        17.069        16.873        18.180        13.841     +1.261   bias  -21.8 /  -25.1
+mover's king: squares around it attacked 1-2                    6333        26.194        25.602        27.321        21.817     +1.782   bias  -24.5 /  -27.6
+mover's king: squares around it attacked 3 or more              3145        26.707        25.596        28.563        21.100     +1.134   bias  -12.2 /  -12.0
+mover's pieces en prise: none                                  13015        19.547        19.027        20.679        15.993     +2.974   bias  -18.1 /  -20.2
+mover's pieces en prise: one                                    2378        37.269        36.766        39.088        30.897     +0.974   bias  -35.2 /  -40.0
+mover's pieces en prise: two or more                             160        65.891        62.912        70.078        43.690     +0.228   bias  -42.2 /  -45.2
+opponent's king: squares around it attacked 0                   6569        21.515        21.194        22.277        17.345     +1.761   bias  -26.4 /  -29.9
+opponent's king: squares around it attacked 1-2                 5687        24.513        23.836        26.082        20.156     +1.593   bias  -21.8 /  -24.9
+opponent's king: squares around it attacked 3 or more           3297        22.092        21.340        23.850        18.212     +0.822   bias   -8.7 /   -8.1
+opponent's pieces en prise: none                               14219        16.154        15.752        17.929        13.447     +2.475   bias   -5.8 /  -11.5
+opponent's pieces en prise: one or more                         1334        92.858        90.824        88.736        73.013     +1.702   bias -182.9 / -151.5
+opposite-coloured bishops                                       1174        24.290        24.007        25.960        20.334     +0.299   bias  -24.6 /  -24.1
+pawns: 13-16                                                    4317        16.161        15.644        16.372        13.192     +0.824   bias  -26.7 /  -31.3
+pawns: 9-12                                                     5979        28.759        28.263        30.490        23.734     +1.932   bias  -27.5 /  -33.7
+pawns: up to 8                                                  5257        21.276        20.661        22.888        17.073     +1.421   bias   -8.8 /   -5.4
+pieces of different kinds on the two sides                      7476        33.116        32.257        34.311        26.468     +3.196   bias  -36.4 /  -37.6
+pieces under attack, both sides together: 0-1                  11217        17.229        16.775        18.603        14.070     +2.278   bias  -11.4 /  -13.4
+pieces under attack, both sides together: 2-3                   3752        34.374        33.722        35.269        28.132     +1.506   bias  -43.4 /  -47.6
+pieces under attack, both sides together: 4 or more              584        53.669        52.129        55.310        43.202     +0.393   bias  -61.4 /  -61.9
+pieces: 11-16                                                   3227        25.773        25.155        27.508        20.384     +1.118   bias  -14.1 /  -15.4
+pieces: 17-22                                                   3858        32.069        31.524        33.977        25.394     +1.656   bias  -30.6 /  -36.5
+pieces: 23-28                                                   4631        20.247        19.739        21.111        17.176     +0.914   bias  -26.4 /  -32.8
+pieces: 29-32                                                   1189        11.379        10.861        10.727        10.058     +0.101   bias  -28.7 /  -33.1
+pieces: up to 10                                                2648        14.874        14.356        16.212        12.599     +0.387   bias   -2.2 /   +6.4
+queens: both sides                                              8091        23.313        22.718        24.492        19.560     +1.952   bias  -22.7 /  -29.6
+queens: none                                                    6993        19.229        18.680        20.517        15.479     +1.686   bias  -15.2 /  -14.2
+queens: one side only                                            469        64.977        65.455        67.507        47.121     +0.538   bias  -77.4 /  -57.4
+second-best move: clearly worse (one good move)                 5070        40.157        39.215        39.696        34.444     +1.862   bias  -87.4 /  -87.1
+second-best move: within 0.04 of the best                      10483        14.306        13.957        16.412        10.873     +2.314   bias  +11.2 /   +7.3
+

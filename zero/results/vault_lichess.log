@@ -1,0 +1,5 @@
+[19:16:52] download and conversion of 20 files started
+416.4M positions in the database, 257.2M kept (quiet, not in check, no forced mate) in 12 shards
+[19:35:25] training a plain 384 network from scratch on them, 8 passes
+[19:41:59] network trained on Stockfish-labelled Lichess positions (zero/w_LE.bin) in 394s: done: steps 125583, val (log-loss, MAE) raw (0.5431408882141113, 0.15676426887512207) averaged (0.5431164503097534, 0.15674516558647156), 38
+[19:41:59] finished

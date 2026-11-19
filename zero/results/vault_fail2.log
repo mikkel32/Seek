@@ -1,0 +1,18 @@
+98 of 3093 one-good-move positions: sf_100000 finds the move, sfnet_1000000 does not
+standing                       1000000 nodes: solves    0 =   0.0%   []
+standing, 3 million            3000000 nodes: solves   57 =  58.2%   []
+no null move                   1000000 nodes: solves   49 =  50.0%   [Off=1]
+no reverse futility            1000000 nodes: solves   46 =  46.9%   [Off=2]
+no late-move reductions        1000000 nodes: solves   55 =  56.1%   [Off=8]
+no late-move pruning           1000000 nodes: solves   45 =  45.9%   [Off=16]
+no quiet futility              1000000 nodes: solves   54 =  55.1%   [Off=32]
+no losing-exchange pruning     1000000 nodes: solves   45 =  45.9%   [Off=64]
+no bad-history pruning         1000000 nodes: solves   36 =  36.7%   [Off=128]
+no singular tests              1000000 nodes: solves   50 =  51.0%   [Off=256]
+no depth cut without table move   1000000 nodes: solves   58 =  59.2%   [Off=512]
+no move pruning at all         1000000 nodes: solves   59 =  60.2%   [Off=240]
+check extension                1000000 nodes: solves   55 =  56.1%   [ChkExt=1]
+half the reductions            1000000 nodes: solves   46 =  46.9%   [LmrDiv=480,LmrBase=34]
+another hash size              1000000 nodes: solves   51 =  52.0%   [Hash=32]
+[23:23:57] finished
+

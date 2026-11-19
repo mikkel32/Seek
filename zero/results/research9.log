@@ -1,0 +1,6 @@
+[07:19:43] label comparison done
+[07:22:43] long-memory loop: generation 62
+[07:27:29] clock 10+0.1, long-memory generation vs generation 35: {"opponent": "generation 35", "tc": "10+0.1", "n": 400, "w": 127, "d": 205, "l": 68, "score": 0.5737, "elo": 51.6, "lo": 28.1, "hi": 75.7, "avg_plies"
+[07:31:14] clock 10+0.1, long-memory generation vs X3: {"opponent": "X3", "tc": "10+0.1", "n": 300, "w": 75, "d": 159, "l": 66, "score": 0.515, "elo": 10.4, "lo": -16.5, "hi": 37.5, "avg_plies": 152.4, "ou
+[07:42:23] clock 60+0.6, long-memory generation vs generation 35: {"opponent": "generation 35", "tc": "60+0.6", "n": 120, "w": 38, "d": 52, "l": 30, "score": 0.5333, "elo": 23.2, "lo": -23.5, "hi": 70.7, "avg_plies":
+[07:42:23] finished

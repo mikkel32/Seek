@@ -1,0 +1,4 @@
+[00:24:24] BIGS with integer scale 2^9 against 2^7, 30,000 nodes: {"opponent": "BIGS 2^7", "tc": "30000 positions per move", "n": 4000, "w": 1021, "d": 2004, "l": 975, "score": 0.5058, "elo": 4.0, "lo": -3.6, "hi": 11.6, "avg_plies": 143.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.4}
+[00:31:52] BIGS with integer scale 2^8 against 2^7, 30,000 nodes: {"opponent": "BIGS 2^7", "tc": "30000 positions per move", "n": 4000, "w": 996, "d": 2057, "l": 947, "score": 0.5061, "elo": 4.3, "lo": -3.2, "hi": 11.8, "avg_plies": 143.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.5}
+[00:31:52] finished
+

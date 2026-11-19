@@ -1,0 +1,60 @@
+[05:29:53] kb16 (--h 768 --bs 32768 --lr 1.4e-3 --kb 16 --kf 1): held-out loss 0.5424913763999939, mean error 0.057391196489334106; 512s, 2019k pos/s
+[05:29:57]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 5.69 centipawns, mean 1.123; evaluations range -25
+[05:29:58]   speed (calc/calc_s18): depth 14: 3,338,526 positions in 1.38s = 2417k per second; signature 6e4eb39430
+[05:43:57] w1536 (--h 1536 --bs 32768 --lr 1.4e-3 --kb 16 --kf 1): held-out loss 0.5415601134300232, mean error 0.05581784248352051; 839s, 1229k pos/s
+[05:44:01]   engine against trainer: 1000 random positions, hidden 1536, king buckets 16, product terms off: largest difference 17.13 centipawns, mean 2.120; evaluations range -
+[05:44:03]   speed (calc/calc_s18x): depth 14: 3,097,309 positions in 1.85s = 1676k per second; signature 69037eeee7
+[05:50:45]   w1536 against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 618, "d": 984, "l": 398, "score": 0.555, "elo": 38.4, "lo": 27.6, "hi": 49.3, "avg_plies": 156.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.7}
+[06:01:19] w1024 (--h 1024 --bs 32768 --lr 1.4e-3 --kb 16 --kf 1): held-out loss 0.542093813419342, mean error 0.05669977143406868; 634s, 1632k pos/s
+[06:01:25]   engine against trainer: 1000 random positions, hidden 1024, king buckets 16, product terms off: largest difference 12.52 centipawns, mean 2.206; evaluations range -
+[06:01:28]   speed (calc/calc_s18): depth 14: 3,377,290 positions in 2.60s = 1301k per second; signature 3214d0d8ad
+[06:09:04]   w1024 against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 539, "d": 991, "l": 470, "score": 0.5172, "elo": 12.0, "lo": 1.2, "hi": 22.8, "avg_plies": 159.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.6}
+[06:16:47] s2 (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1): held-out loss 0.5546880960464478, mean error 0.06561382859945297; 454s, 2273k pos/s
+[06:16:51]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 11.25 centipawns, mean 2.197; evaluations range -2
+[06:16:53]   speed (calc/calc_s19b): depth 14: 3,490,752 positions in 1.69s = 2063k per second; signature ff37a44978
+[06:22:10]   s2 against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 604, "d": 820, "l": 576, "score": 0.507, "elo": 4.9, "lo": -6.8, "hi": 16.6, "avg_plies": 158.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.3}
+[06:30:12] s2_results (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag ym): held-out loss 0.5607303977012634, mean error 0.07126042991876602; 482s, 2142k pos/s
+[06:30:16]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 11.95 centipawns, mean 2.230; evaluations range -3
+[06:30:18]   speed (calc/calc_s19b): depth 14: 2,748,541 positions in 1.64s = 1681k per second; signature 28a0a3cd2d
+[06:36:55]   s2_results against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 521, "d": 736, "l": 743, "score": 0.4445, "elo": -38.7, "lo": -50.9, "hi": -26.6, "avg_plies": 154.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.6}
+[06:46:18] mix (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1): held-out loss 0.5434591770172119, mean error 0.057201873511075974; 563s, 1963k pos/s
+[06:46:23]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 5.84 centipawns, mean 1.032; evaluations range -30
+[06:46:24]   speed (calc/calc_s19b): depth 14: 3,609,743 positions in 1.63s = 2217k per second; signature ed1188314b
+[06:53:21]   mix against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 751, "d": 821, "l": 428, "score": 0.5807, "elo": 56.6, "lo": 44.9, "hi": 68.4, "avg_plies": 153.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.9}
+[07:03:08] mixr (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag ym): held-out loss 0.5445342659950256, mean error 0.05873866379261017; 500s, 2204k pos/s
+[07:03:11]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 5.05 centipawns, mean 1.037; evaluations range -28
+[07:03:13]   speed (calc/calc_s19c): depth 14: 4,108,194 positions in 1.76s = 2336k per second; signature ae581275ef
+[07:08:55]   mixr against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 695, "d": 831, "l": 474, "score": 0.5553, "elo": 38.5, "lo": 26.9, "hi": 50.3, "avg_plies": 155.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.7}
+[07:08:55] probes finished
+[07:17:15] mixc (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5432880520820618, mean error 0.057154133915901184; 497s, 2220k pos/s
+[07:17:18]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 13.22 centipawns, mean 2.012; evaluations range -2
+[07:17:20]   speed (calc/calc_s19c): depth 14: 3,271,778 positions in 1.63s = 2010k per second; signature 17e76828d1
+[07:22:57]   mixc against kb16, 30,000 positions per move: {"opponent": "kb16", "tc": "30000 positions per move", "n": 2000, "w": 725, "d": 889, "l": 386, "score": 0.5847, "elo": 59.5, "lo": 48.1, "hi": 70.9, "avg_plies": 159.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.6}
+[07:22:57] probes finished
+[09:38:01] s2x (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5460716485977173, mean error 0.06047951057553291; 558s, 1920k pos/s
+[09:38:07]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 12.73 centipawns, mean 2.183; evaluations range -2
+[09:38:09]   speed (calc/calc_s19c): depth 14: 3,717,882 positions in 2.27s = 1635k per second; signature 996006f078
+[09:46:05]   s2x against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 535, "d": 880, "l": 585, "score": 0.4875, "elo": -8.7, "lo": -20.1, "hi": 2.7, "avg_plies": 157.2, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 7.9}
+[09:46:05] probes finished
+[09:57:23] sharp2 (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc --sharp 2): held-out loss 0.5450957417488098, mean error 0.05981701612472534; 496s, 2213k pos/s
+[09:57:27]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 8.40 centipawns, mean 1.505; evaluations range -55
+[09:57:28]   speed (calc/calc_s19c): depth 14: 3,099,112 positions in 1.11s = 2798k per second; signature 15428f720b
+[10:01:27]   sharp2 against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 538, "d": 953, "l": 509, "score": 0.5072, "elo": 5.0, "lo": -6.0, "hi": 16.1, "avg_plies": 151.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[10:09:42] sharp15 (--h 768 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc --sharp 1.5): held-out loss 0.5438348650932312, mean error 0.05794277414679527; 495s, 2226k pos/s
+[10:09:46]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 21.38 centipawns, mean 2.554; evaluations range -3
+[10:09:47]   speed (calc/calc_s19c): depth 14: 3,245,272 positions in 1.29s = 2525k per second; signature 2a3ad09c85
+[10:13:44]   sharp15 against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 539, "d": 935, "l": 526, "score": 0.5032, "elo": 2.3, "lo": -8.9, "hi": 13.4, "avg_plies": 154.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.0}
+[10:13:44] probes finished
+[11:17:39] kb32m (--h 768 --kb 32 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5432881116867065, mean error 0.05716078728437424; 1045s, 1053k pos/s
+[11:17:45]   engine against trainer: 1000 random positions, hidden 768, king buckets 32, product terms off: largest difference 33.46 centipawns, mean 3.877; evaluations range -2
+[11:17:47]   speed (calc/calc_s19c): depth 14: 3,327,650 positions in 1.84s = 1805k per second; signature 3d2aa3c44f
+[11:26:00]   kb32m against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 532, "d": 921, "l": 547, "score": 0.4963, "elo": -2.6, "lo": -13.8, "hi": 8.6, "avg_plies": 157.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 8.2}
+[11:37:48] w1024m (--h 1024 --kb 16 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5428687930107117, mean error 0.05647185072302818; 708s, 1554k pos/s
+[11:37:55]   engine against trainer: 1000 random positions, hidden 1024, king buckets 16, product terms off: largest difference 11.07 centipawns, mean 2.031; evaluations range -
+[11:37:57]   speed (calc/calc_s19c): depth 14: 3,255,901 positions in 2.26s = 1439k per second; signature 953aa7436f
+[11:46:35]   w1024m against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 564, "d": 951, "l": 485, "score": 0.5198, "elo": 13.7, "lo": 2.7, "hi": 24.8, "avg_plies": 159.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 8.6}
+[12:03:35] kb32w1024m (--h 1024 --kb 32 --bs 32768 --lr 1.4e-3 --kf 1 --ytag yc): held-out loss 0.5428465008735657, mean error 0.0564577616751194; 1020s, 1074k pos/s
+[12:03:42]   engine against trainer: 1000 random positions, hidden 1024, king buckets 32, product terms off: largest difference 25.87 centipawns, mean 3.825; evaluations range -
+[12:03:44]   speed (calc/calc_s19c): depth 14: 2,980,862 positions in 2.25s = 1326k per second; signature b9b32895c6
+[12:08:15]   kb32w1024m against mixc, 30,000 positions per move: {"opponent": "mixc", "tc": "30000 positions per move", "n": 2000, "w": 553, "d": 964, "l": 483, "score": 0.5175, "elo": 12.2, "lo": 1.2, "hi": 23.1, "avg_plies": 155.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.5}
+[12:08:15] probes finished

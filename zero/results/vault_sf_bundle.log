@@ -1,0 +1,11 @@
+[22:46:09] our search on Stockfish's network, 100000 positions per move; difference to the standing options
+lmp [LmpBase=3,LmpDepth=63]: +0.14 (standard error 0.36, +0.4 of them); 1905 positions scored differently; against Stockfish itself +2.91
+lmr [LmrDiv=214,LmrBase=52,CutLmr=2,TtCapLmr=1,SearchV3=2,PruneV2=8]: -0.50 (standard error 0.35, -1.4 of them); 1816 positions scored differently; against Stockfish itself +2.28
+prunedepth [LmrPrune=1]: +0.64 (standard error 0.38, +1.7 of them); 1782 positions scored differently; against Stockfish itself +3.41
+nmp [NmpBase=4,NmpDiv=3,NmpMargin=62]: -0.14 (standard error 0.34, -0.4 of them); 1746 positions scored differently; against Stockfish itself +2.64
+static [Rfp=83,ProbCut=81]: +0.57 (standard error 0.37, +1.5 of them); 1849 positions scored differently; against Stockfish itself +3.34
+se [SeMul=1,SeDouble=29,NegExt=1]: +0.08 (standard error 0.33, +0.2 of them); 1695 positions scored differently; against Stockfish itself +2.85
+hist [HbQuad=6,HbLin=229,HbMax=4167]: -0.37 (standard error 0.34, -1.1 of them); 1793 positions scored differently; against Stockfish itself +2.41
+all [LmpBase=3,LmpDepth=63,LmrDiv=214,LmrBase=52,CutLmr=2,TtCapLmr=1,SearchV3=2,PruneV2=8,LmrPrune=1,NmpBase=4,NmpDiv=3,NmpMargin=62,Rfp=83,ProbCut=81,SeMul=1,SeDouble=29,NegExt=1,HbQuad=6,HbLin=229,HbMax=4167]: +0.66 (standard error 0.40, +1.6 of them); 1943 positions scored differently; against Stockfish itself +3.43
+[23:12:45] finished
+

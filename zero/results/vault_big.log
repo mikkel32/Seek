@@ -1,0 +1,11 @@
+[21:59:55] 4.37 billion positions in 262 shards; training a plain 384 network from scratch, 4 passes
+[22:54:57] network BIG trained in 3302s
+[22:55:06] training a 768-wide network from scratch on the same positions, 4 passes
+[22:57:59] BIG (4.37 billion Lichess positions) against LFf (0.79 billion), 30,000 positions per move: {"opponent": "LFf", "tc": "30000 positions per move", "n": 2000, "w": 567, "d": 885, "l": 548, "score": 0.5048, "elo": 3.3, "lo": -8.1, "hi": 14.7, "avg_plies": 164.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.9}
+[22:57:59] finished
+[00:17:46] network BIGW (768 wide) trained in 4960s
+[00:20:57] BIGW (768 wide, 4.37 billion positions) against BIG (384 wide, same positions), 30,000 positions per move: {"opponent": "BIG", "tc": "30000 positions per move", "n": 2000, "w": 738, "d": 873, "l": 389, "score": 0.5873, "elo": 61.3, "lo": 49.8, "hi": 72.8, "avg_plies": 161.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.1}
+[00:20:57] wide finished
+[00:25:59] BIGW (768 wide, 4.37 billion positions) against LFW (768 wide, 0.79 billion), 30,000 positions per move: {"opponent": "LFW", "tc": "30000 positions per move", "n": 2000, "w": 566, "d": 916, "l": 518, "score": 0.512, "elo": 8.3, "lo": -2.9, "hi": 19.6, "avg_plies": 160.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.5}
+[00:25:59] data-768 finished
+

@@ -1,0 +1,17 @@
+[05:38:10] arm M (--h 384 --mirror 0.5): train loss loss 0.48187 -> held-out 0.481851  [226s]
+[05:40:45] arm MA (--h 384 --mirror 0.5 --mirror_all 1): train loss loss 0.48205 -> held-out 0.481959  [155s]
+[05:43:55] arm BM (--h 768 --mirror 0.5): train loss loss 0.48103 -> held-out 0.482149  [189s]
+[05:47:57] clock 10+0.1, r6_A11 vs A5: {"opponent": "A5", "tc": "10+0.1", "n": 300, "w": 80, "d": 168, "l": 52, "score": 0.5467, "elo": 32.5, "lo": 6.6, "hi": 58.8, "avg_plies": 156.3, "our
+[05:48:28] 20,000 positions per move, r6_A11 vs A5: {"n": 300, "w": 115, "d": 101, "l": 84, "score": 0.5517, "elo": 36.0, "lo": 4.1, "hi": 68.5, "avg_plies": 151.
+[05:52:44] clock 10+0.1, r6_B5 vs A5: {"opponent": "A5", "tc": "10+0.1", "n": 300, "w": 54, "d": 136, "l": 110, "score": 0.4067, "elo": -65.6, "lo": -95.3, "hi": -36.9, "avg_plies": 155.5,
+[05:53:20] 20,000 positions per move, r6_B5 vs A5: {"n": 300, "w": 92, "d": 99, "l": 109, "score": 0.4717, "elo": -19.7, "lo": -52.2, "hi": 12.4, "avg_plies": 15
+[05:57:24] clock 10+0.1, r6_B11 vs A5: {"opponent": "A5", "tc": "10+0.1", "n": 300, "w": 66, "d": 154, "l": 80, "score": 0.4767, "elo": -16.2, "lo": -43.8, "hi": 11.2, "avg_plies": 154.3, "
+[05:58:05] 20,000 positions per move, r6_B11 vs A5: {"n": 300, "w": 113, "d": 103, "l": 84, "score": 0.5483, "elo": 33.7, "lo": 2.0, "hi": 66.0, "avg_plies": 147.
+[06:02:03] clock 10+0.1, r7_M vs A5: {"opponent": "A5", "tc": "10+0.1", "n": 300, "w": 75, "d": 150, "l": 75, "score": 0.5, "elo": -0.0, "lo": -27.9, "hi": 27.9, "avg_plies": 150.7, "our_
+[06:02:35] 20,000 positions per move, r7_M vs A5: {"n": 300, "w": 107, "d": 103, "l": 90, "score": 0.5283, "elo": 19.7, "lo": -12.1, "hi": 51.9, "avg_plies": 15
+[06:06:40] clock 10+0.1, r7_MA vs A5: {"opponent": "A5", "tc": "10+0.1", "n": 300, "w": 70, "d": 146, "l": 84, "score": 0.4767, "elo": -16.2, "lo": -44.6, "hi": 11.9, "avg_plies": 161.9, "
+[06:07:11] 20,000 positions per move, r7_MA vs A5: {"n": 300, "w": 114, "d": 102, "l": 84, "score": 0.55, "elo": 34.9, "lo": 3.0, "hi": 67.3, "avg_plies": 145.6,
+[06:11:18] clock 10+0.1, r7_BM vs A5: {"opponent": "A5", "tc": "10+0.1", "n": 300, "w": 40, "d": 165, "l": 95, "score": 0.4083, "elo": -64.4, "lo": -91.1, "hi": -38.5, "avg_plies": 149.5, 
+[06:11:50] 20,000 positions per move, r7_BM vs A5: {"n": 300, "w": 100, "d": 95, "l": 105, "score": 0.4917, "elo": -5.8, "lo": -38.4, "hi": 26.8, "avg_plies": 15
+[06:15:43] clock 10+0.1, A5 vs the start weights (generation 35): {"opponent": "start", "tc": "10+0.1", "n": 300, "w": 56, "d": 149, "l": 95, "score": 0.435, "elo": -45.4, "lo": -73.7, "hi": -17.8, "avg_plies": 155.2
+[06:15:43] finished

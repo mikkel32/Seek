@@ -1,0 +1,3 @@
+[07:01:22] iteration 14750/15000  1.2 games/s  Razor=295 Rfp=55 NmpBase=3 NmpDiv=4 NmpEv=188 LmpBase=5 FutBase=85 FutMul=94 HistPrune=4220 SeeQ=54 SeeC=99 SeDepth=7 SeMul=2 Asp=25 DeltaQ=184 LmrBase=6
+[07:08:09] iteration 15000/15000  1.2 games/s  Razor=294 Rfp=55 NmpBase=3 NmpDiv=4 NmpEv=189 LmpBase=5 FutBase=86 FutMul=94 HistPrune=4198 SeeQ=54 SeeC=99 SeDepth=7 SeMul=2 Asp=25 DeltaQ=183 LmrBase=6
+options: Razor=294,Rfp=55,NmpBase=3,NmpDiv=4,NmpEv=189,LmpBase=5,FutBase=86,FutMul=94,HistPrune=4198,SeeQ=54,SeeC=99,SeDepth=7,SeMul=2,Asp=25,DeltaQ=183,LmrBase=65,LmrDiv=230,HbQuad=5,HbLin=36,HbMax=1

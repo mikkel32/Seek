@@ -1,0 +1,7 @@
+59M training positions from 4 shards, 1.0M held out from another shard, 155051 played positions; 8000 steps of 8192; every variant from scratch, same order
+two-speed: narrow 64 with maps     parameters     443k   held-out label loss 0.49943   played positions (half score, half result) 0.52348   368k positions/s
+two-speed: narrow 32 with maps     parameters     378k   held-out label loss 0.50006   played positions (half score, half result) 0.52376   322k positions/s
+two-speed: narrow 128 with maps    parameters     574k   held-out label loss 0.49938   played positions (half score, half result) 0.52333   308k positions/s
+two-speed: narrow 64 with maps, wide 256 parameters     343k   held-out label loss 0.49990   played positions (half score, half result) 0.52390   420k positions/s
+two-speed: narrow 64 with maps, mirrored parameters     443k   held-out label loss 0.49940   played positions (half score, half result) 0.52325   385k positions/s
+two-speed: narrow 64 with maps, 64-32 layers parameters     484k   held-out label loss 0.49958   played positions (half score, half result) 0.52350   410k positions/s

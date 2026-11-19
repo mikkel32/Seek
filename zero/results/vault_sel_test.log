@@ -1,0 +1,9 @@
+[21:26:47] /root/loopchess/zero/sel1.txt at 300000 positions per move
+SelA=210 SelB=50: +0.11 (standard error 0.30, +0.4 of them); 1640 positions scored differently
+SelA=175 SelB=75: -0.33 (standard error 0.27, -1.2 of them); 1567 positions scored differently
+SelA=135 SelB=100: +0.16 (standard error 0.28, +0.6 of them); 1682 positions scored differently
+SelA=260 SelB=50: +0.42 (standard error 0.29, +1.4 of them); 1666 positions scored differently
+SelA=185 SelB=100: +0.06 (standard error 0.26, +0.2 of them); 1571 positions scored differently
+SelA=160 SelB=50: -0.02 (standard error 0.27, -0.1 of them); 1635 positions scored differently
+[21:39:42] finished
+

@@ -1,0 +1,10 @@
+[15:26:10] L2 static judgment
+policy                 choice 79.82%   regret   9.68
+move values            choice 79.43%   regret   9.78
+value of the children  choice 79.75%   regret   9.19
+the policy's first choice is Stockfish's best move in 48.8% of the positions
+fit 0.01011 as it comes, 0.00872 at its best scale (1.6 x its own logit)
+policy                  quiet pairs (5964 clear): 79.71%  the rest (6624 clear): 79.92%
+move values             quiet pairs (5964 clear): 78.79%  the rest (6624 clear): 80.01%
+value of the children   quiet pairs (5964 clear): 79.16%  the rest (6624 clear): 80.28%
+[15:32:09] finished L2 tests

@@ -1,5 +1,5 @@
 """OURO engine: network wrapper, searchless move selection, and loop-deepening MCTS."""
-import math
+import math, os
 import numpy as np, torch, chess
 from model import Ouro
 from chessenc import encode_fen, encode_move
@@ -13,6 +13,8 @@ class Net:
         self.model = Ouro(**ck['cfg'])
         self.model.load_state_dict(ck[key] if key in ck else ck['model'])
         self.model.eval()
+        # OURO_GPU=1: evaluate on the graphics card (batches of leaves from the tree search); default is the CPU
+        self.dev = torch.device('cuda' if os.environ.get('OURO_GPU') and torch.cuda.is_available() else 'cpu'); self.model.to(self.dev)
         self.max_loops = self.model.max_loops
         self.beta = ck.get('beta', 4.0)          # pi x Q mixing weight (set by calibration)
 
@@ -34,7 +36,7 @@ class Net:
 
     def _unpack(self, pol, v, ql, idxs):
         out = []
-        pol = pol.numpy(); ql = ql.numpy(); v = v.numpy()
+        pol = pol.float().cpu().numpy(); ql = ql.float().cpu().numpy(); v = v.float().cpu().numpy()
         for i, idx in enumerate(idxs):
             lp = pol[i, idx]
             lp = lp - lp.max()
@@ -48,6 +50,7 @@ class Net:
     def evaluate(self, boards, loops=2, return_state=False):
         """-> list of (moves, P, V, Q) per board; V,Q are win probabilities for the side to move."""
         encs, board, castle, ep = self.encode(boards)
+        board, castle, ep = board.to(self.dev), castle.to(self.dev), ep.to(self.dev)
         ctx = self.model.prepare(board, castle, ep)
         s = None
         for _ in range(loops):

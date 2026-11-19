@@ -1,0 +1,4 @@
+[16:20:13] transformer L1p steering the search at equal time: 200 ms a move, 3 engines at once, 4000 positions
+LmDepth 12, PolW 2000, PolLmr 1, LmWait 1, LmAhead 0: +2.43 (standard error 0.45, +5.4 of them); 540 positions scored differently; server:  296 requests, 296 answered, 0 dropped as stale; 1 a batch
+LmDepth 14, PolW 2000, PolLmr 1, LmWait 1, LmAhead 0: +0.36 (standard error 0.25, +1.4 of them); 251 positions scored differently; server:  186 requests, 186 answered, 0 dropped as stale; 1 a batch
+LmDepth 8, PolW 2000, PolLmr 1, LmWait 0, LmAhead 6: +0.54 (standard error 0.36, +1.5 of them); 426 positions scored differently; server:  16478 requests, 16478 answered, 0 dropped as stale; 549 a batch

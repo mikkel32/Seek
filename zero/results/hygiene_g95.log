@@ -1,0 +1,28 @@
+8000 positions; in check: 0 of the first 2000; a material-winning capture or promotion is available in 1301 (16.3%); strictly quiet: 6699
+  our evaluator: read for 8000 positions
+  Stockfish 14.1 hand-written: read for 8000 positions
+  Stockfish 14.1 network: read for 8000 positions
+  Stockfish 19 network: read for 8000 positions
+
+all positions: 8000 (fitted on 4000, tested on 4000). Log-loss against the truth, lower is better.
+                                    own K    K only  scale+offset  monotone
+  our evaluator                      1.62    0.3595        0.3592    0.3599
+  Stockfish 14.1 hand-written        1.02    0.3955        0.3909    0.3882
+  Stockfish 14.1 network             1.22    0.3357        0.3352    0.3329
+  Stockfish 19 network               0.89    0.3161        0.3152    0.3154
+  Stockfish 14.1 hand-written minus ours, scale+offset: +0.0317  (95% range +0.0222 to +0.0415; positive = ours is better)
+  Stockfish 14.1 hand-written minus ours, monotone: +0.0283  (95% range +0.0205 to +0.0362; positive = ours is better)
+  Stockfish 14.1 network minus ours, scale+offset: -0.0240  (95% range -0.0299 to -0.0179; positive = ours is better)
+  Stockfish 14.1 network minus ours, monotone: -0.0270  (95% range -0.0323 to -0.0215; positive = ours is better)
+
+strictly quiet positions only: 6699 (fitted on 3349, tested on 3350). Log-loss against the truth, lower is better.
+                                    own K    K only  scale+offset  monotone
+  our evaluator                      1.61    0.3585        0.3584    0.3595
+  Stockfish 14.1 hand-written        0.99    0.3895        0.3857    0.3842
+  Stockfish 14.1 network             1.21    0.3338        0.3334    0.3320
+  Stockfish 19 network               0.89    0.3174        0.3166    0.3172
+  Stockfish 14.1 hand-written minus ours, scale+offset: +0.0274  (95% range +0.0177 to +0.0377; positive = ours is better)
+  Stockfish 14.1 hand-written minus ours, monotone: +0.0248  (95% range +0.0163 to +0.0335; positive = ours is better)
+  Stockfish 14.1 network minus ours, scale+offset: -0.0250  (95% range -0.0305 to -0.0196; positive = ours is better)
+  Stockfish 14.1 network minus ours, monotone: -0.0275  (95% range -0.0329 to -0.0221; positive = ours is better)
+

@@ -1,0 +1,6 @@
+ours: 30000 nodes asked, 21552 reported on the last info line; 85.57 ms per search = 351k nodes per second of wall time
+Stockfish 14.1: 30000 nodes asked, 30020 reported on the last info line; 154.79 ms per search = 194k nodes per second of wall time
+ours: 300000 nodes asked, 218852 reported on the last info line; 879.06 ms per search = 341k nodes per second of wall time
+Stockfish 14.1: 300000 nodes asked, 300174 reported on the last info line; 1519.61 ms per search = 197k nodes per second of wall time
+88
+ 06:02:48 up 6 days, 11:16,  0 users,  load average: 79.79, 79.67, 79.30

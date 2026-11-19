@@ -1,0 +1,5 @@
+[17:23:52] production started from zero/w_N384.bin: 80 workers, a generation every 4 shards, window 36 shards, 0.5 passes a generation
+[17:39:34] generation 1: shards up to b39, 36 in the window; played held-out 0.518656; trained in 221s
+[17:50:24] generation 2: shards up to b43, 36 in the window; played held-out 0.518630; trained in 190s
+[18:13:25] production stopped
+[18:14:07] production started from zero/w_N384.bin: 80 workers, a generation every 4 shards, window 36 shards, 0.5 passes a generation

@@ -1,0 +1,7 @@
+8.0M held-out positions. Distance between static score and label: mean 99 centipawns, median 51
+linear read-out of the hidden layer: explains 13.3% of its variance (correlation 0.36)
+for comparison, predicting it from the size of the static score alone explains -8.3%
+real distance (centipawns) in each tenth of the predicted distance, lowest to highest:
+  28  49  63  76  88  101  115  131  151  193
+the same for positions the evaluator scores within +-1 logit (about +-2.7 pawns; 50% of all):
+  20  35  45  53  61  70  79  90  107  143

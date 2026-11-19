@@ -1,0 +1,23 @@
+[01:58:37] two-brain player (old transformer as root prior), against the search alone
+30000 nodes, prior 8 per unit, cap 40: -1.44 (standard error 0.50, -2.9 of them); 2320 positions scored differently
+30000 nodes, prior 16 per unit, cap 80: -1.42 (standard error 0.53, -2.7 of them); 2470 positions scored differently
+30000 nodes, prior 30 per unit, cap 150: -0.50 (standard error 0.55, -0.9 of them); 2693 positions scored differently
+300000 nodes, prior 8 per unit, cap 40: -0.31 (standard error 0.28, -1.1 of them); 1771 positions scored differently
+300000 nodes, prior 16 per unit, cap 80: +0.50 (standard error 0.31, +1.6 of them); 1982 positions scored differently
+300000 nodes, prior 30 per unit, cap 150: +2.45 (standard error 0.34, +7.1 of them); 2334 positions scored differently
+[02:20:44] finished
+[02:50:06] transformer L1p as root prior, against the search alone
+30000 nodes, prior 8 per unit, cap 40: -2.05 (standard error 0.53, -3.9 of them); 2221 positions scored differently
+300000 nodes, prior 8 per unit, cap 40: -0.30 (standard error 0.28, -1.1 of them); 1736 positions scored differently
+300000 nodes, prior 16 per unit, cap 80: +0.29 (standard error 0.30, +1.0 of them); 1911 positions scored differently
+30000 nodes, prior 16 per unit, cap 80: -2.53 (standard error 0.50, -5.0 of them); 2315 positions scored differently
+[02:57:36] finished L1p
+[03:00:12] transformer L1p as root prior, against the search alone
+100000 nodes, prior 8 per unit, cap 40: -0.87 (standard error 0.36, -2.4 of them); 1937 positions scored differently
+100000 nodes, prior 16 per unit, cap 80: -0.70 (standard error 0.40, -1.8 of them); 2103 positions scored differently
+[03:02:38] finished L1p
+[15:26:31] transformer L2 as root prior, against the search alone
+30000 nodes, prior 16 per unit, cap 80: -3.53 (standard error 0.51, -6.9 of them); 2243 positions scored differently
+100000 nodes, prior 8 per unit, cap 40: -1.69 (standard error 0.38, -4.5 of them); 1906 positions scored differently
+300000 nodes, prior 8 per unit, cap 40: -0.47 (standard error 0.29, -1.6 of them); 1682 positions scored differently
+[15:32:09] finished L2

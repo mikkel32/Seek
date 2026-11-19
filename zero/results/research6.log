@@ -1,0 +1,6 @@
+[05:20:48] start: recent = ar38,ar39,ar40,ar41; both = r5s26,r5s27,r5s28,r5s29,r5s30,r5s31,ar38,ar39,ar40,ar41; held-out shard 42
+[05:23:14] arm A5 (--h 384 on 4 shards, 5.9169 epochs): positions 61.3M, hidden 384, steps train loss loss 0.48052 -> held-out 0.481776  [146s]
+[05:25:28] arm A11 (--h 384 on 10 shards, 2.3865 epochs): positions 152.1M, hidden 384, step train loss loss 0.48257 -> held-out 0.481748  [134s]
+[05:29:43] arm B5 (--h 768 on 4 shards, 5.9169 epochs): positions 61.3M, hidden 768, steps train loss loss 0.47954 -> held-out 0.482523  [255s]
+[05:34:21] arm B11 (--h 768 on 10 shards, 2.3865 epochs): positions 152.1M, hidden 768, step train loss loss 0.48194 -> held-out 0.481976  [277s]
+[05:34:21] finished

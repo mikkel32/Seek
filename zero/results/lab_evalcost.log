@@ -1,0 +1,7 @@
+w_BIGM.bin: evaluations 2953965; cycles per evaluation: sums 511, read-out 367; share of all cycles: sums 26.1%, read-out 18.7%; cycles per position searched 1811
+w_BIGX.bin: evaluations 3038398; cycles per evaluation: sums 909, read-out 698; share of all cycles: sums 33.0%, read-out 25.4%; cycles per position searched 2537
+p_mixc.bin: evaluations 3025816; cycles per evaluation: sums 505, read-out 367; share of all cycles: sums 25.8%, read-out 18.8%; cycles per position searched 1807
+p_layers64.bin: evaluations 3237875; cycles per evaluation: sums 587, read-out 863; share of all cycles: sums 21.2%, read-out 31.2%; cycles per position searched 2546
+w_BIGM.bin: evaluations 2953965; cycles per evaluation: sums 513, read-out 367; share of all cycles: sums 26.2%, read-out 18.7%; cycles per position searched 1814
+w_BIGX.bin: evaluations 3038398; cycles per evaluation: sums 908, read-out 700; share of all cycles: sums 33.0%, read-out 25.5%; cycles per position searched 2534
+finished

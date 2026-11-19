@@ -1,0 +1,16 @@
+[18:45:48] controls
+d_30000: 8964 positions at 30000 nodes (45s, 0 moves sent to Stockfish, 0s): mean loss 19.76 thousandths of a point per move; 12.18% of moves lose 0.05 or more; one-good-move positions solved 76.3% of 3093
+d_30000 against bigm_30000: 8964 positions; mean loss 19.76 against 19.76 thousandths; difference +0.00 (standard error 0.00, +0.0 of them; negative = the first gives away less); 0 positions scored differently
+hist7_30000: 8964 positions at 30000 nodes (46s, 710 moves sent to Stockfish, 83s): mean loss 19.61 thousandths of a point per move; 12.06% of moves lose 0.05 or more; one-good-move positions solved 76.1% of 3093
+hist7_30000 against bigm_30000: 8964 positions; mean loss 19.61 against 19.76 thousandths; difference -0.15 (standard error 0.58, -0.3 of them; negative = the first gives away less); 2306 positions scored differently
+hist7_300000: 8964 positions at 300000 nodes (114s, 254 moves sent to Stockfish, 32s): mean loss 10.53 thousandths of a point per move; 6.51% of moves lose 0.05 or more; one-good-move positions solved 85.7% of 3093
+hist7_300000 against bigm_300000: 8964 positions; mean loss 10.53 against 10.04 thousandths; difference +0.49 (standard error 0.31, +1.6 of them; negative = the first gives away less); 1650 positions scored differently
+hist1_300000: 8964 positions at 300000 nodes (111s, 293 moves sent to Stockfish, 36s): mean loss 9.87 thousandths of a point per move; 5.99% of moves lose 0.05 or more; one-good-move positions solved 86.1% of 3093
+hist1_300000 against bigm_300000: 8964 positions; mean loss 9.87 against 10.04 thousandths; difference -0.17 (standard error 0.29, -0.6 of them; negative = the first gives away less); 1638 positions scored differently
+[18:53:43] games
+[18:56:18] 30k v 30k: {"opponent": "Stockfish 14.1", "tc": "30000 positions per move", "n": 1000, "w": 87, "d": 338, "l": 575, "score": 0.256, "elo": -185.3, "lo": -204.2, "hi": -167.4, "avg_plies": 145.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.6}
+[19:01:22] 100k v 30k: {"opponent": "Stockfish 14.1", "tc": "100000 positions per move, the opponent 30000", "n": 1000, "w": 280, "d": 501, "l": 219, "score": 0.5305, "elo": 21.2, "lo": 6.0, "hi": 36.5, "avg_plies": 154.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 5.1}
+[19:09:44] 100k v 100k: {"opponent": "Stockfish 14.1", "tc": "100000 positions per move", "n": 1000, "w": 28, "d": 437, "l": 535, "score": 0.2465, "elo": -194.1, "lo": -210.5, "hi": -178.4, "avg_plies": 147.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 8.4}
+[19:22:00] 300k v 100k: {"opponent": "Stockfish 14.1", "tc": "300000 positions per move, the opponent 100000", "n": 800, "w": 105, "d": 515, "l": 180, "score": 0.4531, "elo": -32.7, "lo": -47.0, "hi": -18.4, "avg_plies": 153.2, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 12.3}
+[19:22:00] finished
+

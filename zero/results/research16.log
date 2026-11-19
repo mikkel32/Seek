@@ -1,0 +1,7 @@
+[11:42:29] transformer at step 513000, calculator generation 100
+[11:45:14] transformer 100 evaluations per move vs calculator 500 positions per move: {"n": 60, "w": 21, "d": 17, "l": 22, "score": 0.4917, "elo": -5.8, "lo": -81.7, "hi": 69.5, "avg_plies": 146.2, "a_evals_per_move": 96.9, "a_blocks_per_move": 714.1, "a_secs_per_move": 0.221, "b_evals_per_move": 1392.0, "b_blocks_per_move": 6.5, "b_secs_per_move": 0.004, "a": "mcts:zero/ouro_eval.pt:100:1:8-2,48-4", "b": "calc:zero/r16_net.bin:500:calc/calc_w", "secs": 164}
+[11:48:28] transformer 100 evaluations per move vs calculator 2000 positions per move: {"n": 60, "w": 21, "d": 17, "l": 22, "score": 0.4917, "elo": -5.8, "lo": -81.7, "hi": 69.5, "avg_plies": 146.2, "a_evals_per_move": 96.9, "a_blocks_per_move": 714.1, "a_secs_per_move": 0.269, "b_evals_per_move": 1392.0, "b_blocks_per_move": 6.5, "b_secs_per_move": 0.005, "a": "mcts:zero/ouro_eval.pt:100:1:8-2,48-4", "b": "calc:zero/r16_net.bin:2000:calc/calc_w", "secs": 194}
+network alone on the card: 1 loop, batch 16: 4 positions per second
+network alone on the card: 1 loop, batch 1024: 33,806 positions per second
+[12:19:15] the remaining games were cancelled (one evaluation costs 20 ms on a CPU thread; the first pairing already put its worth near 14 calculator positions)
+[12:19:15] finished

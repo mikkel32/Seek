@@ -1,0 +1,1 @@
+[12:37:18] against Stockfish 14.1 with its network off (hand-written evaluator), 10+0.1: {"opponent": "Stockfish 14.1 hand-written evaluator", "tc": "10+0.1", "n": 200, "w": 23, "d": 61, "l": 116, "score": 0.2675, "elo": -175.0, "lo": -220.3, "hi": -134.6, "avg_plies": 144.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.1}

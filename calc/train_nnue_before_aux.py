@@ -1,0 +1,265 @@
+"""Train the calculator's evaluation: directly-solved tapered piece-square table + a small trained network on top.
+
+  out = taper(S_mg, S_eg)(position) + wo . screlu(b + sum E[own-view features]) + wp . screlu(b + sum E[opp-view features])
+  target: sigmoid(out) = win probability of the side to move (deep Stockfish)
+
+  python3 calc/train_nnue.py --h 128 --files b,cb --epochs 2 --out calc/net.bin
+"""
+import argparse, math, struct, time, numpy as np, torch, torch.nn.functional as F
+
+ap = argparse.ArgumentParser()
+ap.add_argument('--h', type=int, default=128); ap.add_argument('--files', default='b,cb')
+ap.add_argument('--epochs', type=float, default=2.0); ap.add_argument('--bs', type=int, default=16384)
+ap.add_argument('--lr', type=float, default=1e-3); ap.add_argument('--out', default='calc/net.bin')
+ap.add_argument('--pst', default='calc/pst.npz'); ap.add_argument('--minutes', type=float, default=1e9)
+ap.add_argument('--threads', type=int, default=4); ap.add_argument('--chunk', type=int, default=4_000_000)
+ap.add_argument('--resume', default=''); ap.add_argument('--seed', type=int, default=0)
+ap.add_argument('--buckets', type=int, default=1)       # output weights per piece-count bucket
+ap.add_argument('--ema', type=float, default=0.0)        # weight averaging decay (0 = off); the averaged weights are exported
+ap.add_argument('--kb', type=int, default=1)             # 7 = king-bucketed, mirrored hidden-layer inputs; 1 = plain
+ap.add_argument('--warm', default='')                    # start from a plain (kb=1) network's weights
+ap.add_argument('--val', default='val')                  # validation data tag
+ap.add_argument('--device', default='cpu')               # cpu | cuda | auto
+ap.add_argument('--experts', type=int, default=1)        # specialists per piece-count group, chosen by a learned router
+ap.add_argument('--phase', action='store_true')          # eight phase specialists: separate input weights per piece-count group (--kb 8)
+ap.add_argument('--overlap', type=float, default=0.0)    # share of boundary positions that train the neighbouring specialist instead (keeps neighbours consistent)
+ap.add_argument('--opt', default='adam')                 # optimiser for the big input matrix: adam | muon | muon2 | normuon (the rest stays on Adam)
+ap.add_argument('--mlr', type=float, default=0.03)       # learning rate of the matrix optimiser
+ap.add_argument('--max_rows', type=int, default=0)       # use only this many positions per file (quick experiments)
+ap.add_argument('--gate', type=int, default=32)          # the router reads this many hidden units per side
+ap.add_argument('--widen', default='')                   # start from a narrower network: copy its units, new units start with zero output weights
+a = ap.parse_args()
+torch.set_num_threads(a.threads); torch.manual_seed(a.seed); rs = np.random.RandomState(a.seed)
+
+# feature index seen from the other side: swap own/opp, mirror the board vertically
+i = np.arange(768); pc, sq = i // 64, i % 64
+LUT = torch.from_numpy(np.concatenate([((pc + 6) % 12) * 64 + (sq ^ 56), [768]]).astype(np.int64))
+PT_W = torch.cat([torch.tensor([0, 1, 1, 2, 4, 0] * 2, dtype=torch.float32).repeat_interleave(64), torch.zeros(1)])
+H = a.h
+DEV = torch.device('cuda' if a.device == 'cuda' or (a.device == 'auto' and torch.cuda.is_available()) else 'cpu')
+M = a.experts; G = min(a.gate, a.h); NEX = a.buckets * M       # NEX output experts in total
+ROUTE = {'tau': 1.0, 'hard': False, 'train': True}                       # router temperature / hard top-1 routing (set by the training loop)
+NKB = a.kb
+KBT = torch.tensor([0, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5] + [6] * 16)
+KB11 = torch.tensor([0, 0, 1, 2, 3, 4, 5, 5, 6, 6, 6, 7, 7, 8, 8, 8] + [9] * 16 + [10] * 32)
+
+
+def kfeat(idx):
+    """plain view-relative indices (B,32) -> king-bucketed, mirrored indices; the view's own king is piece code 5"""
+    isk = (idx >= 320) & (idx < 384)
+    ks = ((idx * isk).sum(1) - 320).clamp(0, 63)    # a handful of source positions are malformed (king missing): send them to bucket of a1
+    if NKB == 11:                                    # un-mirrored buckets: every bucket can start as a copy of a plain network
+        return torch.where(idx == 768, torch.full_like(idx, NKB * 768), KB11[ks][:, None] * 768 + idx)
+    mir = ((ks & 7) >= 4).long() * 7
+    kq = ks ^ mir
+    kb = KBT[(kq >> 3) * 4 + (kq & 7)]
+    f = kb[:, None] * 768 + (idx // 64) * 64 + ((idx % 64) ^ mir[:, None])
+    return torch.where(idx == 768, torch.full_like(idx, NKB * 768), f)
+
+
+class Net(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.E = torch.nn.Parameter(torch.randn(NKB * 768 + 1, H) * 0.05)
+        self.b = torch.nn.Parameter(torch.full((H,), 0.1))
+        self.wo = torch.nn.Parameter(torch.randn(NEX, H) * (1.0 / math.sqrt(H)))
+        self.wp = torch.nn.Parameter(torch.randn(NEX, H) * (1.0 / math.sqrt(H)))
+        self.cb = torch.nn.Parameter(torch.zeros(NEX))
+        if M > 1:                                               # router: one score per expert from 2G hidden activations
+            self.gw = torch.nn.Parameter(torch.randn(NEX, 2 * G) * 0.3)
+            self.gb = torch.nn.Parameter(torch.zeros(NEX))
+        self.S = torch.nn.Parameter(torch.zeros(769, 2))            # [:,0] middlegame, [:,1] endgame
+        self.c = torch.nn.Parameter(torch.zeros(2))
+
+    def forward(self, idx):
+        bk = (((idx < 768).sum(1) - 2) // 4).clamp(0, a.buckets - 1) if a.buckets > 1 else torch.zeros(idx.shape[0], dtype=torch.long, device=idx.device)
+        if a.phase and a.overlap > 0 and ROUTE['train']:          # a position one capture away from the next phase sometimes trains that phase's specialist
+            o = ((idx < 768).sum(1) - 2) % 4; pick = torch.rand(idx.shape[0], device=idx.device) < a.overlap
+            bk = torch.where(pick & (o == 0) & (bk > 0), bk - 1, torch.where(pick & (o == 3) & (bk < 7), bk + 1, bk))
+        if a.phase:                                             # each position only touches the weights of its own phase specialist
+            pb = (bk * 768)[:, None]
+            ip0 = LUT[idx]
+            io = torch.where(idx == 768, torch.full_like(idx, NKB * 768), pb + idx); ip = torch.where(ip0 == 768, torch.full_like(idx, NKB * 768), pb + ip0)
+        else:
+            io, ip = (idx, LUT[idx]) if NKB == 1 else (kfeat(idx), kfeat(LUT[idx]))
+        ao = self.b + F.embedding_bag(io, self.E, mode='sum', padding_idx=NKB * 768)
+        ap_ = self.b + F.embedding_bag(ip, self.E, mode='sum', padding_idx=NKB * 768)
+        lin = self.c + F.embedding_bag(idx, self.S, mode='sum', padding_idx=768)
+        ph = (PT_W[idx].sum(1) / 24).clamp(max=1.0)
+        xo = ao.clamp(0, 1) ** 2; xp = ap_.clamp(0, 1) ** 2
+        base = ph * lin[:, 0] + (1 - ph) * lin[:, 1]
+        if M == 1:
+            return base + self.cb[bk] + (xo * self.wo[bk]).sum(1) + (xp * self.wp[bk]).sum(1)
+        e = bk[:, None] * M + torch.arange(M, device=idx.device)                                        # the piece-count group's experts
+        outs = (xo[:, None, :] * self.wo[e]).sum(2) + (xp[:, None, :] * self.wp[e]).sum(2) + self.cb[e]
+        logits = (torch.cat([xo[:, :G], xp[:, :G]], 1)[:, None, :] * self.gw[e]).sum(2) + self.gb[e]
+        p = torch.softmax(logits / ROUTE['tau'], 1)
+        if ROUTE['hard']:                                                            # the engine runs exactly one expert: train that way at the end
+            p = F.one_hot(logits.argmax(1), M).float() + p - p.detach()
+        return base + (p * outs).sum(1)
+
+    def export(self, path):
+        with open(path, 'wb') as f:
+            if M > 1:
+                f.write(struct.pack('<iiiiii', 0x4F555235, H, NEX, NKB, M, G))
+            else:
+                f.write(struct.pack('<iiii', 0x4F555233, H, a.buckets, NKB) if NKB > 1 else struct.pack('<iii', 0x4F555232, H, a.buckets))
+            for t in (self.E[:NKB * 768], self.b):
+                f.write(t.detach().cpu().numpy().astype('<f4').tobytes())
+            for k in range(NEX):
+                f.write(self.wo[k].detach().cpu().numpy().astype('<f4').tobytes()); f.write(self.wp[k].detach().cpu().numpy().astype('<f4').tobytes())
+            f.write(struct.pack('<f', float(self.c[0]))); f.write(self.S[:768, 0].detach().cpu().numpy().astype('<f4').tobytes())
+            f.write(struct.pack('<f', float(self.c[1]))); f.write(self.S[:768, 1].detach().cpu().numpy().astype('<f4').tobytes())
+            f.write(self.cb.detach().cpu().numpy().astype('<f4').tobytes())
+            if M > 1:
+                f.write(self.gw.detach().cpu().numpy().astype('<f4').tobytes()); f.write(self.gb.detach().cpu().numpy().astype('<f4').tobytes())
+            if PVAL is not None:
+                f.write(struct.pack('<i5i', 0x4C415650, *PVAL))
+
+
+PVAL = [int(x) for x in np.load(a.pst)['pval']] if a.pst and 'pval' in np.load(a.pst).files else None
+net = Net()
+ema = Net() if a.ema > 0 else None
+if a.resume:
+    net.load_state_dict(torch.load(a.resume, map_location='cpu'))
+elif a.widen:
+    w = torch.load(a.widen, map_location='cpu'); h0 = w['E'].shape[1]
+    with torch.no_grad():                               # function-preserving growth: the new network computes what the old one did
+        net.E[:, :h0] = w['E']; net.b[:h0] = w['b']
+        r = NEX // w['wo'].shape[0]                     # experts per old output head
+        net.wo.zero_(); net.wp.zero_()
+        net.wo[:, :h0] = w['wo'].repeat_interleave(r, 0); net.wp[:, :h0] = w['wp'].repeat_interleave(r, 0)
+        net.cb.copy_(w['cb'].repeat_interleave(r, 0))
+        if r > 1:                                       # identical twins would stay identical: nudge them apart
+            net.wo[:, :h0] += torch.randn(NEX, h0) * 0.02 * w['wo'].std(); net.wp[:, :h0] += torch.randn(NEX, h0) * 0.02 * w['wp'].std()
+        if M > 1 and 'gw' in w and w['gw'].shape == net.gw.shape:
+            net.gw.copy_(w['gw']); net.gb.copy_(w['gb'])
+        for k in ('S', 'c'):
+            getattr(net, k).copy_(w[k])
+elif a.warm:
+    w = torch.load(a.warm, map_location='cpu')
+    with torch.no_grad():
+        for k in ('b', 'wo', 'wp', 'cb', 'S', 'c'):
+            getattr(net, k).copy_(w[k])
+        E0 = w['E'][:768].view(12, 64, H)
+        Em = E0.view(12, 8, 8, H).flip(2).reshape(12, 64, H)            # the same table mirrored left-right
+        sym = ((E0 + Em) / 2).reshape(768, H) if NKB == 7 else w['E'][:768]   # mirrored buckets share a table across both wings; un-mirrored ones copy exactly
+        net.E[:NKB * 768] = sym.repeat(NKB, 1); net.E[NKB * 768] = 0
+elif a.pst:
+    z = np.load(a.pst)
+    with torch.no_grad():
+        net.S[:768, 0] = torch.from_numpy(z['S_mg']); net.S[:768, 1] = torch.from_numpy(z['S_eg'])
+        net.c[0] = float(z['c_mg']); net.c[1] = float(z['c_eg'])
+files = [(np.load(f'data/ev_{t}_x.npy', mmap_mode='r'), np.load(f'data/ev_{t}_y.npy', mmap_mode='r')) for t in a.files.split(',')]
+if a.max_rows:
+    files = [(x[:a.max_rows], y[:a.max_rows]) for x, y in files]
+total = sum(len(x) for x, _ in files)
+steps_total = int(a.epochs * total / a.bs)
+
+net.to(DEV)
+if ema is not None:
+    ema.to(DEV)
+LUT, PT_W, KBT, KB11 = LUT.to(DEV), PT_W.to(DEV), KBT.to(DEV), KB11.to(DEV)
+
+
+def newton_schulz(G, steps=5):
+    """approximate orthogonalisation (polar factor) with the quintic iteration used by Muon"""
+    a_, b_, c_ = 3.4445, -4.7750, 2.0315
+    X = G / (G.norm() + 1e-7)
+    tall = X.shape[0] > X.shape[1]
+    if tall:
+        X = X.T
+    for _ in range(steps):
+        A = X @ X.T
+        X = a_ * X + (b_ * A + c_ * A @ A) @ X
+    return X.T if tall else X
+
+
+class MatOpt:
+    """Muon-family optimisers for one matrix parameter.
+    muon    : Nesterov momentum -> orthogonalise                              (Jordan et al. 2024)
+    muon2   : momentum / (sqrt(second moment) + eps) -> orthogonalise         (Liu et al. 2026, Algorithm 1)
+    normuon : momentum -> orthogonalise -> per-neuron second-moment normalise (Li et al. 2026, reference code)"""
+    def __init__(self, p, kind, b1=0.95, b2=0.95, eps=1e-8):
+        self.p, self.kind, self.b1, self.b2, self.eps = p, kind, b1, b2, eps
+        self.m = torch.zeros_like(p); self.v = torch.zeros_like(p) if kind == 'muon2' else None
+        self.v2 = torch.zeros(p.shape[1], 1, device=p.device) if kind == 'normuon' else None        # one value per hidden unit (neuron)
+
+    @torch.no_grad()
+    def step(self, lr):
+        g = self.p.grad
+        if self.kind == 'muon2':
+            self.m.mul_(self.b1).add_(g, alpha=1 - self.b1); self.v.mul_(self.b2).addcmul_(g, g, value=1 - self.b2)
+            O = newton_schulz(self.m / (self.v.sqrt() + self.eps))
+        else:
+            self.m.lerp_(g, 1 - self.b1)
+            O = newton_schulz(g.lerp(self.m, self.b1))                             # Nesterov
+            if self.kind == 'normuon':
+                O = O.T                                                            # rows = hidden units
+                vnorm = O.norm()
+                self.v2.lerp_((O * O).mean(1, keepdim=True), 1 - self.b2)
+                O = O / (self.v2.sqrt() + 1e-10)
+                O = (O * (vnorm / (O.norm() + 1e-10))).T
+        self.p.add_(O, alpha=-lr)
+        self.p[-1].zero_()                                                         # the padding row stays zero
+
+
+matopt = MatOpt(net.E, a.opt) if a.opt != 'adam' else None
+opt = torch.optim.Adam([p for n_, p in net.named_parameters() if matopt is None or n_ != 'E'], lr=a.lr, betas=(0.9, 0.999), eps=1e-8)
+if ema is not None:
+    ema.load_state_dict(net.state_dict())
+VX = torch.from_numpy(np.load(f'data/ev_{a.val}_x.npy').astype(np.int64)).to(DEV); VY = torch.from_numpy(np.load(f'data/ev_{a.val}_y.npy').astype(np.float32)).to(DEV)
+
+
+@torch.no_grad()
+def validate(m=None):
+    m = m or net
+    keep = dict(ROUTE); ROUTE.update(tau=1.0, hard=True, train=False)   # validate the way the engine runs
+    out = torch.cat([m(VX[i:i + 50000]) for i in range(0, len(VX), 50000)])
+    ROUTE.update(keep)
+    return float(F.binary_cross_entropy_with_logits(out, VY)), float((torch.sigmoid(out) - VY).abs().mean())
+
+
+print(f'positions {total/1e6:.1f}M, hidden {H}, steps {steps_total}, start val (log-loss, MAE) {validate()}', flush=True)
+step = 0; t0 = time.time(); seen = 0; run = 0.0; nrun = 0
+chunks = [(fi, s) for fi, (x, _) in enumerate(files) for s in range(0, len(x), a.chunk)]
+done = False
+while not done:
+    for ci in rs.permutation(len(chunks)):
+        fi, s = chunks[ci]
+        X = torch.from_numpy(np.ascontiguousarray(files[fi][0][s:s + a.chunk])).to(DEV); Y = torch.from_numpy(np.ascontiguousarray(files[fi][1][s:s + a.chunk])).to(DEV)
+        perm = torch.randperm(len(X), device=DEV)
+        for j in range(0, len(X) - a.bs + 1, a.bs):
+            k = perm[j:j + a.bs]
+            lr = a.lr * (0.02 + 0.98 * 0.5 * (1 + math.cos(math.pi * min(1.0, step / steps_total)))) * min(1.0, (step + 1) / 200)
+            for g in opt.param_groups:
+                g['lr'] = lr
+            frac = step / max(1, steps_total)
+            ROUTE['tau'] = max(0.3, 1.0 - frac); ROUTE['hard'] = frac >= 0.7      # soft mixture first, exactly-one-expert for the last 30%
+            loss = F.binary_cross_entropy_with_logits(net(X[k].long()), Y[k].float() / 255)
+            opt.zero_grad(set_to_none=True)
+            if matopt is not None:
+                net.E.grad = None
+            loss.backward(); opt.step()
+            if matopt is not None:
+                matopt.step(a.mlr * lr / a.lr)                                 # same warm-up and cosine schedule as the rest
+            if ema is not None:
+                with torch.no_grad():
+                    d = min(a.ema, (1 + step) / (10 + step))
+                    for pe, pm in zip(ema.parameters(), net.parameters()):
+                        pe.lerp_(pm, 1 - d)
+            step += 1; seen += a.bs; run += float(loss); nrun += 1
+            if step % 500 == 0:
+                print(f'step {step}/{steps_total} seen {seen/1e6:.1f}M loss {run/nrun:.5f} {seen/(time.time()-t0)/1e3:.0f}k pos/s', flush=True)
+                run = 0.0; nrun = 0
+            if step >= steps_total or time.time() - t0 > a.minutes * 60:
+                done = True; break
+        if done:
+            break
+        if (ci % 4) == 0:
+            (ema or net).export(a.out); torch.save({k_: v_.cpu() for k_, v_ in net.state_dict().items()}, a.out + '.pt')
+            print(f'  checkpoint: val (log-loss, MAE) {validate(ema or net)}', flush=True)
+(ema or net).export(a.out); torch.save({k_: v_.cpu() for k_, v_ in net.state_dict().items()}, a.out + '.pt')
+if ema is not None:
+    torch.save({k_: v_.cpu() for k_, v_ in ema.state_dict().items()}, a.out + '.ema.pt')
+print(f'done: steps {step}, val (log-loss, MAE) raw {validate()} averaged {validate(ema) if ema is not None else None}, {time.time()-t0:.0f}s -> {a.out}', flush=True)

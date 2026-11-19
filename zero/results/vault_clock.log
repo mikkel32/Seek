@@ -1,0 +1,11 @@
+[22:09:20] BIGS against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 34, "d": 624, "l": 342, "score": 0.346, "elo": -110.6, "lo": -123.4, "hi": -98.1, "avg_plies": 152.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 24.8}
+[22:34:38] BIGM against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 26, "d": 590, "l": 384, "score": 0.321, "elo": -130.1, "lo": -143.4, "hi": -117.2, "avg_plies": 151.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 25.3}
+[22:34:38] finished
+[03:27:58] BIGS + transformer L1p as root prior (8 per unit, cap 40) against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 30, "d": 602, "l": 368, "score": 0.331, "elo": -122.2, "lo": -135.4, "hi": -109.4, "avg_plies": 149.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 25.3}
+[03:27:58] finished duo clock L1p
+[15:57:05] BIGS + transformer L2 as root prior (8 per unit, cap 40) against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 19, "d": 634, "l": 347, "score": 0.336, "elo": -118.3, "lo": -130.7, "hi": -106.2, "avg_plies": 147.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 24.4}
+[15:57:05] finished duo clock L2
+[17:12:54] BIGS against Stockfish 14.1, 10+0.1, 22 boards, games recorded: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 39, "d": 616, "l": 345, "score": 0.347, "elo": -109.8, "lo": -122.8, "hi": -97.2, "avg_plies": 153.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 24.8}
+[17:52:50] BIGS with TmCurve=100 against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 38, "d": 607, "l": 355, "score": 0.3415, "elo": -114.1, "lo": -127.2, "hi": -101.3, "avg_plies": 155.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 26.7}
+[23:15:21] BIGQ against Stockfish 14.1, 10+0.1, 22 boards: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 1000, "w": 31, "d": 611, "l": 358, "score": 0.3365, "elo": -117.9, "lo": -130.9, "hi": -105.3, "avg_plies": 152.9, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 25.0}
+[23:15:21] finished BIGQ clock

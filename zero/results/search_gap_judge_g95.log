@@ -1,0 +1,20 @@
+8000 positions with the truth from Stockfish 19 playouts; our evaluator is generation 95
+
+first 8000 positions (fitted on 4000, tested on 4000); log-loss against the truth, lower is better; difference to our evaluator; depth reached
+  our evaluator, no search                             0.3588   +0.0000 +- 0.0000
+  Stockfish 14.1 hand-written evaluator, no search     0.3909   +0.0321 +- 0.0096
+  Stockfish 14.1 network, no search                    0.3352   -0.0236 +- 0.0060
+  Stockfish 19 network, no search                      0.3152   -0.0437 +- 0.0063
+
+first 2000 positions (fitted on 1000, tested on 1000); log-loss against the truth, lower is better; difference to our evaluator; depth reached
+  our evaluator, no search                             0.3547   +0.0000 +- 0.0000
+  Stockfish 14.1 hand-written evaluator, no search     0.3743   +0.0196 +- 0.0129
+  Stockfish 14.1 network, no search                    0.3294   -0.0253 +- 0.0110
+  Stockfish 19 network, no search                      0.3162   -0.0385 +- 0.0146
+  ours, searching 2,500 positions                      0.3307   -0.0240 +- 0.0122   depth 6.3
+  Stockfish 14.1 hand-written, searching 2,500 positions 0.3633   +0.0086 +- 0.0287   depth 6.3
+  Stockfish 14.1 network, searching 2,500 positions    0.3274   -0.0273 +- 0.0195   depth 6.8
+  ours, searching 20,000 positions                     0.3177   -0.0370 +- 0.0137   depth 8.8
+  Stockfish 14.1 hand-written, searching 20,000 positions 0.3156   -0.0391 +- 0.0165   depth 9.4
+  Stockfish 14.1 network, searching 20,000 positions   0.2859   -0.0688 +- 0.0163   depth 10.0
+

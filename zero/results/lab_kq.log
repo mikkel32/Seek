@@ -1,0 +1,12 @@
+[18:16:24] arm S384K2 (--head 16,32 --hk 128): played held-out 0.518658 in 1108s
+[18:16:25] arm S384K (--head 16,32 --hk 64): played held-out 0.518426 in 1109s
+[18:16:33] engine against trainer, S384K: 300 random positions, hidden 384, product terms off: largest difference 23.36 centipawns, mean 2.342; evaluations range -4125 to 5507, the product terms supply 212 centipawns on average, the layered read-out 212
+[18:16:41] engine against trainer, S384K2: 300 random positions, hidden 384, product terms off: largest difference 25.41 centipawns, mean 2.073; evaluations range -4228 to 5407, the product terms supply 224 centipawns on average, the layered read-out 224
+[18:16:56] speed, S384: depth 14: 3,317,861 positions in 2.30s = 1442k per second; signature ad5f7d6ce3
+[18:16:59] speed, S384K: depth 14: 3,343,621 positions in 3.73s = 898k per second; signature de88e64b51
+[18:17:03] speed, S384K2: depth 14: 3,342,014 positions in 4.03s = 829k per second; signature 9440796696
+[18:17:08] speed, S384H: depth 14: 3,205,425 positions in 4.46s = 718k per second; signature 3d917c4209
+[18:19:43] layers reading 64 units a side (S384K) against plain (S384), 30,000 positions per move: {"opponent": "S384", "tc": "30000 positions per move", "n": 2000, "w": 730, "d": 734, "l": 536, "score": 0.5485, "elo": 33.8, "lo": 21.7, "hi": 46.0, "avg_plies": 152.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.6}
+[18:22:27] layers reading 128 units a side (S384K2) against plain (S384), 30,000 positions per move: {"opponent": "S384", "tc": "30000 positions per move", "n": 2000, "w": 725, "d": 710, "l": 565, "score": 0.54, "elo": 27.9, "lo": 15.6, "hi": 40.1, "avg_plies": 151.3, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 2.7}
+[18:29:17] layers reading 64 units a side (S384K) against plain (S384) at the clock, 10+0.1: {"opponent": "S384", "tc": "10+0.1", "n": 800, "w": 142, "d": 393, "l": 265, "score": 0.4231, "elo": -53.8, "lo": -71.2, "hi": -36.8, "avg_plies": 155.8, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.8}
+[18:35:59] layers reading 128 units a side (S384K2) against plain (S384) at the clock, 10+0.1: {"opponent": "S384", "tc": "10+0.1", "n": 800, "w": 123, "d": 395, "l": 282, "score": 0.4006, "elo": -70.0, "lo": -87.3, "hi": -53.0, "avg_plies": 157.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 6.7}

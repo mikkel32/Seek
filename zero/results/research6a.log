@@ -1,0 +1,14 @@
+same-target held-out set from shard 42
+arm S (hidden 384, king regions 1) on r6val: start val (log-loss, MAE) (0.48372676968574524, 0.0520145483314991)
+arm S (hidden 384, king regions 1) on r5val: start val (log-loss, MAE) (0.5038380026817322, 0.12394051253795624)
+arm A (hidden 384, king regions 1) on r6val: start val (log-loss, MAE) (0.48338329792022705, 0.051135849207639694)
+arm A (hidden 384, king regions 1) on r5val: start val (log-loss, MAE) (0.5037490725517273, 0.12347753345966339)
+arm B (hidden 768, king regions 1) on r6val: start val (log-loss, MAE) (0.4837954044342041, 0.05187898874282837)
+arm B (hidden 768, king regions 1) on r5val: start val (log-loss, MAE) (0.5040736794471741, 0.12359163165092468)
+arm C (hidden 1536, king regions 1) on r6val: start val (log-loss, MAE) (0.48428788781166077, 0.05284516513347626)
+arm C (hidden 1536, king regions 1) on r5val: start val (log-loss, MAE) (0.5046173334121704, 0.1240437924861908)
+arm D (hidden 384, king regions 11) on r6val: start val (log-loss, MAE) (0.48480093479156494, 0.05363727733492851)
+arm D (hidden 384, king regions 11) on r5val: start val (log-loss, MAE) (0.505212128162384, 0.12417060136795044)
+arm E (hidden 384, king regions 7) on r6val: start val (log-loss, MAE) (0.48557060956954956, 0.055134594440460205)
+arm E (hidden 384, king regions 7) on r5val: start val (log-loss, MAE) (0.5059532523155212, 0.12477937340736389)
+finished

@@ -1,0 +1,18 @@
+[22:38:25] node-budget experiment: 4 arms x 10 processes x 45.0 minutes; halting production (a cycle in progress finishes first)
+[22:49:04] production stopped; the arms play with zero/g9.bin
+[23:34:47] arm 1250 nodes: 167760 games, 28.1M positions (13.1M played + 15.0M from the trees), 78 plies per game, 76% of positions from decisive games
+[23:35:23] arm 2500 nodes: 78120 games, 25.1M positions (6.3M played + 18.9M from the trees), 80 plies per game, 74% of positions from decisive games
+[23:35:47] arm 5000 nodes: 35580 games, 16.6M positions (3.0M played + 13.6M from the trees), 84 plies per game, 71% of positions from decisive games
+[23:36:00] arm 10000 nodes: 16640 games, 8.8M positions (1.4M played + 7.4M from the trees), 86 plies per game, 70% of positions from decisive games
+[23:36:25] production restarted
+[23:45:34] arm 1250: trained 6000 steps = 3.50 epochs in 255s; done: steps 5999, val (log-loss, MAE) raw (0.5026827454566956, 0.11795677244663239) averaged (0.5026728510856628, 0.1179
+[23:52:06] arm 2500: trained 6000 steps = 3.91 epochs in 143s; done: steps 5999, val (log-loss, MAE) raw (0.5034961104393005, 0.11986559629440308) averaged (0.503531277179718, 0.11989
+[00:02:36] arm 5000: trained 6000 steps = 5.91 epochs in 440s; done: steps 6000, val (log-loss, MAE) raw (0.5038930773735046, 0.1204269677400589) averaged (0.5038888454437256, 0.12043
+[00:10:03] arm 10000: trained 6000 steps = 11.11 epochs in 342s; done: steps 6000, val (log-loss, MAE) raw (0.5048764944076538, 0.1214137151837349) averaged (0.5048611760139465, 0.12141
+[00:11:48] 1250 nodes vs 2500 nodes: 371-236-393  score 0.489  Elo -7.6 (-26.5 to 11.2)
+[00:13:25] 1250 nodes vs 5000 nodes: 379-224-397  score 0.491  Elo -6.3 (-25.3 to 12.7)
+[00:15:02] 1250 nodes vs 10000 nodes: 475-228-297  score 0.589  Elo 62.5 (43.5 to 81.9)
+[00:16:44] 2500 nodes vs 5000 nodes: 400-243-357  score 0.5215  Elo 14.9 (-3.8 to 33.8)
+[00:18:19] 2500 nodes vs 10000 nodes: 481-197-322  score 0.5795  Elo 55.7 (36.4 to 75.4)
+[00:20:00] 5000 nodes vs 10000 nodes: 457-244-299  score 0.579  Elo 55.4 (36.6 to 74.4)
+[00:20:00] round robin score by arm (nodes per move in self-play): 1250: 52.3%  2500: 53.7%  5000: 52.2%  10000: 41.8%

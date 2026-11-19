@@ -1,0 +1,5 @@
+[22:12:53] speed, LFf: depth 14: 3,629,202 positions in 2.48s = 1462k per second; signature e96aba4468
+[22:12:55] speed, LFW: depth 14: 3,201,431 positions in 2.71s = 1180k per second; signature e31a26828f
+[22:16:35] 768 wide (LFW) against 384 wide (LFf) at the clock, 10+0.1: {"opponent": "LFf (384 wide)", "tc": "10+0.1", "n": 400, "w": 96, "d": 237, "l": 67, "score": 0.5363, "elo": 25.2, "lo": 3.6, "hi": 47.1, "avg_plies": 166.1, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 3.6}
+[22:29:37] 768 wide (LFW) against 384 wide (LFf) at the clock, 60+0.6: {"opponent": "LFf (384 wide)", "tc": "60+0.6", "n": 200, "w": 36, "d": 149, "l": 15, "score": 0.5525, "elo": 36.6, "lo": 12.7, "hi": 60.9, "avg_plies": 157.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 13.0}
+[22:29:37] finished

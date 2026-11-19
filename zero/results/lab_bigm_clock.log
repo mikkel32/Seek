@@ -1,0 +1,7 @@
+[09:29:25] speed, w_BIGM: depth 14: 3,190,837 positions in 3.11s = 1025k per second; signature d40b5b0644
+[09:34:12] w_BIGM against BIGK, 10+0.1: {"opponent": "BIGK", "tc": "10+0.1", "n": 500, "w": 131, "d": 309, "l": 60, "score": 0.571, "elo": 49.7, "lo": 31.1, "hi": 68.5, "avg_plies": 160.7, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.7}
+[09:38:37] standing, w_BIGM: against Stockfish 14.1, 10+0.1: {"opponent": "Stockfish 14.1", "tc": "10+0.1", "n": 500, "w": 28, "d": 283, "l": 189, "score": 0.339, "elo": -116.0, "lo": -135.9, "hi": -96.8, "avg_plies": 151.6, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 4.4}
+[09:54:12] standing, w_BIGM: against Stockfish 14.1, 60+0.6: {"opponent": "Stockfish 14.1", "tc": "60+0.6", "n": 300, "w": 8, "d": 188, "l": 104, "score": 0.34, "elo": -115.2, "lo": -138.5, "hi": -92.9, "avg_plies": 149.0, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 15.6}
+[10:06:05] w_BIGM against BIGK, 60+0.6: {"opponent": "BIGK", "tc": "60+0.6", "n": 200, "w": 38, "d": 150, "l": 12, "score": 0.565, "elo": 45.4, "lo": 21.9, "hi": 69.3, "avg_plies": 151.5, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 11.9}
+[10:06:05] finished
+[10:14:17] BIGM with ThrHist=1 against BIGM with the standing options, 10+0.1: {"opponent": "standing options", "tc": "10+0.1", "n": 1000, "w": 141, "d": 693, "l": 166, "score": 0.4875, "elo": -8.7, "lo": -20.6, "hi": 3.2, "avg_plies": 146.4, "our_time_losses": 0, "their_time_losses": 0, "illegal": 0, "minutes": 8.0}

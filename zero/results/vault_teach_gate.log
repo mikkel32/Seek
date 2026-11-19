@@ -1,0 +1,33 @@
+[16:45:39] labelling with L2 (the network training is paused)
+h0: 5000000 positions in 449s (11134 a second); mean win chance 0.511; against the shard's own labels: correlation 0.973, mean difference 0.039
+h1: 5000000 positions in 449s (11133 a second); mean win chance 0.511; against the shard's own labels: correlation 0.973, mean difference 0.039
+h2: 5000000 positions in 449s (11133 a second); mean win chance 0.511; against the shard's own labels: correlation 0.973, mean difference 0.039
+h3: 5000000 positions in 449s (11137 a second); mean win chance 0.511; against the shard's own labels: correlation 0.973, mean difference 0.039
+h4: 5000000 positions in 449s (11124 a second); mean win chance 0.511; against the shard's own labels: correlation 0.973, mean difference 0.039
+h5: 5000000 positions in 449s (11143 a second); mean win chance 0.511; against the shard's own labels: correlation 0.973, mean difference 0.039
+s0: 5000000 positions in 449s (11134 a second); mean win chance 0.510; against the shard's own labels: correlation 0.962, mean difference 0.050
+s1: 5000000 positions in 449s (11135 a second); mean win chance 0.510; against the shard's own labels: correlation 0.961, mean difference 0.050
+s2: 5000000 positions in 449s (11140 a second); mean win chance 0.510; against the shard's own labels: correlation 0.962, mean difference 0.050
+s3: 5000000 positions in 448s (11155 a second); mean win chance 0.510; against the shard's own labels: correlation 0.962, mean difference 0.050
+s4: 5000000 positions in 448s (11156 a second); mean win chance 0.510; against the shard's own labels: correlation 0.962, mean difference 0.050
+s5: 5000000 positions in 448s (11156 a second); mean win chance 0.510; against the shard's own labels: correlation 0.960, mean difference 0.051
+[18:15:27] labelled; probes
+[18:17:36] c5 (--max_rows 5000000): held-out loss 0.5435752272605896, mean error 0.05778522789478302; 129s, 485k pos/s
+[18:17:38]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 34.52 centipawns, mean 3.020; evaluations range -1716 to 2087, the produc
+[18:17:41]   static move choice:       c5                     choice 70.69%   regret  15.89   fit 0.01760 (scale 340)
+[18:17:44]   with captures played out: c5                     choice 74.59%   regret  11.93   fit 0.01195 (scale 210)
+[18:19:52] t34 (--max_rows 5000000 --tl 0.34): held-out loss 0.5429877638816833, mean error 0.05714486166834831; 128s, 484k pos/s
+[18:19:54]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 31.94 centipawns, mean 2.896; evaluations range -1730 to 2120, the produc
+[18:19:57]   static move choice:       t34                    choice 70.54%   regret  15.90   fit 0.01762 (scale 340)
+[18:20:00]   with captures played out: t34                    choice 74.62%   regret  11.92   fit 0.01213 (scale 210)
+[18:22:08] t100 (--max_rows 5000000 --tl 1): held-out loss 0.5426357388496399, mean error 0.05731983110308647; 128s, 484k pos/s
+[18:22:11]   engine against trainer: 1000 random positions, hidden 768, king buckets 16, product terms off: largest difference 18.02 centipawns, mean 3.132; evaluations range -1745 to 2204, the produc
+[18:22:13]   static move choice:       t100                   choice 70.30%   regret  16.02   fit 0.01779 (scale 380)
+[18:22:16]   with captures played out: t100                   choice 74.27%   regret  12.06   fit 0.01267 (scale 240)
+[18:22:16] sibling probes finished
+36281 pairs; quiet for the search (by BIGS): 21456; the rest: 14825
+BIGS             quiet pairs (5964 clear): static 73.25%  played out 73.25%   |   the rest (6624 clear): static 68.66%  played out 76.03%
+c5               quiet pairs (5964 clear): static 72.85%  played out 72.85%   |   the rest (6624 clear): static 68.75%  played out 76.16%
+t34              quiet pairs (5964 clear): static 72.77%  played out 72.76%   |   the rest (6624 clear): static 68.52%  played out 76.29%
+t100             quiet pairs (5964 clear): static 72.27%  played out 72.28%   |   the rest (6624 clear): static 68.52%  played out 76.05%
+[18:22:20] finished

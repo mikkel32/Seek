@@ -185,6 +185,15 @@ class Block(nn.Module):
         """x (B,T,d) fp32; bias (B*H,T,T) fp32, contiguous."""
         B, T, d = x.shape
         H = self.h
+        if x.is_cuda and amp:                  # graphics card: the whole block in bf16 with the fused attention kernel (the same function)
+            with torch.autocast('cuda', dtype=torch.bfloat16):
+                qkv = F.linear(norm(x), torch.cat([self.q.weight, self.k.weight, self.v.weight], 0))
+                q, k, v = qkv.view(B, T, 3, H, d // H).permute(2, 0, 3, 1, 4).unbind(0)       # each B,H,T,dh
+                q = q * (self.qk_scale.view(1, H, 1, 1) * math.sqrt(d // H))                 # the kernel divides by sqrt(dh) itself
+                a = F.scaled_dot_product_attention(q, k, v, attn_mask=bias.view(B, H, T, T).to(q.dtype))
+                x = x + self.o(a.transpose(1, 2).reshape(B, T, d))
+                x = x + self.pr(F.gelu(self.fc(norm(x))))
+            return x.float()
         with torch.autocast(x.device.type, dtype=torch.bfloat16, enabled=amp):
             qkv = F.linear(norm(x), torch.cat([self.q.weight, self.k.weight, self.v.weight], 0))
         q, k, v = qkv.float().view(B, T, 3, H, d // H).permute(2, 0, 3, 1, 4).unbind(0)   # each B,H,T,dh
@@ -201,10 +210,29 @@ class Ouro(nn.Module):
     amp = True
 
     def __init__(self, d=96, heads=4, mlp=288, n_in=2, n_rec=3, n_out=2, use_rel=True, use_cnt=True,
-                 max_loops=4):
+                 max_loops=4, smolgen=0, fut=0):
         super().__init__()
         self.cfg = dict(d=d, heads=heads, mlp=mlp, n_in=n_in, n_rec=n_rec, n_out=n_out,
                         use_rel=use_rel, use_cnt=use_cnt, max_loops=max_loops)
+        if smolgen:
+            self.cfg['smolgen'] = smolgen
+        if fut:
+            self.cfg['fut'] = fut
+        self.smolgen = smolgen
+        if smolgen:
+            # Smolgen (Leela Chess Zero's transformers): attention biases GENERATED from the whole position. The rule graph
+            # already supplies exact who-attacks-whom biases; this adds a learned, position-dependent bias on top. Each
+            # token is squeezed to 8 numbers, the 512 numbers of the board go through a bottleneck of `smolgen` units to
+            # 64 numbers per head, and one shared map turns those into a 64x64 bias per head. One generator for the
+            # recurrent block (run at every loop, from that loop's state) and one for the output block. The shared map
+            # starts at zero: the network begins as the same function without it.
+            self.sg_comp = nn.ModuleList([nn.Linear(d, 8, bias=False) for _ in range(2)])
+            self.sg_1 = nn.ModuleList([nn.Linear(512, smolgen) for _ in range(2)])
+            self.sg_2 = nn.ModuleList([nn.Linear(smolgen, heads * 64) for _ in range(2)])
+            self.sg_out = nn.Linear(64, 4096, bias=False)
+            nn.init.zeros_(self.sg_out.weight)
+        # training-only head: who will hold each square 8 plies from now (empty / mine / theirs), read off each square's token
+        self.fut = nn.Linear(d, 3) if fut else None
         self.d = d
         self.heads = heads
         self.max_loops = max_loops
@@ -240,9 +268,19 @@ class Ouro(nn.Module):
         nn.init.zeros_(self.v2.bias)
 
     # ---- stages -----------------------------------------------------------
+    def _smol(self, g, u):
+        B = u.shape[0]
+        h = norm(F.gelu(self.sg_1[g](self.sg_comp[g](u).reshape(B, 512))))
+        h = norm(F.gelu(self.sg_2[g](h)).view(B, self.heads, 64))
+        return self.sg_out(h).reshape(B * self.heads, 64, 64)
+
     def _biases(self, rel, B):
         """attention-logit bias for each group: 1x1 conv over the exact relation planes + a learned static map."""
         out = []
+        if self.use_rel and rel.is_cuda and self.amp:
+            with torch.autocast('cuda', dtype=torch.bfloat16):
+                b = F.conv2d(rel.to(torch.bfloat16), self.rel_w.reshape(3 * self.heads, N_REL, 1, 1)).view(B, 3, self.heads, 64, 64) + self.static
+            return [b[:, g].reshape(B * self.heads, 64, 64) for g in range(3)]
         relf = rel.float() if self.use_rel else None
         for g in range(3):
             if self.use_rel:
@@ -276,14 +314,16 @@ class Ouro(nn.Module):
            u_t = N(s_{t-1} + x),  s_t = N(F(u_t)),  s_0 = x"""
         x = ctx['x']
         u = x if s is None else norm(s + x)
+        bias = ctx['rec_bias'] + self._smol(0, u) if self.smolgen else ctx['rec_bias']
         for blk in self.rec:
-            u = blk(u, ctx['rec_bias'], self.amp)
+            u = blk(u, bias, self.amp)
         return norm(u)
 
     def readout(self, ctx, s, aux=False):
         z = s
+        ob = ctx['out_bias'] + self._smol(1, s) if self.smolgen else ctx['out_bias']
         for blk in self.out:
-            z = blk(z, ctx['out_bias'], self.amp)
+            z = blk(z, ob, self.amp)
         z = norm(z)
         B = z.shape[0]
         with torch.autocast(z.device.type, dtype=torch.bfloat16, enabled=self.amp):
@@ -304,7 +344,10 @@ class Ouro(nn.Module):
         f2, t2, f3, t3 = la.float().split(64, dim=-1)
         pv2 = torch.baddbmm(self.la_static[0].expand(B, 64, 64), f2, t2.transpose(1, 2), alpha=0.125)
         pv3 = torch.baddbmm(self.la_static[1].expand(B, 64, 64), f3, t3.transpose(1, 2), alpha=0.125)
-        return pol, v, ql, torch.stack([pv2.reshape(B, 4096), pv3.reshape(B, 4096)], 1)
+        pvl = torch.stack([pv2.reshape(B, 4096), pv3.reshape(B, 4096)], 1)
+        if self.fut is not None:
+            return pol, v, ql, (pvl, self.fut(z))
+        return pol, v, ql, pvl
 
     def forward(self, board, castle, ep, loops=1, tbptl=True, aux=False):
         ctx = self.prepare(board, castle, ep)
@@ -343,25 +386,52 @@ def _ns5(G, steps=5):
     return X.T if t else X
 
 
+def _ns5_batched(G, steps=5):
+    """the same iteration as _ns5 for a stack of equally shaped matrices (K, m, n): one batched product instead of K small ones"""
+    a, b, c = 3.4445, -4.7750, 2.0315
+    X = G / (G.flatten(1).norm(dim=1)[:, None, None] + 1e-7)
+    t = G.size(1) > G.size(2)
+    if t:
+        X = X.transpose(1, 2)
+    for _ in range(steps):
+        A = X @ X.transpose(1, 2)
+        Bm = b * A + c * A @ A
+        X = a * X + Bm @ X
+    return X.transpose(1, 2) if t else X
+
+
 class Muon(torch.optim.Optimizer):
+    """Muon (momentum, then orthogonalise the update). Matrices of the same shape are orthogonalised together: the model has
+    47 of them in three shapes, and doing them one by one cost about 750 tiny matrix products per step, more time than the
+    forward and backward pass together. The arithmetic is unchanged."""
     def __init__(self, params, lr=0.02, momentum=0.95, wd=0.0):
         super().__init__(params, dict(lr=lr, momentum=momentum, wd=wd))
+        self._stacks = {}
 
     @torch.no_grad()
     def step(self):
-        for g in self.param_groups:
+        for gi, g in enumerate(self.param_groups):
+            by_shape = {}
             for p in g['params']:
-                if p.grad is None:
-                    continue
-                st = self.state[p]
-                if 'buf' not in st:
-                    st['buf'] = torch.zeros_like(p.grad)
-                buf = st['buf']
-                buf.lerp_(p.grad, 1 - g['momentum'])
-                upd = _ns5(p.grad.lerp(buf, g['momentum']))
-                if g['wd']:
-                    p.mul_(1 - g['lr'] * g['wd'])
-                p.add_(upd, alpha=-g['lr'] * max(1.0, p.size(0) / p.size(1)) ** 0.5)
+                if p.grad is not None:
+                    by_shape.setdefault(tuple(p.shape), []).append(p)
+            for shape, ps in by_shape.items():
+                key = (gi, shape, len(ps))
+                S = self._stacks.get(key)
+                if S is None or any(self.state[p].get('buf') is None or self.state[p]['buf'].data_ptr() != S[i].data_ptr() for i, p in enumerate(ps)):
+                    # (re)build the stacked momentum buffer; each parameter's 'buf' is a view into it, so checkpoints keep working
+                    S = torch.stack([self.state[p]['buf'] if 'buf' in self.state[p] else torch.zeros_like(p.grad) for p in ps])
+                    for i, p in enumerate(ps):
+                        self.state[p]['buf'] = S[i]
+                    self._stacks[key] = S
+                G = torch.stack([p.grad for p in ps])
+                S.lerp_(G, 1 - g['momentum'])
+                U = _ns5_batched(G.lerp(S, g['momentum']))
+                scale = -g['lr'] * max(1.0, shape[0] / shape[1]) ** 0.5
+                for i, p in enumerate(ps):
+                    if g['wd']:
+                        p.mul_(1 - g['lr'] * g['wd'])
+                    p.add_(U[i], alpha=scale)
 
 
 def make_optimizers(model, muon_lr=0.02, adam_lr=3e-3, wd=0.0, use_muon=True):
@@ -371,7 +441,7 @@ def make_optimizers(model, muon_lr=0.02, adam_lr=3e-3, wd=0.0, use_muon=True):
             hidden.append(p)
         else:
             other.append(p)
-    opts = [torch.optim.AdamW(other, lr=adam_lr, betas=(0.9, 0.95), weight_decay=0.0)]
+    opts = [torch.optim.AdamW(other, lr=adam_lr, betas=(0.9, 0.95), weight_decay=0.0, fused=all(p.is_cuda for p in other))]
     if hidden:
         opts.append(Muon(hidden, lr=muon_lr, momentum=0.95, wd=wd))
     return opts

@@ -1,0 +1,17 @@
+sfnet_30000: 8964 positions at 30000 nodes (88s, 743 moves sent to Stockfish, 87s): mean loss 18.57 thousandths of a point per move; 11.51% of moves lose 0.05 or more; one-good-move positions solved 77.2% of 3093
+sfnet_30000 against sf_30000: 8964 positions; mean loss 18.57 against 14.99 thousandths; difference +3.58 (standard error 0.54, +6.6 of them; negative = the first gives away less); 2572 positions scored differently
+sfnet_30000 against bigm_30000: 8964 positions; mean loss 18.57 against 19.76 thousandths; difference -1.19 (standard error 0.58, -2.1 of them; negative = the first gives away less); 2812 positions scored differently
+sfnet_100000: 8964 positions at 100000 nodes (177s, 230 moves sent to Stockfish, 30s): mean loss 12.35 thousandths of a point per move; 7.51% of moves lose 0.05 or more; one-good-move positions solved 83.6% of 3093
+sfnet_100000 against sf_100000: 8964 positions; mean loss 12.35 against 9.57 thousandths; difference +2.77 (standard error 0.38, +7.3 of them; negative = the first gives away less); 2081 positions scored differently
+sfnet_100000 against bigm_100000: 8964 positions; mean loss 12.35 against 13.96 thousandths; difference -1.61 (standard error 0.41, -4.0 of them; negative = the first gives away less); 2398 positions scored differently
+sfnet_300000: 8964 positions at 300000 nodes (454s, 138 moves sent to Stockfish, 19s): mean loss 9.33 thousandths of a point per move; 5.39% of moves lose 0.05 or more; one-good-move positions solved 87.5% of 3093
+sfnet_300000 against sf_300000: 8964 positions; mean loss 9.33 against 6.31 thousandths; difference +3.01 (standard error 0.30, +9.9 of them; negative = the first gives away less); 1776 positions scored differently
+sfnet_300000 against bigm_300000: 8964 positions; mean loss 9.33 against 10.04 thousandths; difference -0.71 (standard error 0.34, -2.1 of them; negative = the first gives away less); 2088 positions scored differently
+sfnet_1000000: 8964 positions at 1000000 nodes (1422s, 97 moves sent to Stockfish, 17s): mean loss 6.07 thousandths of a point per move; 3.09% of moves lose 0.05 or more; one-good-move positions solved 92.0% of 3093
+sfnet_1000000 against sf_1000000: 8964 positions; mean loss 6.07 against 3.79 thousandths; difference +2.27 (standard error 0.21, +10.6 of them; negative = the first gives away less); 1549 positions scored differently
+sfnet_1000000 against bigm_1000000: 8964 positions; mean loss 6.07 against 7.78 thousandths; difference -1.71 (standard error 0.25, -7.0 of them; negative = the first gives away less); 1807 positions scored differently
+sf_30000 against sfnet_100000: 8964 positions; mean loss 14.99 against 12.35 thousandths; difference +2.64 (standard error 0.45, +5.8 of them; negative = the first gives away less); 2373 positions scored differently
+sf_100000 against sfnet_300000: 8964 positions; mean loss 9.57 against 9.33 thousandths; difference +0.24 (standard error 0.34, +0.7 of them; negative = the first gives away less); 1908 positions scored differently
+sf_300000 against sfnet_1000000: 8964 positions; mean loss 6.31 against 6.07 thousandths; difference +0.25 (standard error 0.24, +1.0 of them; negative = the first gives away less); 1579 positions scored differently
+[20:00:20] finished
+

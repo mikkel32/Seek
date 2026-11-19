@@ -1,0 +1,14 @@
+1000 games scored at 100000 nodes a position -> games_bigs.jsonl.sc.jsonl
+1000 games: 39 won, 616 drawn, 345 lost
+
+lost games by how they were lost: one move (0.25 or more of a point in a single move of ours): 33 (10%); two or three moves (each 0.10 or more): 206 (60%); slow decline (no single move of 0.10): 106 (31%)
+lost games by the last move at which the judge still gave us 0.35 or more: by move 20: 67; moves 21-40: 211; moves 41-60: 50; after move 60: 17
+the worst move of each lost game that had one (0.10 or more; 239 games): median move number 32, median clock left 3.4s, median time spent on it 248 ms; with under 2 s on the clock: 16%, under 1 s: 2%
+
+win chance given away per move (thousandths), ours / the opponent's, as the judge sees it:
+  moves up to 20   13.93 /  11.87   (13289 of our moves; our time a move 417 ms)
+  moves 21-40      15.09 /  11.57   (19114 of our moves; our time a move 245 ms)
+  moves 41-60       7.89 /   6.63   (16042 of our moves; our time a move 150 ms)
+  after move 60     3.08 /   2.56   (21749 of our moves; our time a move 107 ms)
+our clock left (10 s to start, 0.1 s a move): at move 20: median 5.8s, a tenth of the games under 4.8s; at move 30: median 4.0s, a tenth of the games under 3.1s; at move 40: median 2.9s, a tenth of the games under 2.1s; at move 60: median 1.9s, a tenth of the games under 1.1s
+[17:23:07] finished

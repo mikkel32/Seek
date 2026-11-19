@@ -1,0 +1,6 @@
+[04:12:38] transformer L1p judging the ends of the two best lines, against the search alone
+300000 nodes, leaf weight 0%, first search 50% of the nodes: +1.75 (standard error 0.30, +5.8 of them); 1598 positions scored differently
+300000 nodes, leaf weight 50%, first search 50% of the nodes: +2.28 (standard error 0.33, +6.8 of them); 1863 positions scored differently
+300000 nodes, leaf weight 100%, first search 50% of the nodes: +8.03 (standard error 0.50, +16.2 of them); 2477 positions scored differently
+100000 nodes, leaf weight 50%, first search 50% of the nodes: +1.65 (standard error 0.41, +4.0 of them); 2050 positions scored differently
+[04:20:50] finished L1p
