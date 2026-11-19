@@ -15,7 +15,7 @@ from readout_arena import OPTIONS
 def review(job):
     rows, a = job
     opts = opts_of(OPTIONS) + [('EvalScale',str(a.scale))]
-    engines = [Eng([a.engine, net], opts) for net in (a.parent, a.candidate)]
+    engines = [Eng([a.engine, a.parent], opts), Eng([a.candidate_engine or a.engine, a.candidate], opts)]
     judge = Eng([a.stockfish], [('Threads','1'),('Hash','32'),('MultiPV','2'),('Use NNUE','true')])
     out = []
     try:
@@ -25,7 +25,7 @@ def review(job):
             for eng in engines:
                 eng.new()
                 choices.append(eng.move(fen, a.nodes))
-            if choices[0] != case['played']:
+            if 'played' in case and choices[0] != case['played']:
                 raise ValueError('Original engine failed to reproduce the recorded choice')
             old, new = choices
             if old == new:
@@ -57,6 +57,7 @@ if __name__ == '__main__':
     p = argparse.ArgumentParser(description=__doc__)
     for name in ('engine','parent','candidate','stockfish','cases','output'):
         p.add_argument(name,type=Path)
+    p.add_argument('--candidate-engine', type=Path, help='use a different search executable for the second arm')
     p.add_argument('--scale',type=int,default=72)
     p.add_argument('--nodes',type=int,default=10000)
     p.add_argument('--judge-nodes',type=int,default=240000)
@@ -64,6 +65,8 @@ if __name__ == '__main__':
     a = p.parse_args()
     for name in ('engine', 'parent', 'candidate', 'stockfish', 'cases'):
         setattr(a, name, getattr(a, name).resolve(strict=True))
+    if a.candidate_engine:
+        a.candidate_engine = a.candidate_engine.resolve(strict=True)
     cases = [r for r in map(json.loads,a.cases.read_text().splitlines()) if r['split']=='test']
     if not cases or min(a.workers,a.nodes,a.judge_nodes) <= 0:
         p.error('Need test cases and positive search budgets')
