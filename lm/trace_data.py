@@ -2,6 +2,7 @@
 import argparse
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
+import json
 from pathlib import Path
 import random
 import subprocess
@@ -70,7 +71,11 @@ def select_positions(archive, counts, seed):
 
 
 def main(args):
-    positions = select_positions(args.archive, args.counts, args.seed)
+    if args.positions:
+        with args.archive.open() as stream:
+            positions = [tuple(json.loads(line)) for line in stream]
+    else:
+        positions = select_positions(args.archive, args.counts, args.seed)
     # Limit each child process's stdout buffer without restarting the engine for every board.
     jobs = [(args.engine.resolve(), args.network.resolve(), positions[i:i+24], args.nodes, args.scale)
             for i in range(0,len(positions),24)]
@@ -92,6 +97,7 @@ def main(args):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
     for name in ('engine','network','archive','output'):p.add_argument(name,type=Path)
+    p.add_argument('--positions', action='store_true', help='read explicit position rows produced by trace_selfplay.py')
     p.add_argument('--nodes',type=int,default=140000)
     p.add_argument('--scale',type=int,default=72)
     p.add_argument('--workers',type=int,default=8)

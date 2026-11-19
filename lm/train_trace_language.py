@@ -48,10 +48,33 @@ def pack(groups, taps):
                  np.array([g[3] for g in groups]),np.array([g[4] for g in groups]))
 
 
+def self_taught_challengers(observations, leaders, depth):
+    """Build targets from future search work and future leaders; only used during training."""
+    current = leaders[depth]
+    later = observations[depth + 1:depth + 7]
+    # Cost buckets are logarithmic. Cancel the common offset before taking powers.
+    buckets = later[:, :, 2].astype(np.float32)
+    relative = buckets - buckets.min(axis=1, keepdims=True)
+    future_work = np.exp2(-relative)
+    future_work[:, current] = 0
+    future_work /= np.maximum(future_work.sum(axis=1, keepdims=True), 1e-20)
+    depth_weights = np.arange(1, len(later) + 1, dtype=np.float32)
+    target = np.average(future_work, axis=0, weights=depth_weights)
+    reference = int(np.argmax(target))
+    votes = np.zeros_like(target)
+    np.add.at(votes, leaders[depth + 1:depth + 1 + len(later)], depth_weights)
+    votes[current] = 0
+    if votes.sum():
+        target = .4 * target + .6 * votes / votes.sum()
+    return target, reference
+
+
 def datasets(path, teacher_path, taps, batch_size):
     raw=np.load(path,allow_pickle=False)
     tokens, leaders=raw['tokens'],raw['leaders']
-    teacher={r['fen']:r['moves'] for r in map(json.loads,teacher_path.read_text().splitlines())}
+    teacher = None
+    if teacher_path is not None:
+        teacher = {r['fen']: r['moves'] for r in map(json.loads, teacher_path.read_text().splitlines())}
     splits={k:[] for k in ('train','tune','test')}
     pending={k:[] for k in splits}
     ti=yi=0
@@ -60,25 +83,28 @@ def datasets(path, teacher_path, taps, batch_size):
         x=tokens[ti:ti+depth*m].reshape(depth,m,7); ti+=depth*m
         y=leaders[yi:yi+depth]; yi+=depth
         vocabulary=moves.split()
-        scored=teacher[fen]
-        ref=np.array([scored.get(move,-np.inf) for move in vocabulary])
+        if teacher is not None:
+            ref = np.array([teacher[fen].get(move, -np.inf) for move in vocabulary])
         visited[split].add(opening)
         for d in range(1,depth-1):
             # At d, the most recent available token is x[d]. Labels never enter these features.
             hist=np.stack([x[d-k] if d>=k else np.zeros_like(x[0]) for k in range(taps)],axis=1)
             target=np.zeros((m,2),np.float32)
             target[y[d+1],0]=1
-            challenger=ref.copy(); challenger[y[d]]=-np.inf
-            external=-1
-            if np.isfinite(challenger).any():
-                external=int(np.argmax(challenger))
-                mass=np.exp((challenger-np.max(challenger))/55)
-                target[:,1]=.60*mass/mass.sum()
-            for future in y[d+1:d+4]:
-                if future!=y[d]:
-                    target[future,1]+=.40
-                    break
-            if target[:,1].sum():target[:,1]/=target[:,1].sum()
+            if teacher is None:
+                target[:, 1], external = self_taught_challengers(x, y, d)
+            else:
+                challenger=ref.copy(); challenger[y[d]]=-np.inf
+                external=-1
+                if np.isfinite(challenger).any():
+                    external=int(np.argmax(challenger))
+                    mass=np.exp((challenger-np.max(challenger))/55)
+                    target[:,1]=.60*mass/mass.sum()
+                for future in y[d+1:d+4]:
+                    if future!=y[d]:
+                        target[future,1]+=.40
+                        break
+                if target[:,1].sum():target[:,1]/=target[:,1].sum()
             pending[split].append((hist,target,external,int(y[d+1]),opening))
             if len(pending[split])>=batch_size:
                 splits[split].append(pack(pending[split],taps));pending[split].clear()
@@ -191,18 +217,28 @@ def main(a):
         print(epoch,round(objective,4),round(tune['switch_top1'],4),flush=True)
     export(chosen,a.taps,a.output)
     test=measure(as_float(quantize(chosen)),data['test'])
+    if a.self_taught:
+        for measurement in [*history, test]:
+            measurement['future_work_top1'] = measurement.pop('teacher_top1')
+            measurement['effort_future_work_top1'] = measurement.pop('effort_teacher_top1')
     summary=dict(taps=a.taps,parameters=sum(v.size for v in chosen),train_tokens=sum(len(b.starts) for b in data['train']),
-                 epoch=best_epoch,tune=history[best_epoch-1],test=test,epochs=history)
+                 epoch=best_epoch,tune=history[best_epoch-1],test=test,epochs=history,
+                 target_source='seek_future_search' if a.self_taught else 'stockfish_and_seek')
     (a.output/'metrics.json').write_text(json.dumps(summary,indent=2,default=float)+'\n')
     print(json.dumps(test,default=float),flush=True)
 
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__)
-    for arg in ('data','teacher','output'):p.add_argument(arg,type=Path)
+    p.add_argument('data', type=Path)
+    p.add_argument('teacher', type=Path, nargs='?', help='Stockfish labels for assisted training')
+    p.add_argument('output', type=Path)
+    p.add_argument('--self-taught', action='store_true', help='derive both targets solely from subsequent Seek searches')
     p.add_argument('--taps',type=int,choices=(1,3),default=3)
     p.add_argument('--epochs',type=int,default=14)
     p.add_argument('--seed',type=int,default=19031)
     a=p.parse_args()
     if a.epochs<1:p.error('Use at least one epoch')
+    if a.self_taught != (a.teacher is None):
+        p.error('Pass teacher labels for assisted training, or omit them and use --self-taught')
     main(a)
