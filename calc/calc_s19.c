@@ -2068,6 +2068,9 @@ static void adjust_soft_time(void) {
     if (time_ms_limit < 1) time_ms_limit = 1;
 }
 #endif
+#ifdef SEEK_MATE_PROOF
+#include "mate_proof.h"
+#endif
 static Move search_root(int max_depth) {
 #ifdef SEEK_FILE_SYMMETRY
     prepare_file_symmetry();
@@ -2085,6 +2088,21 @@ static Move search_root(int max_depth) {
     if (oracle) {
         root_scores[0] = root_score;
         return oracle;
+    }
+#endif
+#ifdef SEEK_MATE_PROOF
+    if (mate_share && n_root > 1) {
+        U64 allowance = node_limit ? node_limit / mate_share : 900;
+        if (allowance > 10000) allowance = 10000;
+        int bound = 0, horizon = mate_max_plies < max_depth ? mate_max_plies : max_depth;
+        Move proved = mate_probe(horizon, &bound, allowance);
+        if (proved) {
+            char text[8]; move_str(proved, text);
+            root_score = MATE - bound;
+            for (int i = 0; i < n_root; i++) root_scores[i] = root_moves[i] == proved ? root_score : -INF;
+            if (!silent) printf("info depth %d score mate %d nodes %llu time %d pv %s\n", bound, (bound+1)/2, nodes, elapsed_ms(), text);
+            return proved;
+        }
     }
 #endif
 #ifdef SEEK_TRAINED_CLOCK
@@ -2400,6 +2418,9 @@ int main(int argc, char **argv) {
 #ifdef SEEK_SYZYGY
             puts("option name SyzygyPath type string default <empty>");
 #endif
+#ifdef SEEK_MATE_PROOF
+            puts("option name MateProofDivisor type spin default 24 min 0 max 1024");
+#endif
             printf("uciok\n");
         } else if (!strcmp(line, "isready")) printf("readyok\n");
         else if (!strncmp(line, "setoption name EvalFile value ", 30)) { if (!load_net(line + 30)) printf("info string cannot load %s\n", line + 30); }
@@ -2409,6 +2430,12 @@ int main(int argc, char **argv) {
             tb_init(strcmp(path, "<empty>") ? path : "");
             memset(tt, 0, (tt_mask + 1) * sizeof(TTE));
             printf("info string Syzygy up to %u pieces\n", TB_LARGEST);
+        }
+#endif
+#ifdef SEEK_MATE_PROOF
+        else if (!strncmp(line, "setoption name MateProofDivisor value ", sizeof("setoption name MateProofDivisor value ") - 1)) {
+            int share = atoi(line + sizeof("setoption name MateProofDivisor value ") - 1);
+            if (share >= 0 && share <= 1024) mate_share = share;
         }
 #endif
         else if (!strncmp(line, "setoption name Hash value ", 26)) tt_alloc(atoi(line + 26));
@@ -2505,6 +2532,28 @@ int main(int argc, char **argv) {
             if (tb_hits) printf("info tbhits %u\n", tb_hits);
 #endif
             if (m) { move_str(m, ms); printf("bestmove %s\n", ms); } else printf("bestmove 0000\n");
+#ifdef SEEK_MATE_PROOF
+        } else if (!strncmp(line, "mateproof ", 10)) {
+            int depth = 0, budget = 0, length = 0; char text[8] = "0000";
+            if (sscanf(line + 10, "%d %d", &depth, &budget) != 2 || depth < 1 || depth > 31 || budget < 1)
+                puts("info string mateproof requires 1..31 plies and a positive node budget");
+            else {
+                nodes = node_limit = 0; time_ms_limit = hard_ms_limit = 0;
+                mate_record = 1;
+                Move result = mate_probe(depth, &length, (U64)budget);
+                mate_record = 0;
+                if (result) {
+                    fputs("mcert", stdout);
+                    for (int i = 0; i < mate_length; i++) {
+                        if (mate_certificate[i]) { char mv[8]; move_str(mate_certificate[i], mv); printf(" %s", mv); }
+                        else fputs(" )", stdout);
+                    }
+                    putchar('\n');
+                }
+                if (result) move_str(result, text);
+                printf("mateproof %s %d %d\n", text, length, mate_spent);
+            }
+#endif
         } else if (!strncmp(line, "perft", 5)) { printf("perft %llu\n", perft(atoi(line + 6))); }
         else if (!strcmp(line, "eval")) {
 #ifdef SEEK_FILE_SYMMETRY
