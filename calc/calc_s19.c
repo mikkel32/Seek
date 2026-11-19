@@ -92,6 +92,9 @@ static void init_pext(void) {
 typedef struct { U64 bb[2][6], occ[2]; signed char sq[64]; int side, castle, ep, half; U64 key, pkey, npkey[2], mmkey[2]; } Pos;      // mmkey: where the minor pieces and kings stand / the major pieces and kings
 typedef struct { Move m; int cap, castle, ep, half; U64 key; } Undo;
 static Pos P;
+#ifdef SEEK_SYZYGY
+#include "syzygy.h"
+#endif
 static Undo ust[2048];
 static U64 keys[2048];
 static int hply;
@@ -509,6 +512,26 @@ static void quantize_net(void) {
     }
     #undef QW
 }
+#ifdef SEEK_FILE_SYMMETRY
+static float pst_original[2][768], pst_projected[2][768];
+static int pst_eligible, pst_is_projected;
+
+// With castling unavailable, reflecting files is a chess symmetry. For king-
+// mirrored nets the hidden output is already invariant; only the linear tables
+// have to be averaged. Once castling is gone it stays gone in every descendant.
+static void prepare_file_symmetry(void) {
+    int want_projected = pst_eligible && !P.castle;
+    if (want_projected == pst_is_projected) return;
+    const float (*tables)[768] = want_projected ? pst_projected : pst_original;
+    memcpy(NS, tables[0], sizeof NS);
+    memcpy(NS2, tables[1], sizeof NS2);
+    pst_is_projected = want_projected;
+    acc_refresh();
+    // Searches from earlier roots may have seen rights-free descendants with
+    // the old table. Their backed-up scores belong to the previous evaluator.
+    memset(tt, 0, (tt_mask + 1) * sizeof(*tt));
+}
+#endif
 static int load_net(const char *path) {
     FILE *f = fopen(path, "rb");
     if (!f) return 0;
@@ -586,6 +609,15 @@ static int load_net(const char *path) {
     fclose(f);
     if (!taper) { NC2 = 0; memset(NS2, 0, sizeof NS2); }
     have_net = (int)ok;
+#ifdef SEEK_FILE_SYMMETRY
+    pst_eligible = have_net && (NKB == 7 || NKB == 16 || NKB == 32 || (NKB == 1 && NMIR));
+    pst_is_projected = 0;
+    memcpy(pst_original[0], NS, sizeof NS);
+    memcpy(pst_original[1], NS2, sizeof NS2);
+    for (int stage = 0; stage < 2; stage++)
+        for (int i = 0; i < 768; i++)
+            pst_projected[stage][i] = (pst_original[stage][i] + pst_original[stage][i ^ 7]) * 0.5f;
+#endif
     if (have_net && NH) quantize_net();
     kc_reset();
     acc_refresh();
@@ -1098,6 +1130,39 @@ static Move killers[MAXPLY][2];
 // Quiet-move history, kept separately for whether the square the piece leaves and the square it goes to are attacked by the
 // opponent: "this move was good" means something different when it rescues a piece or walks into an attack.
 static int history_t[2][4][64][64];
+#ifdef SEEK_COLLECT_PRIOR
+static FILE *prior_examples;
+static void record_quiet_cutoff(Move winner, const Move *failed, int count) {
+    if (!prior_examples || !count) return;
+    int flip = P.side == BLACK ? 56 : 0;
+    int phase = __builtin_popcountll(P.occ[WHITE] | P.occ[BLACK]) / 8;
+    unsigned short record[3] = {(unsigned short)(phase > 3 ? 3 : phase),
+        (unsigned short)((FROM(winner) ^ flip) * 64 + (TO(winner) ^ flip)), 0};
+    for (int i = 0; i < count; i++) {
+        record[2] = (unsigned short)((FROM(failed[i]) ^ flip) * 64 + (TO(failed[i]) ^ flip));
+        if (fwrite(record, sizeof record, 1, prior_examples) != 1) exit(2);
+    }
+}
+#endif
+#ifdef SEEK_HISTORY_PRIOR
+#include "history_prior.h"
+// Decay toward the teacher's quiet-move logit once per root search.
+static void age_trained_history(void) {
+    int phase = __builtin_popcountll(P.occ[WHITE] | P.occ[BLACK]) / 8;
+    if (phase > 3) phase = 3;
+    for (int side = 0; side < 2; side++) {
+        int flip = side == BLACK ? 56 : 0;
+        for (int t = 0; t < 4; t++) for (int from = 0; from < 64; from++) {
+            for (int to = 0; to < 64; to++) {
+                int idx = (from ^ flip) * 64 + (to ^ flip);
+                int prior = quiet_move_prior[phase][idx] * SEEK_HISTORY_PRIOR / 256;
+                int *cell = &history_t[side][t][from][to];
+                *cell = (*cell + prior) / 2;
+            }
+        }
+    }
+}
+#endif
 static U64 thr_stack[MAXPLY + 4];        // squares the opponent attacks, per ply (0 where it was not worked out)
 #define HIST(m, ply) history_t[P.side][(int)(((thr_stack[ply] >> FROM(m)) & 1) | (((thr_stack[ply] >> TO(m)) & 1) << 1))][FROM(m)][TO(m)]
 static int root_vol = 0;                 // the reliability read-out at the root (for the clock)
@@ -1561,6 +1626,10 @@ static int qsearch(int alpha, int beta, int ply) {
 #ifdef SSTAT
     st_p[st_mode]++;
 #endif
+#ifdef SEEK_SYZYGY
+    int tb_score;
+    if (tb_cutoff(alpha, beta, ply, &tb_score)) return tb_score;
+#endif
     TTE *e = tt_find(P.key);
     Move ttm = 0;
     if (e->key == P.key) {
@@ -1620,6 +1689,10 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
     if (alpha < -MATE + ply) alpha = -MATE + ply;                         // mate-distance pruning
     if (beta > MATE - ply - 1) beta = MATE - ply - 1;
     if (alpha >= beta) return alpha;
+#ifdef SEEK_SYZYGY
+    int tb_score;
+    if (!excluded[ply] && tb_cutoff(alpha, beta, ply, &tb_score)) return tb_score;
+#endif
     ST(1); if (pv_node) ST(30);
 #ifdef SSTAT
     st_d[depth > 23 ? 23 : depth]++; st_p[st_mode]++;
@@ -1891,6 +1964,9 @@ static int search(int depth, int alpha, int beta, int ply, int allow_null) {
                         if ((par[HIST_V2] & 2) && ply > 0 && move_stack[ply - 1]) cmove[piece_stack[ply - 1]][TO(move_stack[ply - 1])] = m;
                         if (killers[ply][0] != m) { killers[ply][1] = killers[ply][0]; killers[ply][0] = m; }
                         int bonus = par[HB_QUAD] * depth * depth + par[HB_LIN] * depth; if (bonus > par[HB_MAX]) bonus = par[HB_MAX];
+#ifdef SEEK_COLLECT_PRIOR
+                        if (!chk && depth >= 3) record_quiet_cutoff(m, quiets, nq);
+#endif
                         hist_update(m, ply, bonus);
                         for (int q = 0; q < nq; q++) hist_update(quiets[q], ply, -bonus);
                     } else if (is_capture(m) && FLAG(m) != F_EP) {
@@ -1970,12 +2046,74 @@ static void move_str(Move m, char *o) {
 
 // root: iterative deepening, PVS over the root moves, optional additive prior (root_bonus) from the judgment network
 static Move root_moves[256]; static int root_scores[256], n_root, use_bonus, print_root, silent, root_score;
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+#include "trace_language.h"
+#endif
+#ifdef SEEK_TRAINED_CLOCK
+#include "clock_weights.h"
+static void adjust_soft_time(void) {
+    if (!tm_dynamic || !time_ms_limit) return;
+    int captures = 0;
+    for (int i = 0; i < n_root; i++) captures += is_capture(root_moves[i]) != 0;
+    double features[7] = {1, log1p(n_root), log1p(captures), in_check() != 0,
+                          popc(P.occ[0] | P.occ[1]) / 16.0,
+                          popc(P.bb[0][QUEEN] | P.bb[1][QUEEN]), n_root == 1};
+    int phase = 0;
+    while (phase < 5 && game_move > phase_edges[phase]) phase++;
+    double pred = 0;
+    for (int i = 0; i < 7; i++) pred += (features[i] - feature_means[phase][i]) * clock_weights[i];
+    if (pred < -.90) pred = -.90;
+    if (pred > .60) pred = .60;
+    time_ms_limit = (int)(time_ms_limit * exp(.6 * pred) / phase_normalizer[phase]);
+    if (time_ms_limit < 1) time_ms_limit = 1;
+}
+#endif
+#ifdef SEEK_MATE_PROOF
+#include "mate_proof.h"
+#endif
 static Move search_root(int max_depth) {
+#ifdef SEEK_FILE_SYMMETRY
+    prepare_file_symmetry();
+#endif
     Move list[256];
     int n = gen(list, 0);
     n_root = 0;
     for (int i = 0; i < n; i++) if (make(list[i])) { unmake(); root_moves[n_root++] = list[i]; }
+#ifdef SEEK_SYZYGY
+    tb_hits = 0;
+#endif
     if (!n_root) return 0;
+#ifdef SEEK_SYZYGY
+    Move oracle = tb_root_moves(root_moves, &n_root, &root_score);
+    if (oracle) {
+        root_scores[0] = root_score;
+        return oracle;
+    }
+#endif
+#ifdef SEEK_MATE_PROOF
+    if (mate_share && n_root > 1) {
+        U64 allowance = node_limit ? node_limit / mate_share : 900;
+        if (allowance > 10000) allowance = 10000;
+        int bound = 0, horizon = mate_max_plies < max_depth ? mate_max_plies : max_depth;
+        Move proved = mate_probe(horizon, &bound, allowance);
+        if (proved) {
+            char text[8]; move_str(proved, text);
+            root_score = MATE - bound;
+            for (int i = 0; i < n_root; i++) root_scores[i] = root_moves[i] == proved ? root_score : -INF;
+            if (!silent) printf("info depth %d score mate %d nodes %llu time %d pv %s\n", bound, (bound+1)/2, nodes, elapsed_ms(), text);
+            return proved;
+        }
+    }
+#endif
+#ifdef SEEK_TRAINED_CLOCK
+    adjust_soft_time();
+#endif
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+    tr_start();
+#ifdef SEEK_TRACE_CLOCK
+    tr_clock_scale = 1.0;
+#endif
+#endif
     Move best = root_moves[0];
 #ifdef LSEL
     lsel_gid++;
@@ -1983,13 +2121,23 @@ static Move search_root(int max_depth) {
     memset(killers, 0, sizeof killers);
     corr_ply = 0; evals_stack[0] = in_check() ? -INF : eval_corr();
     root_vol = (have_vol && !in_check()) ? eval_vol() : 0;
+#ifdef SEEK_HISTORY_PRIOR
+    age_trained_history();
+#else
     for (int i = 0; i < 2; i++) for (int t = 0; t < 4; t++) for (int a = 0; a < 64; a++) for (int b = 0; b < 64; b++) history_t[i][t][a][b] /= 2;
+#endif
     thr_stack[0] = 0;
     int last = 0, stable = 0;
     tt_age = (tt_age + 1) & 31;
     memset(root_move_nodes, 0, sizeof root_move_nodes);
     for (root_depth = 1; root_depth <= max_depth; root_depth++) {
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+        memset(tr_work, 0, n_root * sizeof(tr_work[0]));
+#endif
         int alpha = -INF, beta = INF, iter_best = -INF; Move iter_move = 0;
+#ifdef SEEK_PROVEN_ROOT
+        Move last_proven = best;
+#endif
         int delta = par[ASP], first_done = 0;
         if (root_depth >= 5) { alpha = last - delta; beta = last + delta; }
         for (;;) {
@@ -2000,8 +2148,12 @@ static Move search_root(int max_depth) {
                 move_stack[0] = m; piece_stack[0] = P.sq[FROM(m)];
                 U64 n0 = nodes; int rq = !is_capture(m) && !PROMO(m);
                 make(m);
+                int child_depth = root_depth - 1;
+#ifdef SEEK_TRACE_EXTEND
+                if (m == tr_verify_move && root_depth < MAXPLY - 2) child_depth++;
+#endif
                 int v;
-                if (i == 0) { cutn[1] = 0; v = -search(root_depth - 1, -(beta - bon), -(a - bon), 1, 1) + bon; }
+                if (i == 0) { cutn[1] = 0; v = -search(child_depth, -(beta - bon), -(a - bon), 1, 1) + bon; }
                 else {
                     // late quiet root moves get a shallower first look, like late moves everywhere else in the tree
                     int r = 0;
@@ -2010,25 +2162,54 @@ static Move search_root(int max_depth) {
                         if (r < 0) r = 0;
                         if (r > root_depth - 2) r = root_depth - 2;
                     }
-                    cutn[1] = 1; v = -search(root_depth - 1 - r, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
-                    if (v > a && r && !stop_flag) v = -search(root_depth - 1, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
-                    if (v > a && !stop_flag) { cutn[1] = 0; v = -search(root_depth - 1, -(beta - bon), -(a - bon), 1, 1) + bon; }
+                    cutn[1] = 1; v = -search(child_depth - r, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
+                    if (v > a && r && !stop_flag) v = -search(child_depth, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
+                    if (v > a && !stop_flag) { cutn[1] = 0; v = -search(child_depth, -(beta - bon), -(a - bon), 1, 1) + bon; }
                 }
                 unmake();
                 root_move_nodes[FROM(m) * 64 + TO(m)] += nodes - n0;
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+                tr_work[tr_slot(m)] += nodes - n0;
+#endif
                 if (stop_flag) break;
                 root_scores[i] = v; first_done = 1;
                 if (v > iter_best) { iter_best = v; iter_move = m; }
                 if (v > a) { a = v; if (v >= beta) break; }
             }
             if (stop_flag) break;
-            if (iter_best <= alpha) { alpha = iter_best - delta; if (alpha < -INF) alpha = -INF; delta *= 3; continue; }
-            if (iter_best >= beta) { beta = iter_best + delta; if (beta > INF) beta = INF; delta *= 3;
-                                     for (int i = 1; i < n_root; i++) if (root_moves[i] == iter_move) { memmove(root_moves + 1, root_moves, i * sizeof(Move)); root_moves[0] = iter_move; break; }
-                                     continue; }
+            if (iter_best <= alpha) {
+#ifdef SEEK_PROVEN_ROOT
+                last_proven = best;
+#endif
+                alpha = iter_best - delta; if (alpha < -INF) alpha = -INF;
+                delta *= 3; continue;
+            }
+            if (iter_best >= beta) {
+#ifdef SEEK_PROVEN_ROOT
+                last_proven = iter_move;
+#endif
+                beta = iter_best + delta; if (beta > INF) beta = INF;
+                delta *= 3;
+                for (int i = 1; i < n_root; i++) if (root_moves[i] == iter_move) {
+                    memmove(root_moves + 1, root_moves, i * sizeof(Move)); root_moves[0] = iter_move; break;
+                }
+                continue;
+            }
             break;
         }
-        if (stop_flag) { if (first_done && iter_move && root_depth > 1) best = iter_move; break; }   // partial iteration: usable once the previous best has been re-searched
+        if (stop_flag) {
+#ifdef SEEK_PROVEN_ROOT
+            // A score at or below alpha is only an upper bound. It cannot
+            // establish that this move is better than the earlier leader.
+            best = first_done && iter_move && root_depth > 1 && iter_best > alpha ? iter_move : last_proven;
+#else
+            if (first_done && iter_move && root_depth > 1) best = iter_move;
+#endif
+            break;
+        }
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+        tr_complete(iter_move, iter_best, last, root_depth);
+#endif
         int prev_score = last; stable = (iter_move == best && root_depth > 1) ? stable + 1 : 0;
         best = iter_move; last = iter_best; root_score = last;
         for (int i = 1; i < n_root; i++) if (root_moves[i] == best) { memmove(root_moves + 1, root_moves, i * sizeof(Move)); root_moves[0] = best; break; }
@@ -2038,6 +2219,20 @@ static Move search_root(int max_depth) {
                 while (j >= 1 && root_move_nodes[FROM(root_moves[j]) * 64 + TO(root_moves[j])] < k) { root_moves[j + 1] = root_moves[j]; j--; }
                 root_moves[j + 1] = mv;
             }
+#ifdef SEEK_TRACE_COLLECT
+        {
+            int costly = 1;
+            for (int i = 2; i < n_root; i++) {
+                Move a = root_moves[i], b = root_moves[costly];
+                if (root_move_nodes[64*FROM(a)+TO(a)] > root_move_nodes[64*FROM(b)+TO(b)]) costly = i;
+            }
+            printf("trbase %d %d %d\n", root_depth, n_root > 1 ? tr_slot(root_moves[1]) : -1,
+                   n_root > 1 ? tr_slot(root_moves[costly]) : -1);
+        }
+#endif
+#ifdef SEEK_TRACE_MODEL
+        tr_order(root_depth);
+#endif
         char ms[8]; move_str(best, ms);
         int t = elapsed_ms();
         if (silent) { if (n_root == 1 && root_depth >= 2) break; if (last > MATE_IN && root_depth >= 6) break; continue; }
@@ -2054,6 +2249,9 @@ static Move search_root(int max_depth) {
             double scale = (1.5 - frac) * 1.35 * (1.3 - 0.05 * (stable > 10 ? 10 : stable));
             int drop = prev_score - last; if (drop > 0) scale *= 1.0 + (drop > 75 ? 75 : drop) * 0.004;
             if (par[VOL_TM] && root_vol) { double f = (double)root_vol / par[VOL_REF]; f = f < 0.5 ? 0.5 : (f > 2.0 ? 2.0 : f); scale *= 0.7 + 0.3 * f; }   // an unreliable evaluation at the root: think longer
+#ifdef SEEK_TRACE_CLOCK
+            scale *= tr_clock_scale;
+#endif
             if (t >= (int)(time_ms_limit * scale)) break;
         } else
         if (time_ms_limit && t >= time_ms_limit) break;
@@ -2189,6 +2387,10 @@ static void selfplay(const char *path, int ngames, int nodes_per_move, U64 seed,
 }
 
 int main(int argc, char **argv) {
+#ifdef SEEK_COLLECT_PRIOR
+    const char *output = getenv("SEEK_QUIET_PAIRS");
+    if (!output || !(prior_examples = fopen(output, "wb"))) return 2;
+#endif
     init_nnz(); init_tables(); init_pext(); init_zobrist(); tt_alloc(32);
 #ifdef SFNET
     if (getenv("SFNET_FILE") && !sf_load(getenv("SFNET_FILE"))) { printf("cannot read the network in SFNET_FILE\n"); return 1; }
@@ -2213,9 +2415,29 @@ int main(int argc, char **argv) {
         if (!strcmp(line, "uci")) {
             printf("id name CALC\nid author loopchess\noption name EvalFile type string default <none>\noption name Hash type spin default 32 min 1 max 4096\noption name Bonus type string default <none>\n");
             for (int i = 0; i < NPAR; i++) printf("option name %s type spin default %d min 0 max 100000\n", par_name[i], par[i]);
+#ifdef SEEK_SYZYGY
+            puts("option name SyzygyPath type string default <empty>");
+#endif
+#ifdef SEEK_MATE_PROOF
+            puts("option name MateProofDivisor type spin default 24 min 0 max 1024");
+#endif
             printf("uciok\n");
         } else if (!strcmp(line, "isready")) printf("readyok\n");
         else if (!strncmp(line, "setoption name EvalFile value ", 30)) { if (!load_net(line + 30)) printf("info string cannot load %s\n", line + 30); }
+#ifdef SEEK_SYZYGY
+        else if (!strncmp(line, "setoption name SyzygyPath value ", sizeof("setoption name SyzygyPath value ") - 1)) {
+            const char *path = line + sizeof("setoption name SyzygyPath value ") - 1;
+            tb_init(strcmp(path, "<empty>") ? path : "");
+            memset(tt, 0, (tt_mask + 1) * sizeof(TTE));
+            printf("info string Syzygy up to %u pieces\n", TB_LARGEST);
+        }
+#endif
+#ifdef SEEK_MATE_PROOF
+        else if (!strncmp(line, "setoption name MateProofDivisor value ", sizeof("setoption name MateProofDivisor value ") - 1)) {
+            int share = atoi(line + sizeof("setoption name MateProofDivisor value ") - 1);
+            if (share >= 0 && share <= 1024) mate_share = share;
+        }
+#endif
         else if (!strncmp(line, "setoption name Hash value ", 26)) tt_alloc(atoi(line + 26));
         else if (!strncmp(line, "setoption name SelFile value ", 29)) { if (!ls_load(line + 29)) printf("info string cannot read the model %s\n", line + 29); }
         else if (!strncmp(line, "setoption name TmNew value ", 27)) tm_new = atoi(line + 27);
@@ -2306,11 +2528,45 @@ int main(int argc, char **argv) {
             use_bonus = 0;
             char ms[8];
             if (lm_fd >= 0) printf("info string transformer requests %llu, answers used %llu, answers too late %llu, waits %llu, waited %llu ms, asked ahead %llu, not sent (link full) %llu\n", lm_calls, lm_hits, lm_late, lm_waits, lm_wait_us / 1000, lm_ahead_n, lm_full);
+#ifdef SEEK_SYZYGY
+            if (tb_hits) printf("info tbhits %u\n", tb_hits);
+#endif
             if (m) { move_str(m, ms); printf("bestmove %s\n", ms); } else printf("bestmove 0000\n");
+#ifdef SEEK_MATE_PROOF
+        } else if (!strncmp(line, "mateproof ", 10)) {
+            int depth = 0, budget = 0, length = 0; char text[8] = "0000";
+            if (sscanf(line + 10, "%d %d", &depth, &budget) != 2 || depth < 1 || depth > 31 || budget < 1)
+                puts("info string mateproof requires 1..31 plies and a positive node budget");
+            else {
+                nodes = node_limit = 0; time_ms_limit = hard_ms_limit = 0;
+                mate_record = 1;
+                Move result = mate_probe(depth, &length, (U64)budget);
+                mate_record = 0;
+                if (result) {
+                    fputs("mcert", stdout);
+                    for (int i = 0; i < mate_length; i++) {
+                        if (mate_certificate[i]) { char mv[8]; move_str(mate_certificate[i], mv); printf(" %s", mv); }
+                        else fputs(" )", stdout);
+                    }
+                    putchar('\n');
+                }
+                if (result) move_str(result, text);
+                printf("mateproof %s %d %d\n", text, length, mate_spent);
+            }
+#endif
         } else if (!strncmp(line, "perft", 5)) { printf("perft %llu\n", perft(atoi(line + 6))); }
-        else if (!strcmp(line, "eval")) printf("eval %d\n", evaluate());
+        else if (!strcmp(line, "eval")) {
+#ifdef SEEK_FILE_SYMMETRY
+            prepare_file_symmetry();
+#endif
+            printf("eval %d\n", evaluate());
+        }
         else if (!strcmp(line, "fen")) { char f_[128]; pos_fen(f_); printf("fen %s\n", f_); }       // the position as the transformer is sent it
-        else if (!strcmp(line, "qeval")) { nodes = 0; stop_flag = 0; node_limit = 0; hard_ms_limit = time_ms_limit = 0; printf("eval %d\n", qsearch(-INF, INF, 0)); }   // the value after captures are played out, as a search leaf returns it
+        else if (!strcmp(line, "qeval")) {
+#ifdef SEEK_FILE_SYMMETRY
+            prepare_file_symmetry();
+#endif
+            nodes = 0; stop_flag = 0; node_limit = 0; hard_ms_limit = time_ms_limit = 0; printf("eval %d\n", qsearch(-INF, INF, 0)); }   // the value after captures are played out, as a search leaf returns it
         else if (!strcmp(line, "pol")) {                 // the read-out's scores for the quiet moves of the current position
             if (have_pol && !in_check()) { evaluate(); Picker q; mp_init(&q, 0, 0, 0); q.pol = 1; Move m; char ms[8]; while ((m = mp_next(&q))) if (q.pol_on && !is_capture(m) && !PROMO(m)) { move_str(m, ms); printf("pol %s %d\n", ms, q.pol_now); } }
             printf("pol end\n");

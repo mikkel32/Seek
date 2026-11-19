@@ -1,0 +1,265 @@
+{
+  "production-results": {
+    "champion": {
+      "bytes": 37807184,
+      "sha256": "9b204a84cbb78acab433ce79fbefdc848e02c71df2a2966e73affb3a2f2fe2fa",
+      "header": [
+        1330991667,
+        768,
+        8,
+        16
+      ]
+    },
+    "fit": {
+      "validation": [
+        "parent held-out cross entropy 0.653299",
+        "student held-out cross entropy 0.653007",
+        "unique quiet positions: 73578 train, 21918 held out"
+      ],
+      "sha256": "b6c8cf0b7b656b819916ec28c82b1a02a6e72497ab3b59b45edb7810f9e7205c"
+    },
+    "readout-15k": [
+      {
+        "opponent": "parent",
+        "tc": "15000 positions per move",
+        "n": 320,
+        "w": 73,
+        "d": 111,
+        "l": 136,
+        "score": 0.4016,
+        "elo": -69.3,
+        "lo": -101.0,
+        "hi": -38.7,
+        "avg_plies": 152.6,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 1.7
+      },
+      {
+        "pairs": 160,
+        "score": 0.4015625,
+        "elo": -69.3,
+        "paired_95_lo": -100.1,
+        "paired_95_hi": -39.5
+      }
+    ],
+    "scale72-15k": [
+      {
+        "opponent": "parent",
+        "tc": "15000 positions per move",
+        "n": 320,
+        "w": 99,
+        "d": 133,
+        "l": 88,
+        "score": 0.5172,
+        "elo": 11.9,
+        "lo": -17.1,
+        "hi": 41.2,
+        "avg_plies": 144.3,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 1.5
+      },
+      {
+        "pairs": 160,
+        "score": 0.5171875,
+        "elo": 11.9,
+        "paired_95_lo": -14.8,
+        "paired_95_hi": 38.8
+      }
+    ],
+    "clock_choice": {
+      "candidate": "scale72",
+      "pairs": 150,
+      "tc": "10+0.1"
+    },
+    "clock-scale72": [
+      {
+        "opponent": "parent",
+        "tc": "10+0.1",
+        "n": 300,
+        "w": 33,
+        "d": 219,
+        "l": 48,
+        "score": 0.475,
+        "elo": -17.4,
+        "lo": -37.9,
+        "hi": 3.0,
+        "avg_plies": 145.9,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 13.4
+      },
+      {
+        "pairs": 150,
+        "score": 0.475,
+        "elo": -17.4,
+        "paired_95_lo": -36.9,
+        "paired_95_hi": 2.0
+      }
+    ]
+  },
+  "siblings-results": {
+    "champion": {
+      "bytes": 37807184,
+      "sha256": "9b204a84cbb78acab433ce79fbefdc848e02c71df2a2966e73affb3a2f2fe2fa",
+      "header": [
+        1330991667,
+        768,
+        8,
+        16
+      ]
+    },
+    "input-BIGS": {
+      "sha256": "9b204a84cbb78acab433ce79fbefdc848e02c71df2a2966e73affb3a2f2fe2fa"
+    },
+    "input-C1a": {
+      "sha256": "eff0dfd5d00e7f4da5b2df7182cac55b5d7926e4a5125a676a63dc8b9c4e0dd1"
+    },
+    "input-G1a": {
+      "sha256": "e32ffae6d5a20383f92ccc8a0c65e8ded790c8acbad04438130e3f35266cff16"
+    },
+    "input-G1b": {
+      "sha256": "c05ea250f0a34c539c71dcefc9010a2f606e1725fede41fe5f2ed5f8700faf83"
+    },
+    "w_BIGS_siblings_avg_20261118": {
+      "factors": [
+        [
+          "C1a",
+          0.5
+        ],
+        [
+          "G1a",
+          0.25
+        ]
+      ],
+      "sha256": "1675f1e7e8d8e96ed85721fc01bbe2dde2122561accc58fb51e4c7262c7b4798"
+    },
+    "w_BIGS_siblings_contrast_20261118": {
+      "factors": [
+        [
+          "C1a",
+          0.75
+        ],
+        [
+          "G1b",
+          -0.25
+        ]
+      ],
+      "sha256": "298405c63599afc540676c11fe87cb308728de08701dc2168b63040b319a8eba"
+    },
+    "average-screen": [
+      {
+        "opponent": "parent",
+        "tc": "20000 positions per move",
+        "n": 400,
+        "w": 105,
+        "d": 192,
+        "l": 103,
+        "score": 0.5025,
+        "elo": 1.7,
+        "lo": -22.8,
+        "hi": 26.3,
+        "avg_plies": 143.3,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 1.7
+      },
+      {
+        "pairs": 200,
+        "score": 0.5025,
+        "elo": 1.7,
+        "paired_95_lo": -23.3,
+        "paired_95_hi": 26.8
+      }
+    ],
+    "contrast-screen": [
+      {
+        "opponent": "parent",
+        "tc": "20000 positions per move",
+        "n": 400,
+        "w": 108,
+        "d": 178,
+        "l": 114,
+        "score": 0.4925,
+        "elo": -5.2,
+        "lo": -30.7,
+        "hi": 20.2,
+        "avg_plies": 144.2,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 1.8
+      },
+      {
+        "pairs": 200,
+        "score": 0.4925,
+        "elo": -5.2,
+        "paired_95_lo": -29.8,
+        "paired_95_hi": 19.3
+      }
+    ],
+    "control-C1a-screen": [
+      {
+        "opponent": "parent",
+        "tc": "20000 positions per move",
+        "n": 400,
+        "w": 115,
+        "d": 172,
+        "l": 113,
+        "score": 0.5025,
+        "elo": 1.7,
+        "lo": -24.0,
+        "hi": 27.5,
+        "avg_plies": 146.5,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 2.1
+      },
+      {
+        "pairs": 200,
+        "score": 0.5025,
+        "elo": 1.7,
+        "paired_95_lo": -23.5,
+        "paired_95_hi": 27.0
+      }
+    ],
+    "clock_choice": {
+      "candidate": "control-C1a",
+      "pairs": 200,
+      "tc": "10+0.1",
+      "weight": "w_C1a.bin"
+    },
+    "clock-control-C1a": [
+      {
+        "opponent": "parent",
+        "tc": "10+0.1",
+        "n": 400,
+        "w": 53,
+        "d": 306,
+        "l": 41,
+        "score": 0.515,
+        "elo": 10.4,
+        "lo": -6.1,
+        "hi": 27.0,
+        "avg_plies": 145.4,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 22.6
+      },
+      {
+        "pairs": 200,
+        "score": 0.515,
+        "elo": 10.4,
+        "paired_95_lo": -5.4,
+        "paired_95_hi": 26.3
+      }
+    ]
+  }
+}

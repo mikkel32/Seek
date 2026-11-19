@@ -30,7 +30,8 @@ D = 'data/q'; SF = '/usr/games/stockfish'
 
 class Eng:
     def __init__(self, cmd, opts):
-        self.p = subprocess.Popen(cmd.split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
+        argv = cmd.split() if isinstance(cmd, str) else cmd
+        self.p = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
         self.send('uci'); self.wait('uciok')
         for k, v in opts:
             self.send(f'setoption name {k} value {v}')

@@ -1,0 +1,538 @@
+{
+  "g101_training_bank": {
+    "attempted": 96,
+    "passed": 19
+  },
+  "g101_programming": {
+    "original_repairs": 19,
+    "combined_repairs": 7,
+    "changed": 22,
+    "all_four": 5
+  },
+  "g101_capture_transfer": {
+    "cases": 21,
+    "opening_count": 20,
+    "exact_pawn_takes_rook": 4,
+    "margin_cp": 80,
+    "nodes": 10000,
+    "parent": {
+      "correct": 20,
+      "new_success": 0,
+      "new_miss": 0,
+      "exact_correct": 4
+    },
+    "single": {
+      "correct": 20,
+      "new_success": 0,
+      "new_miss": 0,
+      "exact_correct": 4
+    },
+    "combined": {
+      "correct": 20,
+      "new_success": 0,
+      "new_miss": 0,
+      "exact_correct": 4
+    }
+  },
+  "g101_nearby_transfer": {
+    "eligible": 706,
+    "sampled": 120,
+    "reviewed": 120,
+    "all": {
+      "positions": 120,
+      "parent": 89,
+      "edited": 94,
+      "fixed": 8,
+      "regressed": 3,
+      "parent_captures": 57,
+      "edited_captures": 55
+    },
+    "clear_capture_best": {
+      "positions": 47,
+      "parent": 44,
+      "edited": 42,
+      "fixed": 0,
+      "regressed": 2,
+      "parent_captures": 44,
+      "edited_captures": 42
+    },
+    "clear_other_best": {
+      "positions": 50,
+      "parent": 36,
+      "edited": 37,
+      "fixed": 1,
+      "regressed": 0,
+      "parent_captures": 7,
+      "edited_captures": 6
+    }
+  },
+  "g101_fit": {
+    "shape": [
+      384,
+      768,
+      8
+    ],
+    "changed": 255,
+    "first_layer_size": 294912,
+    "training": 3679,
+    "tuning": 1024,
+    "testing": 1168,
+    "grid": 0.00390625,
+    "tuning_candidates": [
+      {
+        "budget": 256,
+        "factor": 0.6,
+        "changed": 255,
+        "mean_abs_change_cp": 2.7263671874999997,
+        "pairs": 1024,
+        "clear": 612,
+        "preferred_pct": 58.66013071895425,
+        "regret_cp": 39.490196078431374,
+        "margin_shortfall_cp": 60.91699346405228
+      },
+      {
+        "budget": 256,
+        "factor": 1.0,
+        "changed": 255,
+        "mean_abs_change_cp": 4.195546875,
+        "pairs": 1024,
+        "clear": 612,
+        "preferred_pct": 58.74183006535948,
+        "regret_cp": 39.583333333333336,
+        "margin_shortfall_cp": 60.70944444444444
+      },
+      {
+        "budget": 2048,
+        "factor": 0.6,
+        "changed": 1993,
+        "mean_abs_change_cp": 4.7144531249999995,
+        "pairs": 1024,
+        "clear": 612,
+        "preferred_pct": 58.90522875816993,
+        "regret_cp": 39.3921568627451,
+        "margin_shortfall_cp": 60.67084967320261
+      },
+      {
+        "budget": 2048,
+        "factor": 1.0,
+        "changed": 2028,
+        "mean_abs_change_cp": 7.6890234374999995,
+        "pairs": 1024,
+        "clear": 612,
+        "preferred_pct": 58.333333333333336,
+        "regret_cp": 39.720588235294116,
+        "margin_shortfall_cp": 60.317385620915026
+      }
+    ],
+    "test_parent": {
+      "pairs": 1168,
+      "clear": 747,
+      "preferred_pct": 61.98125836680054,
+      "regret_cp": 37.22958500669344,
+      "margin_shortfall_cp": 57.618366800535476
+    },
+    "test_candidate": {
+      "pairs": 1168,
+      "clear": 747,
+      "preferred_pct": 61.84738955823293,
+      "regret_cp": 37.50401606425703,
+      "margin_shortfall_cp": 57.41997322623829
+    },
+    "test_mean_abs_change_cp": 2.8442465753424657
+  },
+  "head_to_head": {
+    "single-node": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 360,
+        "w": 106,
+        "d": 134,
+        "l": 120,
+        "score": 0.4806,
+        "elo": -13.5,
+        "lo": -42.1,
+        "hi": 14.9,
+        "avg_plies": 145.8,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 2.9
+      },
+      "paired": {
+        "pairs": 180,
+        "score": 0.48055555555555557,
+        "elo": -13.5,
+        "paired_95_lo": -41.2,
+        "paired_95_hi": 14.0
+      }
+    },
+    "stacked-node": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 400,
+        "w": 125,
+        "d": 142,
+        "l": 133,
+        "score": 0.49,
+        "elo": -6.9,
+        "lo": -34.4,
+        "hi": 20.4,
+        "avg_plies": 145.6,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 5.1
+      },
+      "paired": {
+        "pairs": 200,
+        "score": 0.49,
+        "elo": -6.9,
+        "paired_95_lo": -35.4,
+        "paired_95_hi": 21.4
+      }
+    },
+    "stacked-clock": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "5+0.05",
+        "n": 240,
+        "w": 47,
+        "d": 139,
+        "l": 54,
+        "score": 0.4854,
+        "elo": -10.1,
+        "lo": -38.8,
+        "hi": 18.4,
+        "avg_plies": 159.8,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 10.9
+      },
+      "paired": {
+        "pairs": 120,
+        "score": 0.48541666666666666,
+        "elo": -10.1,
+        "paired_95_lo": -39.7,
+        "paired_95_hi": 19.3
+      }
+    },
+    "g101-node": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 500,
+        "w": 168,
+        "d": 180,
+        "l": 152,
+        "score": 0.516,
+        "elo": 11.1,
+        "lo": -13.2,
+        "hi": 35.6,
+        "avg_plies": 143.7,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 1.8
+      },
+      "paired": {
+        "pairs": 250,
+        "score": 0.516,
+        "elo": 11.1,
+        "paired_95_lo": -12.8,
+        "paired_95_hi": 35.1
+      }
+    },
+    "g101-clock": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "5+0.05",
+        "n": 300,
+        "w": 70,
+        "d": 168,
+        "l": 62,
+        "score": 0.5133,
+        "elo": 9.3,
+        "lo": -16.8,
+        "hi": 35.4,
+        "avg_plies": 157.6,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 13.1
+      },
+      "paired": {
+        "pairs": 150,
+        "score": 0.5133333333333333,
+        "elo": 9.3,
+        "paired_95_lo": -12.7,
+        "paired_95_hi": 31.3
+      }
+    },
+    "fitted-confirm": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 1500,
+        "w": 474,
+        "d": 558,
+        "l": 468,
+        "score": 0.502,
+        "elo": 1.4,
+        "lo": -12.5,
+        "hi": 15.3,
+        "avg_plies": 147.4,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 11.1
+      },
+      "paired": {
+        "pairs": 750,
+        "score": 0.502,
+        "elo": 1.4,
+        "paired_95_lo": -12.5,
+        "paired_95_hi": 15.2
+      }
+    },
+    "fitted-root": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 440,
+        "w": 134,
+        "d": 174,
+        "l": 132,
+        "score": 0.5023,
+        "elo": 1.6,
+        "lo": -23.7,
+        "hi": 26.9,
+        "avg_plies": 143.2,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 1.7
+      },
+      "paired": {
+        "pairs": 220,
+        "score": 0.5022727272727273,
+        "elo": 1.6,
+        "paired_95_lo": -22.5,
+        "paired_95_hi": 25.7
+      }
+    }
+  },
+  "bigs_head_to_head": {
+    "node": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 480,
+        "w": 130,
+        "d": 220,
+        "l": 130,
+        "score": 0.5,
+        "elo": -0.0,
+        "lo": -22.9,
+        "hi": 22.9,
+        "avg_plies": 142.1,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 3.0
+      },
+      "paired": {
+        "pairs": 240,
+        "score": 0.5,
+        "elo": 0.0,
+        "paired_95_lo": -21.5,
+        "paired_95_hi": 21.5
+      }
+    },
+    "clock": {
+      "summary": {
+        "opponent": "parent",
+        "tc": "10+0.1",
+        "n": 200,
+        "w": 31,
+        "d": 141,
+        "l": 28,
+        "score": 0.5075,
+        "elo": 5.2,
+        "lo": -21.0,
+        "hi": 31.4,
+        "avg_plies": 147.1,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 9.8
+      },
+      "paired": {
+        "pairs": 100,
+        "score": 0.5075,
+        "elo": 5.2,
+        "paired_95_lo": -18.0,
+        "paired_95_hi": 28.5
+      }
+    }
+  },
+  "bigs_fit": {
+    "changed": 227,
+    "first_layer_size": 9437184,
+    "training": 3691,
+    "tuning": 1029,
+    "testing": 1168,
+    "grid": 0.0078125
+  },
+  "bigs_static_before": {
+    "pairs": 1168,
+    "clear": 750,
+    "preferred_pct": 64.53333333333333,
+    "regret_cp": 32.444,
+    "margin_shortfall_cp": 48.55826666666666
+  },
+  "bigs_static_after": {
+    "pairs": 1168,
+    "clear": 750,
+    "preferred_pct": 64.60000000000001,
+    "regret_cp": 32.428666666666665,
+    "margin_shortfall_cp": 48.5316
+  },
+  "unseen_move_review": {
+    "g101": {
+      "positions": 1170,
+      "openings": 101,
+      "moves_changed": 412,
+      "better": 211,
+      "worse": 184,
+      "referee_fallbacks": 2,
+      "equal_changed": 17,
+      "opening_mean_score_change": 0.0003908317186268969,
+      "lower": -0.0030398794272551042,
+      "upper": 0.0038215428645088983
+    },
+    "stacked": {
+      "positions": 1170,
+      "openings": 101,
+      "moves_changed": 358,
+      "better": 189,
+      "worse": 159,
+      "referee_fallbacks": 1,
+      "equal_changed": 10,
+      "opening_mean_score_change": 0.001524885689583975,
+      "lower": -0.0013911248083675728,
+      "upper": 0.0044408961875355224
+    },
+    "bigs": {
+      "positions": 1168,
+      "openings": 101,
+      "moves_changed": 244,
+      "better": 106,
+      "worse": 129,
+      "referee_fallbacks": 1,
+      "equal_changed": 9,
+      "opening_mean_score_change": -7.398043310117574e-05,
+      "lower": -0.003206350294134574,
+      "upper": 0.003058389427932223
+    }
+  },
+  "g101_stockfish": {
+    "baseline": [
+      {
+        "opponent": "Stockfish 14.1",
+        "tc": "18500 positions per move",
+        "n": 200,
+        "w": 3,
+        "d": 13,
+        "l": 184,
+        "score": 0.0475,
+        "elo": -520.9,
+        "lo": -644.4,
+        "hi": -446.4,
+        "avg_plies": 111.7,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 5.1
+      },
+      {
+        "pairs": 100,
+        "score": 0.0475,
+        "elo": -520.9,
+        "paired_95_lo": -648.3,
+        "paired_95_hi": -445.1
+      }
+    ],
+    "trained": [
+      {
+        "opponent": "Stockfish 14.1",
+        "tc": "18500 positions per move",
+        "n": 200,
+        "w": 2,
+        "d": 19,
+        "l": 179,
+        "score": 0.0575,
+        "elo": -485.8,
+        "lo": -585.0,
+        "hi": -420.3,
+        "avg_plies": 116.0,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 5.4
+      },
+      {
+        "pairs": 100,
+        "score": 0.0575,
+        "elo": -485.8,
+        "paired_95_lo": -585.5,
+        "paired_95_hi": -420.1
+      }
+    ],
+    "trained_minus_baseline_points_per_game": [
+      0.01,
+      -0.023010099978793344,
+      0.04301009997879335
+    ]
+  },
+  "bigs_single_programming": {
+    "attempted": 48,
+    "passed": 7,
+    "changed": 1,
+    "target_hits": 4,
+    "opposite_hits": 0,
+    "parent_hits": 0,
+    "deep_prefers_target": true,
+    "deep_gain_cp": 60,
+    "parent_cp": 52,
+    "target_cp": 112
+  },
+  "bigs_single_match": {
+    "summary": {
+      "opponent": "parent",
+      "tc": "18500 positions per move",
+      "n": 240,
+      "w": 58,
+      "d": 115,
+      "l": 67,
+      "score": 0.4813,
+      "elo": -13.0,
+      "lo": -45.0,
+      "hi": 18.7,
+      "avg_plies": 139.4,
+      "our_time_losses": 0,
+      "their_time_losses": 0,
+      "illegal": 0,
+      "minutes": 1.3
+    },
+    "paired": {
+      "pairs": 120,
+      "score": 0.48125,
+      "elo": -13.0,
+      "paired_95_lo": -32.7,
+      "paired_95_hi": 6.6
+    }
+  }
+}
