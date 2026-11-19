@@ -11,6 +11,10 @@ import tempfile
 
 def apply(source, manifest, destination, reverse=False):
     patch = json.loads(manifest.read_text())
+    if isinstance(patch, list):
+        # The fitter stores checkpoint hashes and tensor dimensions alongside the edits.
+        summary = json.loads(manifest.with_name('summary.json').read_text())
+        patch = {**summary, 'edits': patch}
     before, after = ('candidate', 'parent') if reverse else ('parent', 'candidate')
     data = bytearray(source.read_bytes())
     if hashlib.sha256(data).hexdigest() != patch[before + '_sha256']:
