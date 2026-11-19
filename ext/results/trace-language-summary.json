@@ -1,0 +1,1216 @@
+{
+  "selection": "challenge",
+  "retraining": {
+    "quantized_weights_identical": true,
+    "test_metrics_identical": true
+  },
+  "self_taught": {
+    "shared_test_leader_switch": {
+      "events": 2156,
+      "model": 0.3692022263450835,
+      "snapshot": 0.3692022263450835,
+      "native_order": 0.2949907235621521,
+      "cumulative_effort": 0.313543599257885,
+      "difference_to_effort": 0.05565862708719849,
+      "paired_bootstrap_95": [
+        0.04016787049867779,
+        0.07149691384319172
+      ]
+    },
+    "shared_test_teacher_challenger": {
+      "events": 9193,
+      "model": 0.286196018709888,
+      "snapshot": 0.286196018709888,
+      "native_order": 0.2117915805504188,
+      "cumulative_effort": 0.24953769172196236,
+      "difference_to_effort": 0.03665832698792562,
+      "paired_bootstrap_95": [
+        0.02350805550370509,
+        0.04985469006269554
+      ]
+    },
+    "integer_logits_verified": 12006,
+    "portable_checks": {
+      "positions": 850,
+      "matching_bestmoves": 850
+    },
+    "model": {
+      "taps": 3,
+      "parameters": 3312,
+      "train_tokens": 34322,
+      "epoch": 13,
+      "tune": {
+        "tokens": 8060,
+        "switches": 1802,
+        "next_nll": 0.9422213845135223,
+        "challenger_nll": 2.691465502307439,
+        "next_accuracy": 0.774317617866005,
+        "copy_accuracy": 0.7764267990074442,
+        "switch_top1": 0.40455049944506105,
+        "effort_switch_top1": 0.32685904550499445,
+        "future_work_top1": 0.39627791563275433,
+        "effort_future_work_top1": 0.34950372208436725
+      },
+      "test": {
+        "tokens": 9206,
+        "switches": 1965,
+        "next_nll": 0.8996104258642965,
+        "challenger_nll": 2.7590563289615826,
+        "next_accuracy": 0.7856832500543124,
+        "copy_accuracy": 0.7865522485335651,
+        "switch_top1": 0.39134860050890585,
+        "effort_switch_top1": 0.310941475826972,
+        "future_work_top1": 0.37975233543341297,
+        "effort_future_work_top1": 0.3354334129915273
+      },
+      "epochs": [
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9653559770192515,
+          "challenger_nll": 2.7323215097788762,
+          "next_accuracy": 0.776302729528536,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.39234184239733627,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3936724565756824,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9527045021776417,
+          "challenger_nll": 2.7119214562665976,
+          "next_accuracy": 0.7766749379652605,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40066592674805773,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3945409429280397,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9520044099945961,
+          "challenger_nll": 2.7072908176934787,
+          "next_accuracy": 0.7754342431761787,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40843507214206437,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3964019851116625,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9489904961468872,
+          "challenger_nll": 2.7019052626849454,
+          "next_accuracy": 0.7750620347394541,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.4017758046614872,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3990074441687345,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.944864814190027,
+          "challenger_nll": 2.698311921920951,
+          "next_accuracy": 0.7761786600496278,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.4051054384017758,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3956575682382134,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9440675008791717,
+          "challenger_nll": 2.6984750393172163,
+          "next_accuracy": 0.7758064516129032,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40455049944506105,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.40260545905707196,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9432892242831752,
+          "challenger_nll": 2.6977736685315103,
+          "next_accuracy": 0.775682382133995,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.4034406215316315,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3988833746898263,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9455008948180494,
+          "challenger_nll": 2.6936687053047974,
+          "next_accuracy": 0.7751861042183623,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.402330743618202,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.40074441687344914,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.941423075891573,
+          "challenger_nll": 2.6961184026268956,
+          "next_accuracy": 0.7754342431761787,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.3995560488346282,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3966501240694789,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9436111948835789,
+          "challenger_nll": 2.6962015137518685,
+          "next_accuracy": 0.7760545905707196,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40066592674805773,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3929280397022333,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9421577339239849,
+          "challenger_nll": 2.692919917162573,
+          "next_accuracy": 0.7761786600496278,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40677025527192007,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.39950372208436724,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9445068182376913,
+          "challenger_nll": 2.6943118870093246,
+          "next_accuracy": 0.7759305210918114,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40621531631520535,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.3977667493796526,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9422213845135223,
+          "challenger_nll": 2.691465502307439,
+          "next_accuracy": 0.774317617866005,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40455049944506105,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.39627791563275433,
+          "effort_future_work_top1": 0.34950372208436725
+        },
+        {
+          "tokens": 8060,
+          "switches": 1802,
+          "next_nll": 0.9445811440982012,
+          "challenger_nll": 2.6937829218358673,
+          "next_accuracy": 0.7760545905707196,
+          "copy_accuracy": 0.7764267990074442,
+          "switch_top1": 0.40621531631520535,
+          "effort_switch_top1": 0.32685904550499445,
+          "future_work_top1": 0.39727047146401984,
+          "effort_future_work_top1": 0.34950372208436725
+        }
+      ],
+      "target_source": "seek_future_search"
+    },
+    "roots": {
+      "train": 3200,
+      "tune": 750,
+      "test": 850
+    },
+    "self_play_nodes_per_move": 1000,
+    "trace_nodes_per_root": 140000,
+    "matched_score_vs_assisted": [
+      -0.019583333333333335,
+      -0.05024147846607768,
+      0.011074811799411013
+    ],
+    "opening_groups": {
+      "train": 311,
+      "tune": 87,
+      "test": 101
+    }
+  },
+  "network": "G101, with a separate G102 transfer match",
+  "trace_roots": {
+    "train": 3200,
+    "tune": 750,
+    "test": 850
+  },
+  "trace_budgets": {
+    "seek": 140000,
+    "stockfish_multipv3": 180000
+  },
+  "games": 8340,
+  "time_forfeits": 0,
+  "illegal_moves": 0,
+  "model": {
+    "taps": 3,
+    "parameters": 3312,
+    "train_tokens": 34652,
+    "epoch": 13,
+    "tune": {
+      "tokens": 8169,
+      "switches": 1958,
+      "next_nll": 1.0081242185231314,
+      "challenger_nll": 2.425356145458217,
+      "next_accuracy": 0.7599461378381687,
+      "copy_accuracy": 0.760313379850655,
+      "switch_top1": 0.3794688457609806,
+      "effort_switch_top1": 0.3237997957099081,
+      "teacher_top1": 0.29477292202227934,
+      "effort_teacher_top1": 0.2361366140286449
+    },
+    "test": {
+      "tokens": 9193,
+      "switches": 2156,
+      "next_nll": 1.0147739328540957,
+      "challenger_nll": 2.46552737003836,
+      "next_accuracy": 0.7640596105732622,
+      "copy_accuracy": 0.7654737300119656,
+      "switch_top1": 0.3631725417439703,
+      "effort_switch_top1": 0.3042671614100185,
+      "teacher_top1": 0.29032959860763624,
+      "effort_teacher_top1": 0.23245948003916023
+    },
+    "epochs": [
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0402547970322613,
+        "challenger_nll": 2.462597022943663,
+        "next_accuracy": 0.7592116538131962,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.37640449438202245,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.28644876973925815,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0229939894680828,
+        "challenger_nll": 2.448253298032786,
+        "next_accuracy": 0.7597013098298445,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3825331971399387,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.28901946382666177,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0190303147476782,
+        "challenger_nll": 2.4434988760029284,
+        "next_accuracy": 0.7598237238340066,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3799795709908069,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.29061084588076874,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0171590380374094,
+        "challenger_nll": 2.437055054944845,
+        "next_accuracy": 0.7594564818215204,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.38202247191011235,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.28999877585995837,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0107745131987496,
+        "challenger_nll": 2.433729998563237,
+        "next_accuracy": 0.7594564818215204,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.38202247191011235,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2930591259640103,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0136278876463893,
+        "challenger_nll": 2.4327462016441053,
+        "next_accuracy": 0.7600685518423308,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3774259448416752,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2915901579140654,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.010836648662943,
+        "challenger_nll": 2.4305298763657146,
+        "next_accuracy": 0.7599461378381687,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.38764044943820225,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.29048843187660667,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0106228423024513,
+        "challenger_nll": 2.435201561694813,
+        "next_accuracy": 0.7600685518423308,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.37538304392236976,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.29110050189741704,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0099270907849733,
+        "challenger_nll": 2.428204223404039,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.38508682328907046,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.29110050189741704,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.008467477657639,
+        "challenger_nll": 2.425800438584295,
+        "next_accuracy": 0.7597013098298445,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3830439223697651,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.29061084588076874,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.009850808888326,
+        "challenger_nll": 2.42975671542913,
+        "next_accuracy": 0.7598237238340066,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3861082737487232,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.29048843187660667,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0109931515172026,
+        "challenger_nll": 2.42788079070616,
+        "next_accuracy": 0.7598237238340066,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3718079673135853,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.28963153384747214,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0081242185231314,
+        "challenger_nll": 2.425356145458217,
+        "next_accuracy": 0.7599461378381687,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3794688457609806,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.29477292202227934,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0087646307598825,
+        "challenger_nll": 2.429405983204937,
+        "next_accuracy": 0.7598237238340066,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.37640449438202245,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2912229159015791,
+        "effort_teacher_top1": 0.2361366140286449
+      }
+    ]
+  },
+  "snapshot": {
+    "taps": 1,
+    "parameters": 1136,
+    "train_tokens": 34652,
+    "epoch": 12,
+    "tune": {
+      "tokens": 8169,
+      "switches": 1958,
+      "next_nll": 1.047609355780577,
+      "challenger_nll": 2.520712072180336,
+      "next_accuracy": 0.760313379850655,
+      "copy_accuracy": 0.760313379850655,
+      "switch_top1": 0.3687436159346272,
+      "effort_switch_top1": 0.3237997957099081,
+      "teacher_top1": 0.28045048353531643,
+      "effort_teacher_top1": 0.2361366140286449
+    },
+    "test": {
+      "tokens": 9193,
+      "switches": 2156,
+      "next_nll": 1.0473948637233832,
+      "challenger_nll": 2.5579045792543926,
+      "next_accuracy": 0.7653649515936038,
+      "copy_accuracy": 0.7654737300119656,
+      "switch_top1": 0.3622448979591837,
+      "effort_switch_top1": 0.3042671614100185,
+      "teacher_top1": 0.27673229631241164,
+      "effort_teacher_top1": 0.23245948003916023
+    },
+    "epochs": [
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.068672828337759,
+        "challenger_nll": 2.545384102429259,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3687436159346272,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2819194515852613,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0622991622698776,
+        "challenger_nll": 2.539261000520509,
+        "next_accuracy": 0.7601909658464928,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3707865168539326,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.27787978944791286,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0591034948881586,
+        "challenger_nll": 2.5368146598386017,
+        "next_accuracy": 0.7600685518423308,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3738508682328907,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.27947117150201983,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0574445171740117,
+        "challenger_nll": 2.5359979045323606,
+        "next_accuracy": 0.7601909658464928,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3707865168539326,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.27628840739380583,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0561476492328454,
+        "challenger_nll": 2.533545712273888,
+        "next_accuracy": 0.7600685518423308,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.37027579162410623,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.27653323540213,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.052291230664826,
+        "challenger_nll": 2.528276742205957,
+        "next_accuracy": 0.7601909658464928,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3672114402451481,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.27751254743542664,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.050090501005689,
+        "challenger_nll": 2.526613516695596,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.36976506639427986,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.27996082751866813,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0509891612390265,
+        "challenger_nll": 2.5276359375079496,
+        "next_accuracy": 0.7600685518423308,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3661899897854954,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.27947117150201983,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0491113368678195,
+        "challenger_nll": 2.5263799868549444,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3651685393258427,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2782470314603991,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0487424988238159,
+        "challenger_nll": 2.5261716824620915,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.36414708886619,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2782470314603991,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0487019569959735,
+        "challenger_nll": 2.5219584802696295,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.37027579162410623,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2819194515852613,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.047609355780577,
+        "challenger_nll": 2.520712072180336,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.3687436159346272,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.28045048353531643,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.048492816911981,
+        "challenger_nll": 2.5221318234958576,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.36567926455566907,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.2833884196352063,
+        "effort_teacher_top1": 0.2361366140286449
+      },
+      {
+        "tokens": 8169,
+        "switches": 1958,
+        "next_nll": 1.0469974912470463,
+        "challenger_nll": 2.5233062631596086,
+        "next_accuracy": 0.760313379850655,
+        "copy_accuracy": 0.760313379850655,
+        "switch_top1": 0.36363636363636365,
+        "effort_switch_top1": 0.3237997957099081,
+        "teacher_top1": 0.28142979556861303,
+        "effort_teacher_top1": 0.2361366140286449
+      }
+    ]
+  },
+  "checks": {
+    "integer_logits_verified": 11918,
+    "positions": 850,
+    "openings": 101,
+    "leader_switch": {
+      "events": 2156,
+      "model": 0.3631725417439703,
+      "snapshot": 0.3622448979591837,
+      "native_order": 0.2949907235621521,
+      "cumulative_effort": 0.313543599257885,
+      "difference_to_effort": 0.04962894248608529,
+      "paired_bootstrap_95": [
+        0.03130646080654594,
+        0.06740705269087342
+      ]
+    },
+    "teacher_challenger": {
+      "events": 9193,
+      "model": 0.29032959860763624,
+      "snapshot": 0.27673229631241164,
+      "native_order": 0.2117915805504188,
+      "cumulative_effort": 0.24953769172196236,
+      "difference_to_effort": 0.040791906885673884,
+      "paired_bootstrap_95": [
+        0.026561453058195877,
+        0.05486043162031728
+      ]
+    }
+  },
+  "latency": {
+    "roots": 850,
+    "calls": 127500,
+    "mean_legal_moves": 33.94,
+    "microseconds_per_observation": 0.622,
+    "checksum": 7386380222
+  },
+  "portable_checks": {
+    "baseline_matches_previous": 80,
+    "baseline_matches_portable": 80,
+    "baseline_count": 80,
+    "selected_matches_portable": 850,
+    "selected_count": 850
+  },
+  "javascript": {
+    "javascript_scores_checked": 3918
+  },
+  "replay_checks": {
+    "examples": 8,
+    "interactive_depth_states": 60,
+    "runner": "Node DOM fixture",
+    "external_scripts": 0,
+    "browser_render_verified": false
+  },
+  "head_to_head": {
+    "order-screen": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 400,
+        "w": 126,
+        "d": 150,
+        "l": 124,
+        "score": 0.5025,
+        "elo": 1.7,
+        "lo": -25.2,
+        "hi": 28.7,
+        "avg_plies": 143.7,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 3.4
+      },
+      {
+        "pairs": 200,
+        "score": 0.5025,
+        "elo": 1.7,
+        "paired_95_lo": -25.1,
+        "paired_95_hi": 28.6
+      }
+    ],
+    "challenge-screen": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 400,
+        "w": 136,
+        "d": 148,
+        "l": 116,
+        "score": 0.525,
+        "elo": 17.4,
+        "lo": -9.6,
+        "hi": 44.6,
+        "avg_plies": 145.8,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 3.3
+      },
+      {
+        "pairs": 200,
+        "score": 0.525,
+        "elo": 17.4,
+        "paired_95_lo": -7.5,
+        "paired_95_hi": 42.5
+      }
+    ],
+    "verify-screen": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 400,
+        "w": 129,
+        "d": 147,
+        "l": 124,
+        "score": 0.5062,
+        "elo": 4.3,
+        "lo": -22.8,
+        "hi": 31.5,
+        "avg_plies": 140.0,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 3.3
+      },
+      {
+        "pairs": 200,
+        "score": 0.50625,
+        "elo": 4.3,
+        "paired_95_lo": -22.1,
+        "paired_95_hi": 30.9
+      }
+    ],
+    "effort-screen": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 400,
+        "w": 128,
+        "d": 147,
+        "l": 125,
+        "score": 0.5038,
+        "elo": 2.6,
+        "lo": -24.5,
+        "hi": 29.8,
+        "avg_plies": 147.7,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 3.3
+      },
+      {
+        "pairs": 200,
+        "score": 0.50375,
+        "elo": 2.6,
+        "paired_95_lo": -26.2,
+        "paired_95_hi": 31.5
+      }
+    ],
+    "confirm": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 1200,
+        "w": 401,
+        "d": 442,
+        "l": 357,
+        "score": 0.5183,
+        "elo": 12.7,
+        "lo": -2.9,
+        "hi": 28.4,
+        "avg_plies": 144.9,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 18.2
+      },
+      {
+        "pairs": 600,
+        "score": 0.5183333333333333,
+        "elo": 12.7,
+        "paired_95_lo": -2.5,
+        "paired_95_hi": 28.1
+      }
+    ],
+    "against-effort": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 440,
+        "w": 132,
+        "d": 158,
+        "l": 150,
+        "score": 0.4795,
+        "elo": -14.2,
+        "lo": -40.3,
+        "hi": 11.7,
+        "avg_plies": 146.5,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 6.4
+      },
+      {
+        "pairs": 220,
+        "score": 0.47954545454545455,
+        "elo": -14.2,
+        "paired_95_lo": -39.9,
+        "paired_95_hi": 11.4
+      }
+    ],
+    "against-snapshot": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 440,
+        "w": 149,
+        "d": 148,
+        "l": 143,
+        "score": 0.5068,
+        "elo": 4.7,
+        "lo": -21.7,
+        "hi": 31.3,
+        "avg_plies": 147.9,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 3.2
+      },
+      {
+        "pairs": 220,
+        "score": 0.5068181818181818,
+        "elo": 4.7,
+        "paired_95_lo": -20.8,
+        "paired_95_hi": 30.3
+      }
+    ],
+    "clock-pure": [
+      {
+        "opponent": "parent",
+        "tc": "5+0.05",
+        "n": 180,
+        "w": 39,
+        "d": 101,
+        "l": 40,
+        "score": 0.4972,
+        "elo": -1.9,
+        "lo": -35.7,
+        "hi": 31.8,
+        "avg_plies": 157.5,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 15.6
+      },
+      {
+        "pairs": 90,
+        "score": 0.49722222222222223,
+        "elo": -1.9,
+        "paired_95_lo": -32.6,
+        "paired_95_hi": 28.7
+      }
+    ],
+    "clock-adaptive": [
+      {
+        "opponent": "parent",
+        "tc": "5+0.05",
+        "n": 180,
+        "w": 34,
+        "d": 105,
+        "l": 41,
+        "score": 0.4806,
+        "elo": -13.5,
+        "lo": -46.5,
+        "hi": 19.2,
+        "avg_plies": 155.6,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 15.2
+      },
+      {
+        "pairs": 90,
+        "score": 0.48055555555555557,
+        "elo": -13.5,
+        "paired_95_lo": -42.2,
+        "paired_95_hi": 15.0
+      }
+    ],
+    "g102": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 500,
+        "w": 180,
+        "d": 163,
+        "l": 157,
+        "score": 0.523,
+        "elo": 16.0,
+        "lo": -9.0,
+        "hi": 41.1,
+        "avg_plies": 143.6,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 13.7
+      },
+      {
+        "pairs": 250,
+        "score": 0.523,
+        "elo": 16.0,
+        "paired_95_lo": -7.4,
+        "paired_95_hi": 39.5
+      }
+    ],
+    "fast-budget": [
+      {
+        "opponent": "parent",
+        "tc": "4000 positions per move",
+        "n": 600,
+        "w": 244,
+        "d": 139,
+        "l": 217,
+        "score": 0.5225,
+        "elo": 15.6,
+        "lo": -8.7,
+        "hi": 40.1,
+        "avg_plies": 152.5,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 2.5
+      },
+      {
+        "pairs": 300,
+        "score": 0.5225,
+        "elo": 15.6,
+        "paired_95_lo": -7.6,
+        "paired_95_hi": 39.0
+      }
+    ],
+    "deep-budget": [
+      {
+        "opponent": "parent",
+        "tc": "60000 positions per move",
+        "n": 320,
+        "w": 86,
+        "d": 137,
+        "l": 97,
+        "score": 0.4828,
+        "elo": -11.9,
+        "lo": -40.9,
+        "hi": 16.8,
+        "avg_plies": 146.6,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 8.3
+      },
+      {
+        "pairs": 160,
+        "score": 0.4828125,
+        "elo": -11.9,
+        "paired_95_lo": -37.6,
+        "paired_95_hi": 13.5
+      }
+    ],
+    "self-confirm": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 1200,
+        "w": 377,
+        "d": 443,
+        "l": 380,
+        "score": 0.4988,
+        "elo": -0.9,
+        "lo": -16.5,
+        "hi": 14.8,
+        "avg_plies": 150.7,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 4.0
+      },
+      {
+        "pairs": 600,
+        "score": 0.49875,
+        "elo": -0.9,
+        "paired_95_lo": -16.1,
+        "paired_95_hi": 14.4
+      }
+    ],
+    "g102-confirm": [
+      {
+        "opponent": "parent",
+        "tc": "18500 positions per move",
+        "n": 800,
+        "w": 254,
+        "d": 272,
+        "l": 274,
+        "score": 0.4875,
+        "elo": -8.7,
+        "lo": -28.3,
+        "hi": 10.9,
+        "avg_plies": 145.1,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 9.7
+      },
+      {
+        "pairs": 400,
+        "score": 0.4875,
+        "elo": -8.7,
+        "paired_95_lo": -28.1,
+        "paired_95_hi": 10.7
+      }
+    ],
+    "g102-clock": [
+      {
+        "opponent": "parent",
+        "tc": "5+0.05",
+        "n": 160,
+        "w": 31,
+        "d": 92,
+        "l": 37,
+        "score": 0.4813,
+        "elo": -13.0,
+        "lo": -48.4,
+        "hi": 22.0,
+        "avg_plies": 159.2,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 7.4
+      },
+      {
+        "pairs": 80,
+        "score": 0.48125,
+        "elo": -13.0,
+        "paired_95_lo": -49.1,
+        "paired_95_hi": 22.8
+      }
+    ]
+  },
+  "stockfish": {
+    "baseline": [
+      {
+        "opponent": "Stockfish 14.1",
+        "tc": "18500 positions per move",
+        "n": 240,
+        "w": 9,
+        "d": 33,
+        "l": 198,
+        "score": 0.1062,
+        "elo": -370.0,
+        "lo": -436.2,
+        "hi": -319.1,
+        "avg_plies": 115.0,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 16.0
+      },
+      {
+        "pairs": 120,
+        "score": 0.10625,
+        "elo": -370.0,
+        "paired_95_lo": -440.8,
+        "paired_95_hi": -316.5
+      }
+    ],
+    "trained": [
+      {
+        "opponent": "Stockfish 14.1",
+        "tc": "18500 positions per move",
+        "n": 240,
+        "w": 8,
+        "d": 25,
+        "l": 207,
+        "score": 0.0854,
+        "elo": -411.9,
+        "lo": -488.9,
+        "hi": -355.7,
+        "avg_plies": 114.4,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 16.6
+      },
+      {
+        "pairs": 120,
+        "score": 0.08541666666666667,
+        "elo": -411.9,
+        "paired_95_lo": -487.4,
+        "paired_95_hi": -356.5
+      }
+    ],
+    "trained_minus_baseline_points_per_game": [
+      -0.020833333333333332,
+      -0.060817981634193455,
+      0.019151314967526787
+    ],
+    "self-taught": [
+      {
+        "opponent": "Stockfish 14.1",
+        "tc": "18500 positions per move",
+        "n": 240,
+        "w": 6,
+        "d": 25,
+        "l": 209,
+        "score": 0.0771,
+        "elo": -431.3,
+        "lo": -510.7,
+        "hi": -374.2,
+        "avg_plies": 124.2,
+        "our_time_losses": 0,
+        "their_time_losses": 0,
+        "illegal": 0,
+        "minutes": 2.3
+      },
+      {
+        "pairs": 120,
+        "score": 0.07708333333333334,
+        "elo": -431.3,
+        "paired_95_lo": -505.4,
+        "paired_95_hi": -377.0
+      }
+    ],
+    "self_taught_minus_baseline_points_per_game": [
+      -0.029166666666666667,
+      -0.07025201553164609,
+      0.011918682198312748
+    ]
+  },
+  "unseen_search_audit": {
+    "positions": 850,
+    "openings": 101,
+    "moves_changed": 258,
+    "better": 130,
+    "worse": 118,
+    "referee_fallbacks": 0,
+    "equal_changed": 10,
+    "opening_mean_score_change": 0.0008438730955334491,
+    "lower": -0.0034133050388700206,
+    "upper": 0.005101051229936919
+  }
+}
