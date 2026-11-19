@@ -29,7 +29,7 @@ def combine(args):
         raise ValueError('All repairs must use the same archive, architecture, scale and budgets')
     args.output.mkdir(parents=True, exist_ok=False)
     path = args.output / 'candidate.bin'
-    engine = Eng(f'{args.engine} {args.parent}', opts_of(OPTIONS) + [('EvalScale', str(args.scale))])
+    engine = Eng([args.engine, args.parent], opts_of(OPTIONS) + [('EvalScale', str(args.scale))])
     accepted = []
     shifts = Counter()
 

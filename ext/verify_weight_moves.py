@@ -15,8 +15,8 @@ from readout_arena import OPTIONS
 def review(job):
     rows, a = job
     opts = opts_of(OPTIONS) + [('EvalScale',str(a.scale))]
-    engines = [Eng(f'{a.engine} {net}', opts) for net in (a.parent, a.candidate)]
-    judge = Eng(str(a.stockfish), [('Threads','1'),('Hash','32'),('MultiPV','2'),('Use NNUE','true')])
+    engines = [Eng([a.engine, net], opts) for net in (a.parent, a.candidate)]
+    judge = Eng([a.stockfish], [('Threads','1'),('Hash','32'),('MultiPV','2'),('Use NNUE','true')])
     out = []
     try:
         for case in rows:
@@ -62,6 +62,8 @@ if __name__ == '__main__':
     p.add_argument('--judge-nodes',type=int,default=240000)
     p.add_argument('--workers',type=int,default=4)
     a = p.parse_args()
+    for name in ('engine', 'parent', 'candidate', 'stockfish', 'cases'):
+        setattr(a, name, getattr(a, name).resolve(strict=True))
     cases = [r for r in map(json.loads,a.cases.read_text().splitlines()) if r['split']=='test']
     if not cases or min(a.workers,a.nodes,a.judge_nodes) <= 0:
         p.error('Need test cases and positive search budgets')

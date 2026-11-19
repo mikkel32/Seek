@@ -49,8 +49,8 @@ def roots(archive):
 
 def collect(args):
     jobs, engine, network, fish, nodes, teacher_nodes, scale = args
-    seek = Eng(f'{engine} {network}', opts_of(OPTIONS) + [('EvalScale', str(scale))])
-    judge = Eng(str(fish), [('Threads', '1'), ('Hash', '32'), ('MultiPV', '2'), ('Use NNUE', 'true')])
+    seek = Eng([engine, network], opts_of(OPTIONS) + [('EvalScale', str(scale))])
+    judge = Eng([fish], [('Threads', '1'), ('Hash', '32'), ('MultiPV', '2'), ('Use NNUE', 'true')])
     out = []
     try:
         for split, origin, fen, drop in jobs:

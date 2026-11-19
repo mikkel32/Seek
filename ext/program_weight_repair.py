@@ -34,7 +34,7 @@ def repair(job):
     original = a.parent.read_bytes()
     offset = 16 if struct.unpack_from('<I',original)[0] == 0x4F555233 else 12
     result = []
-    eng = Eng(f'{a.engine} {a.parent}', opts_of(OPTIONS) + [('EvalScale',str(a.scale))])
+    eng = Eng([a.engine, a.parent], opts_of(OPTIONS) + [('EvalScale',str(a.scale))])
     try:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp)/'candidate.bin'
