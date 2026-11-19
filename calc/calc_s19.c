@@ -2046,6 +2046,9 @@ static void move_str(Move m, char *o) {
 
 // root: iterative deepening, PVS over the root moves, optional additive prior (root_bonus) from the judgment network
 static Move root_moves[256]; static int root_scores[256], n_root, use_bonus, print_root, silent, root_score;
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+#include "trace_language.h"
+#endif
 #ifdef SEEK_TRAINED_CLOCK
 #include "clock_weights.h"
 static void adjust_soft_time(void) {
@@ -2087,6 +2090,12 @@ static Move search_root(int max_depth) {
 #ifdef SEEK_TRAINED_CLOCK
     adjust_soft_time();
 #endif
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+    tr_start();
+#ifdef SEEK_TRACE_CLOCK
+    tr_clock_scale = 1.0;
+#endif
+#endif
     Move best = root_moves[0];
 #ifdef LSEL
     lsel_gid++;
@@ -2104,6 +2113,9 @@ static Move search_root(int max_depth) {
     tt_age = (tt_age + 1) & 31;
     memset(root_move_nodes, 0, sizeof root_move_nodes);
     for (root_depth = 1; root_depth <= max_depth; root_depth++) {
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+        memset(tr_work, 0, n_root * sizeof(tr_work[0]));
+#endif
         int alpha = -INF, beta = INF, iter_best = -INF; Move iter_move = 0;
 #ifdef SEEK_PROVEN_ROOT
         Move last_proven = best;
@@ -2118,8 +2130,12 @@ static Move search_root(int max_depth) {
                 move_stack[0] = m; piece_stack[0] = P.sq[FROM(m)];
                 U64 n0 = nodes; int rq = !is_capture(m) && !PROMO(m);
                 make(m);
+                int child_depth = root_depth - 1;
+#ifdef SEEK_TRACE_EXTEND
+                if (m == tr_verify_move && root_depth < MAXPLY - 2) child_depth++;
+#endif
                 int v;
-                if (i == 0) { cutn[1] = 0; v = -search(root_depth - 1, -(beta - bon), -(a - bon), 1, 1) + bon; }
+                if (i == 0) { cutn[1] = 0; v = -search(child_depth, -(beta - bon), -(a - bon), 1, 1) + bon; }
                 else {
                     // late quiet root moves get a shallower first look, like late moves everywhere else in the tree
                     int r = 0;
@@ -2128,12 +2144,15 @@ static Move search_root(int max_depth) {
                         if (r < 0) r = 0;
                         if (r > root_depth - 2) r = root_depth - 2;
                     }
-                    cutn[1] = 1; v = -search(root_depth - 1 - r, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
-                    if (v > a && r && !stop_flag) v = -search(root_depth - 1, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
-                    if (v > a && !stop_flag) { cutn[1] = 0; v = -search(root_depth - 1, -(beta - bon), -(a - bon), 1, 1) + bon; }
+                    cutn[1] = 1; v = -search(child_depth - r, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
+                    if (v > a && r && !stop_flag) v = -search(child_depth, -(a - bon) - 1, -(a - bon), 1, 1) + bon;
+                    if (v > a && !stop_flag) { cutn[1] = 0; v = -search(child_depth, -(beta - bon), -(a - bon), 1, 1) + bon; }
                 }
                 unmake();
                 root_move_nodes[FROM(m) * 64 + TO(m)] += nodes - n0;
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+                tr_work[tr_slot(m)] += nodes - n0;
+#endif
                 if (stop_flag) break;
                 root_scores[i] = v; first_done = 1;
                 if (v > iter_best) { iter_best = v; iter_move = m; }
@@ -2170,6 +2189,9 @@ static Move search_root(int max_depth) {
 #endif
             break;
         }
+#if defined(SEEK_TRACE_MODEL) || defined(SEEK_TRACE_COLLECT)
+        tr_complete(iter_move, iter_best, last, root_depth);
+#endif
         int prev_score = last; stable = (iter_move == best && root_depth > 1) ? stable + 1 : 0;
         best = iter_move; last = iter_best; root_score = last;
         for (int i = 1; i < n_root; i++) if (root_moves[i] == best) { memmove(root_moves + 1, root_moves, i * sizeof(Move)); root_moves[0] = best; break; }
@@ -2179,6 +2201,20 @@ static Move search_root(int max_depth) {
                 while (j >= 1 && root_move_nodes[FROM(root_moves[j]) * 64 + TO(root_moves[j])] < k) { root_moves[j + 1] = root_moves[j]; j--; }
                 root_moves[j + 1] = mv;
             }
+#ifdef SEEK_TRACE_COLLECT
+        {
+            int costly = 1;
+            for (int i = 2; i < n_root; i++) {
+                Move a = root_moves[i], b = root_moves[costly];
+                if (root_move_nodes[64*FROM(a)+TO(a)] > root_move_nodes[64*FROM(b)+TO(b)]) costly = i;
+            }
+            printf("trbase %d %d %d\n", root_depth, n_root > 1 ? tr_slot(root_moves[1]) : -1,
+                   n_root > 1 ? tr_slot(root_moves[costly]) : -1);
+        }
+#endif
+#ifdef SEEK_TRACE_MODEL
+        tr_order(root_depth);
+#endif
         char ms[8]; move_str(best, ms);
         int t = elapsed_ms();
         if (silent) { if (n_root == 1 && root_depth >= 2) break; if (last > MATE_IN && root_depth >= 6) break; continue; }
@@ -2195,6 +2231,9 @@ static Move search_root(int max_depth) {
             double scale = (1.5 - frac) * 1.35 * (1.3 - 0.05 * (stable > 10 ? 10 : stable));
             int drop = prev_score - last; if (drop > 0) scale *= 1.0 + (drop > 75 ? 75 : drop) * 0.004;
             if (par[VOL_TM] && root_vol) { double f = (double)root_vol / par[VOL_REF]; f = f < 0.5 ? 0.5 : (f > 2.0 ? 2.0 : f); scale *= 0.7 + 0.3 * f; }   // an unreliable evaluation at the root: think longer
+#ifdef SEEK_TRACE_CLOCK
+            scale *= tr_clock_scale;
+#endif
             if (t >= (int)(time_ms_limit * scale)) break;
         } else
         if (time_ms_limit && t >= time_ms_limit) break;

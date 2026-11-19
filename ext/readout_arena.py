@@ -72,6 +72,8 @@ def main():
     parser.add_argument("--pool-size", type=int, default=640)
     parser.add_argument("--pairs", type=int, default=100)
     parser.add_argument("--common-options", default=OPTIONS, help="comma-separated UCI options for both engines")
+    parser.add_argument("--student-options", default="", help="additional UCI options just for the challenger")
+    parser.add_argument("--parent-options", default="", help="additional UCI options just for the incumbent")
     parser.add_argument("--student-eval-scale", type=int, default=100, help="UCI EvalScale for the candidate")
     parser.add_argument("--parent-eval-scale", type=int, default=100, help="UCI EvalScale for a calibration control")
     parser.add_argument("--workers", type=int, default=8)
@@ -103,8 +105,8 @@ def main():
         # gauntlet uses space-delimited UCI commands. Short symlinks keep paths with spaces usable.
         for name, target in [("engine", engine), ("challenger", student_engine), ("parent.bin", parent), ("student.bin", student)]:
             (work / name).symlink_to(target)
-        parent_options = f"{args.common_options},EvalScale={args.parent_eval_scale}"
-        student_options = f"{args.common_options},EvalScale={args.student_eval_scale}"
+        parent_options = ",".join(filter(None, [args.common_options, args.parent_options, f"EvalScale={args.parent_eval_scale}"]))
+        student_options = ",".join(filter(None, [args.common_options, args.student_options, f"EvalScale={args.student_eval_scale}"]))
         cmd = [sys.executable, str(ROOT / "gauntlet.py"), "--us", "./challenger student.bin",
                "--us_opts", student_options, "--opp", f"parent|./engine parent.bin|{parent_options}",
                "--workers", str(args.workers), "--openings", str(args.pairs), "--seed", str(args.seed)]
